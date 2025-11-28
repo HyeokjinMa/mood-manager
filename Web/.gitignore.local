@@ -1,0 +1,5 @@
+# Build artifacts (generated files)
+.build-artifacts/
+.next/
+node_modules/
+*.tsbuildinfo

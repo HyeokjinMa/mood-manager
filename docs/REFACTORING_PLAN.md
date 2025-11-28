@@ -11,7 +11,7 @@
 ### 완료된 작업
 
 #### 1. 코드 리팩토링
-- ✅ 중복 함수 통합 (`hexToRgb`, `hexToRgba` → `src/lib/utils.ts`)
+- ✅ 중복 함수 통합 (`hexToRgb`, `hexToRgba` → `Web/src/lib/utils.ts`)
 - ✅ 커스텀 훅 분리 (`useDeviceSync`, `useMoodColors`, `useHeartAnimation`, `useSegmentSelector`)
 - ✅ Props 그룹화 (`moodState`, `deviceState`, `backgroundState`)
 - ✅ TypeScript 타입 안정성 향상 (`any` 타입 제거)
@@ -35,10 +35,20 @@
 
 ## 리팩토링 계획
 
+### Phase 0: 현재 상태 (완료)
+
+#### 완료된 작업
+- ✅ 코드 리팩토링 (중복 제거, 커스텀 훅 분리, 타입 안정성)
+- ✅ 관리자 모드 구현 (Mock 데이터 플로우)
+- ✅ UI/UX 개선 (무드셋 페이지, 디바이스 관리, 설문조사)
+- ✅ 프로젝트 구조 정리 (Web/, Watch/, ML/, docs/ 구조)
+
 ### Phase 1: 데이터 플로우 전환 (우선순위: High)
 
 #### 목표
-목업 데이터부터 시작하여 전처리와 LLM 2번을 거쳐 유효한 다양한 무드스트림을 생성
+목업 데이터부터 시작하여 전처리와 LLM 2단계를 거쳐 유효한 다양한 무드스트림을 생성
+
+**참고**: 현재는 LLM이 시계열+마르코프 체인 역할을 대체하고 있으나, Phase 4에서 전용 모델로 교체 예정
 
 #### 전체 데이터 흐름
 ```
@@ -62,14 +72,14 @@
 #### 작업 항목
 
 **1.1 전처리 통합 및 선호도 연동**
-- [ ] 선호도 변환 함수 생성 (`src/lib/preferences/convertPreferences.ts`)
+- [ ] 선호도 변환 함수 생성 (`Web/src/lib/preferences/convertPreferences.ts`)
   - DB 형식 (쉼표 구분 문자열) → LLM 인풋 형식 (`Record<string, '+' | '-'>`)
-- [ ] 전처리 API 수정 (`src/app/api/preprocessing/route.ts`)
+- [ ] 전처리 API 수정 (`Web/src/app/api/preprocessing/route.ts`)
   - 사용자 선호도 조회 추가 (`/api/preferences`)
   - 선호도 변환 함수 호출
   - `raw_events` 처리 개선 (ML에서 가공된 데이터 가정)
   - `timeOfDay`, `season` 자동 계산 및 포함
-- [ ] 타입 정의 통합 (`src/types/preprocessing.ts`)
+- [ ] 타입 정의 통합 (`Web/src/types/preprocessing.ts`)
 
 **전처리 출력 타입:**
 ```typescript
@@ -140,9 +150,9 @@ interface LLM1Output {
 - Response format: `json_object`
 
 **1.3 LLM 2차 처리 구현**
-- [ ] LLM 2차 API 엔드포인트 생성 (`src/app/api/ai/mood-stream/expand/route.ts`)
-- [ ] 프롬프트 생성 함수 (`src/lib/llm/generateMoodPrompt.ts`)
-- [ ] 응답 검증 함수 (`src/lib/llm/validateMoodResponse.ts`)
+- [ ] LLM 2차 API 엔드포인트 생성 (`Web/src/app/api/ai/mood-stream/expand/route.ts`)
+- [ ] 프롬프트 생성 함수 (`Web/src/lib/llm/generateMoodPrompt.ts`)
+- [ ] 응답 검증 함수 (`Web/src/lib/llm/validateMoodResponse.ts`)
 - [ ] 기존 `background-params` API와 통합
 
 **LLM 2차 출력 타입:**
@@ -183,7 +193,7 @@ interface LLM2Output {
 - Response format: `json_object`
 
 **1.4 무드스트림 생성 로직 통합**
-- [ ] 무드스트림 생성 API 수정 (`src/app/api/moods/current/generate/route.ts`)
+- [ ] 무드스트림 생성 API 수정 (`Web/src/app/api/moods/current/generate/route.ts`)
 - [ ] 3단계 플로우 통합
   ```typescript
   // 1. 전처리 데이터 조회
@@ -252,6 +262,119 @@ interface LLM2Output {
 - [ ] 개인화 추천 시스템
 
 **예상 시간**: 2-3주
+
+---
+
+### Phase 4: 프로덕션 배포 및 고급 ML 통합 (우선순위: High)
+
+#### 목표
+1. 시계열 + 마르코프 체인 모델 구현으로 LLM 의존도 감소
+2. 프로덕션 웹 애플리케이션 배포
+3. 전체 파이프라인 최종 검증
+
+#### 작업 항목
+
+**4.1 시계열 + 마르코프 체인 모델 구현**
+
+**4.1.1 시계열 분석 모듈**
+- [ ] 시계열 데이터 전처리 (`Web/src/lib/timeseries/preprocess.ts`)
+  - 생체 신호 시계열 데이터 정규화
+  - 이동 평균 및 트렌드 분석
+  - 계절성 및 주기성 패턴 추출
+- [ ] 감정 상태 예측 모델 (`Web/src/lib/timeseries/predictEmotion.ts`)
+  - ARIMA 또는 LSTM 기반 시계열 예측
+  - 생체 신호 → 감정 상태 매핑
+  - 시간대별 감정 변화 패턴 학습
+
+**4.1.2 마르코프 체인 모델**
+- [ ] 상태 전이 행렬 생성 (`Web/src/lib/markov/buildTransitionMatrix.ts`)
+  - 감정 상태 간 전이 확률 계산
+  - 사용자별 개인화된 전이 행렬
+  - 시간대별 전이 패턴 고려
+- [ ] 마르코프 체인 예측 (`Web/src/lib/markov/predictSequence.ts`)
+  - 현재 상태에서 다음 N개 상태 예측
+  - 전이 확률 기반 시퀀스 생성
+  - 일관성 보장 (temperature: 0.3과 유사한 효과)
+
+**4.1.3 통합 모델**
+- [ ] 시계열 + 마르코프 체인 결합 (`Web/src/lib/ml/emotionPredictor.ts`)
+  - 시계열 예측 결과를 마르코프 체인의 초기 상태로 사용
+  - 10개 세그먼트(30분) 감정 시퀀스 생성
+  - LLM Stage 1 대체
+- [ ] 모델 학습 및 검증 (`Web/src/lib/ml/trainModel.ts`)
+  - 과거 데이터 기반 모델 학습
+  - 교차 검증 및 성능 평가
+  - 모델 버전 관리
+
+**4.1.4 API 통합**
+- [ ] 감정 세그먼트 생성 API 수정 (`Web/src/app/api/ai/emotion-segments/route.ts`)
+  - LLM 호출 대신 ML 모델 사용
+  - Fallback: LLM 사용 (모델 실패 시)
+- [ ] 타입 정의 (`Web/src/types/ml.ts`)
+  - `EmotionSegment` 타입 (기존과 동일)
+  - `TimeSeriesData`, `MarkovState`, `TransitionMatrix` 타입
+
+**예상 시간**: 4-6주
+
+**4.2 프로덕션 웹 애플리케이션 배포**
+
+**4.2.1 AWS Amplify 배포 설정**
+- [ ] 프로덕션 환경 변수 설정
+  - 데이터베이스 URL (Production)
+  - OpenAI API Key (Production)
+  - NextAuth Secret (Production)
+  - 기타 보안 키
+- [ ] Amplify 빌드 설정 최적화 (`amplify.yml`)
+  - 빌드 캐시 전략
+  - 환경별 설정 분리
+- [ ] 도메인 및 SSL 설정
+  - 커스텀 도메인 연결
+  - HTTPS 인증서 설정
+
+**4.2.2 데이터베이스 마이그레이션**
+- [ ] 프로덕션 데이터베이스 설정
+  - MySQL/AWS RDS 설정
+  - 연결 풀 최적화
+- [ ] 마이그레이션 스크립트 실행
+  - Prisma 마이그레이션 적용
+  - 초기 데이터 시드
+- [ ] 백업 및 복구 전략
+  - 자동 백업 설정
+  - 복구 프로세스 문서화
+
+**4.2.3 CDN 및 정적 자산 최적화**
+- [ ] 이미지 최적화
+  - Next.js Image 컴포넌트 활용
+  - WebP 형식 변환
+- [ ] 정적 자산 CDN 배포
+  - CloudFront 또는 Amplify CDN 설정
+  - 캐싱 전략 최적화
+
+**예상 시간**: 1-2주
+
+**4.3 전체 파이프라인 최종 검증**
+
+**4.3.1 End-to-End 테스트**
+- [ ] WearOS → Firestore 데이터 수집 검증
+- [ ] ML 서버 오디오 분류 검증
+- [ ] 전처리 → ML 모델 → LLM Stage 2 파이프라인 검증
+- [ ] 웹 앱 UI/UX 최종 검증
+
+**4.3.2 성능 테스트**
+- [ ] API 응답 시간 측정
+- [ ] 동시 사용자 부하 테스트
+- [ ] 데이터베이스 쿼리 성능 최적화
+- [ ] 프론트엔드 번들 크기 최적화
+
+**4.3.3 모니터링 및 로깅**
+- [ ] 에러 추적 시스템 구축 (Sentry 등)
+- [ ] 성능 모니터링 (AWS CloudWatch)
+- [ ] 사용자 행동 분석 (Google Analytics)
+- [ ] 로그 집계 및 분석
+
+**예상 시간**: 2-3주
+
+**전체 Phase 4 예상 시간**: 7-11주
 
 ---
 
@@ -331,10 +454,10 @@ interface LLM2Output {
 
 ### 장기 (6개월 이상)
 
-1. **AI 모델 개선**
-   - 시계열 + 마르코프 체인 모델 구현
-   - LLM 의존도 감소
-   - 개인화 모델 학습
+1. **AI 모델 고도화**
+   - 개인화 모델 학습 (사용자별 맞춤 예측)
+   - 딥러닝 기반 감정 인식 모델
+   - 실시간 학습 및 적응 시스템
 
 2. **확장성 개선**
    - 마이크로서비스 아키텍처 전환 검토
@@ -352,9 +475,11 @@ interface LLM2Output {
 
 | 작업 | 우선순위 | 예상 시간 | 의존성 |
 |------|---------|----------|--------|
-| 데이터 플로우 전환 | High | 2-3주 | - |
+| 데이터 플로우 전환 (LLM 기반) | High | 2-3주 | - |
 | 코드 품질 개선 | Medium | 1-2주 | 데이터 플로우 전환 |
 | 백엔드 연동 | High | 2-3주 | 데이터 플로우 전환 |
+| 시계열+마르코프 체인 모델 구현 | High | 4-6주 | 데이터 플로우 전환, 백엔드 연동 |
+| 프로덕션 배포 | High | 1-2주 | 시계열+마르코프 체인 모델 |
 | 테스트 코드 작성 | Medium | 1-2주 | 백엔드 연동 |
 | 디바이스/무드 폴더링 | Low | 2-3주 | 코드 품질 개선 |
 | 선호도 학습 시스템 | Low | 2-3주 | 백엔드 연동 |
@@ -373,3 +498,8 @@ interface LLM2Output {
 ## 업데이트 이력
 
 - 2025-11-28: 최종 리팩토링 계획서 작성 및 설명용 문서 통합
+- 2025-11-28: Phase 4 추가 (프로덕션 배포 및 시계열+마르코프 체인 모델 구현)
+  - 시계열 분석 모듈 구현 계획
+  - 마르코프 체인 모델 구현 계획
+  - 프로덕션 웹 애플리케이션 배포 계획
+  - 전체 파이프라인 최종 검증 계획
