@@ -73,13 +73,23 @@ export function getEmotionCounts(userId: string): {
  * ML 결과에 따라 카운트 증가
  * @param userId 사용자 ID
  * @param result "Laughter" | "Sigh" | "Negative"
+ * @param confidence 신뢰도
  */
 export function incrementEmotionCount(
   userId: string,
-  result: "Laughter" | "Sigh" | "Negative"
+  result: "Laughter" | "Sigh" | "Negative",
+  confidence: number
 ): void {
   const today = getTodayDateString();
   let cache = userEmotionCache.get(userId);
+
+  // 신뢰도가 70 미만이면 무시
+  if (confidence < 70) {
+    console.log(
+      `[Emotion Cache] ${userId} - ${result} ignored (confidence: ${confidence})`
+    );
+    return;
+  }
 
   // 캐시가 없거나 날짜가 다르면 초기화
   if (!cache || cache.date !== today) {
