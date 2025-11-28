@@ -4,6 +4,7 @@
 
 #### UI FLOW (Mock)
 Sample page: [mood-manager-official](https://mood-manager-official.vercel.app/)
+Deployed: [mood-manager-deployed](http://54.180.50.127/)
 
 #### API Specification (v1)
 
@@ -47,9 +48,10 @@ The service analyzes biometric signals collected from the WearOS device (such as
 
 ### 3. ML Python Microservice
 
-  * **Audio classification:** Retrieves Base64 WAV data stored in Firestore.
-  * **Analysis:** Classifies events into laughter, sigh, anger, sadness, or false-positive (noise).
-  * **Result delivery:** Sends validated classification results (timestamp + emotion type) back to the Web App.
+  * **Audio Classification:** Collects and preprocesses Base64-encoded WAV data stored in Firestore.
+  * **Analysis:** Classifies laughter, sighs, and noise events with high accuracy using a fine-tuned Wav2Vec2-based audio model.
+  * **Result Delivery:** Sends the event timestamps and classification results to the web application.
+  * **Deployment Strategy:** Optimizes the model using ONNX and quantization, packages it into a Docker image, and deploys it to AWS Lambda in a serverless architecture.
 
 ### 4. Web Application Layer (Next.js)
 
@@ -83,9 +85,10 @@ The service analyzes biometric signals collected from the WearOS device (such as
 
 ### 3. ML Python 마이크로서비스
 
-  * **오디오 분류:** Firestore에 저장된 Base64 WAV 데이터를 가져옵니다.
-  * **분석:** 데이터를 웃음, 한숨, 분노, 슬픔, 오탐(소음)으로 분류합니다.
-  * **결과 반환:** 검증된 이벤트 분류 결과(시간 + 한숨/웃음/분노/슬픔)를 웹 앱으로 전달합니다.
+  * **오디오 분류:** Firestore에 저장된 Base64 WAV 데이터를 수집해 전처리합니다.
+  * **분석:** 파인튜닝된 Wav2Vec2 기반 오디오 모델로 웃음·한숨·소음 이벤트를 고정밀로 분류합니다.
+  * **결과 반환:** 분석된 이벤트의 타임스탬프와 분류 결과를 웹 애플리케이션으로 전달합니다.
+  * **배포 전략:** 모델을 ONNX 및 양자화를 통해 경량화한 후 Docker 이미지로 패키징하여 AWS Lambda에 서버리스 형태로 배포합니다.
 
 ### 4. 웹 애플리케이션 계층 (Next.js)
 
@@ -213,8 +216,8 @@ mood-manager/
 
   * [x] `raw_periodic` Data Stabilization
   * [x] `raw_events` Data Stabilization & DB Schema Finalization
-  * [ ] ML Python Server Setup (Base64 WAV → Laughter/Sigh/Anger/Sadness Classification)
-  * [ ] ML Server Data Retrieval Pipeline
+  * [x] ML Python Server Setup (Base64 WAV → Laughter/Sigh/Anger/Sadness Classification)
+  * [x] ML Server Data Retrieval Pipeline
   * [ ] ML Result Integration with WebApp
   * [x] WebApp Data Preprocessing (Biometric + ML Results + Preferences + Weather)
   * [ ] LLM Stage 1 Implementation (Time-series + Markov chain prediction for emotion segment generation)
