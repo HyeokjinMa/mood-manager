@@ -8,48 +8,41 @@
 
 ```
 mood-manager/
-├── src/                    # Next.js 웹앱 (표준 구조)
-│   ├── app/                # Next.js App Router
-│   │   ├── (auth)/         # 인증 페이지
-│   │   │   ├── login/
-│   │   │   ├── register/
-│   │   │   └── forgot-password/
-│   │   ├── (main)/         # 메인 페이지
-│   │   │   ├── home/
-│   │   │   └── mypage/
-│   │   └── api/            # API Routes (21개)
-│   │       ├── auth/
-│   │       ├── devices/
-│   │       ├── moods/
-│   │       └── inquiry/
-│   ├── components/        # 공유 컴포넌트
-│   │   ├── navigation/     # 네비게이션
-│   │   └── ui/             # UI 컴포넌트
-│   ├── hooks/              # 커스텀 훅
-│   │   ├── useDevices.ts
-│   │   ├── useMood.ts
-│   │   └── useSurvey.ts
-│   ├── lib/                # 유틸리티 및 설정
-│   │   ├── openai.ts       # OpenAI 무드 이름 생성 (코드만 작성, 미사용)
-│   │   ├── firebase.ts     # Firebase 설정 (미구현)
-│   │   └── utils.ts        # 유틸리티 함수
-│   └── types/              # TypeScript 타입 정의
-│       ├── device.ts
-│       └── mood.ts
-├── apps/
-│   └── watch/              # WearOS 앱 (Kotlin)
-│       ├── app/
-│       │   ├── src/main/java/com/moodmanager/watch/
-│       │   │   └── presentation/
-│       │   │       ├── MainActivity.kt
-│       │   │       ├── PeriodicDataService.kt
-│       │   │       ├── AudioEventService.kt
-│       │   │       ├── FirebaseViewModel.kt
-│       │   │       └── theme/Theme.kt
-│       │   └── google-services.json
-│       └── README.md
-├── docs/                   # 문서
-└── public/                 # 정적 파일
+├── Web/                    # Next.js 웹앱
+│   ├── src/                # Source Code
+│   │   ├── app/             # Next.js App Router
+│   │   │   ├── (auth)/       # 인증 페이지
+│   │   │   │   ├── login/
+│   │   │   │   ├── register/
+│   │   │   │   └── forgot-password/
+│   │   │   ├── (main)/       # 메인 페이지
+│   │   │   │   ├── home/
+│   │   │   │   └── mypage/
+│   │   │   └── api/          # API Routes (21개)
+│   │   │       ├── auth/
+│   │   │       ├── devices/
+│   │   │       ├── moods/
+│   │   │       └── inquiry/
+│   │   ├── components/       # 공유 컴포넌트
+│   │   │   ├── navigation/   # 네비게이션
+│   │   │   └── ui/           # UI 컴포넌트
+│   │   ├── hooks/            # 커스텀 훅
+│   │   ├── lib/              # 유틸리티 및 설정
+│   │   └── types/            # TypeScript 타입 정의
+│   ├── public/              # 정적 파일
+│   └── prisma/              # Prisma Schema & Migrations
+├── Watch/                   # WearOS 앱 (Kotlin)
+│   └── app/
+│       ├── src/main/java/com/moodmanager/watch/
+│       │   └── presentation/
+│       │       ├── MainActivity.kt
+│       │       ├── PeriodicDataService.kt
+│       │       ├── AudioEventService.kt
+│       │       ├── FirebaseViewModel.kt
+│       │       └── theme/Theme.kt
+│       └── google-services.json
+├── ML/                      # ML Python Server (예정)
+└── docs/                    # 문서
 ```
 
 ---
@@ -57,11 +50,11 @@ mood-manager/
 ## 구조 설명
 
 ### 웹앱 (Next.js)
-- **위치**: `src/`
+- **위치**: `Web/src/`
 - **구조**: Next.js App Router 표준 구조
 
 ### WearOS 앱 (Kotlin)
-- **위치**: `apps/watch/`
+- **위치**: `Watch/`
 - **구조**: Android/Kotlin 표준 구조
 - **상태**: v4 버전, 정상 작동 중
 - **역할**: 생체 데이터 및 오디오 이벤트 수집 후 Firestore로 전송

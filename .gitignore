@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+Web/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -11,6 +12,7 @@
 !.yarn/versions
 /prisma/migrations/
 /prisma/erd.svg
+Web/prisma/migrations/
 
 # testing
 /coverage
@@ -18,6 +20,8 @@
 
 # next.js
 /.next/
+Web/.next/
+Web/.build-artifacts/
 /out/
 
 # production
