@@ -119,49 +119,73 @@ export function generateOptimizedPrompt(
     .map((i) => `- ${i.key}: ${i.desc}`)
     .join("\n");
   
-  // 10개 세그먼트 정보 간소화 (있는 경우)
+  // 10개 세그먼트 정보 상세화 (각 세그먼트별로 다른 값 생성)
   let streamInfo = "";
   if (segments && segments.length > 0) {
-    // 스트림 요약: 무드 패턴, 장르, 향 종류
-    const uniqueMoods = [...new Set(segments.map(s => s.moodName || s.mood?.name).filter(Boolean))];
-    const uniqueGenres = [...new Set(segments.map(s => s.musicGenre || s.music?.genre).filter(Boolean))];
-    const uniqueScents = [...new Set(segments.map(s => s.scentType || s.scent?.type).filter(Boolean))];
+    // 각 세그먼트의 상세 정보를 인덱스와 함께 나열
+    const segmentDetails = segments.map((seg, idx) => {
+      const segMood = seg.moodName || seg.mood?.name || moodName;
+      const segGenre = seg.musicGenre || seg.music?.genre || musicGenre;
+      const segScent = seg.scentType || seg.scent?.type || scentType;
+      return `Segment${idx}: mood=${segMood} genre=${segGenre} scent=${segScent}`;
+    }).join(" | ");
     
-    streamInfo = `[10개세그먼트] 무드:${uniqueMoods.join(',')} 장르:${uniqueGenres.join(',')} 향:${uniqueScents.join(',')}`;
+    streamInfo = `[10 SEGMENTS] ${segmentDetails}`;
   }
   
-  // 최적화된 프롬프트 (토큰 최소화, 영어 응답 강제, 다양성 강조)
-  return `Mood background design (Respond in English only)
+  // 최적화된 프롬프트 (10개 세그먼트 각각에 대해 다른 값 생성 요청)
+  return `Mood background design for 10 segments (Respond in English only)
 
+[BASE CONTEXT]
 [MOOD] ${moodName} | [MUSIC] ${musicGenre} | [SCENT] ${scentType} | [TIME] ${timeOfDay}h | [SEASON] ${season}
-${streamInfo ? streamInfo + "\n" : ""}
 [BIOMETRICS] stress:${preprocessed.recent_stress_index}/100 sleep:${preprocessed.latest_sleep_score}/100
 [WEATHER] ${weather}
 [EMOTIONS] ${emotions}
 [PREFERENCES] music:${musicPrefs} color:${colorPrefs} scent:${scentPrefs}
 
+${streamInfo ? streamInfo + "\n" : ""}
 [ICON CATALOG]
 Choose exactly ONE icon key from the list below:
 ${iconCatalogText}
 
-Return ONE JSON object only, in English, with the following fields.
-Important:
-- Use ONLY one of the iconCategory keys above for backgroundIcon.category.
-- Do NOT invent new icon categories.
-- VARIETY: Even for similar moods, vary colors, icons, and music selections. Avoid repetitive blue/calm themes. Use diverse color palettes (warm yellows, browns, greens, purples, etc.) when appropriate.
-- moodColor: Choose colors that match the mood but vary across different segments. Don't always default to blue tones.
+[REQUIREMENTS]
+You must generate DIFFERENT values for EACH of the 10 segments. Each segment should have:
+- UNIQUE moodAlias (2-4 word English nickname, vary across segments)
+- UNIQUE musicSelection (different track title/style for each segment)
+- UNIQUE moodColor (CRITICAL: Each segment MUST have a different color. Use diverse palette: warm yellows (#FFD700, #FFA500), browns (#8B4513, #A0522D), greens (#228B22, #32CD32), purples (#9370DB, #8A2BE2), oranges (#FF6347, #FF8C00), pinks (#FF69B4, #FF1493), teals (#008080, #20B2AA), reds (#DC143C, #B22222). DO NOT use the same color for multiple segments. Maximum 1 duplicate color allowed across all 10 segments.)
+- UNIQUE backgroundIcon.category (choose different icons from catalog for each segment)
+- UNIQUE backgroundWind (vary direction and speed)
+- Vary animationSpeed, iconOpacity across segments
 
+CRITICAL COLOR REQUIREMENT: 
+- Generate 10 DISTINCT colors. You may reuse a color at most ONCE (so minimum 5 unique colors, ideally 8-10 unique colors).
+- Do NOT generate the same color for more than 2 segments.
+- Use the full color spectrum: warm, cool, pastel, vibrant tones.
+- Each segment's moodColor should be visually distinguishable from others.
+
+Return a JSON object with this structure:
 {
-  "moodAlias": "2-4 word English nickname",
-  "musicSelection": "track title / style in English",
-  "moodColor": "#HEX",
+  "segments": [
+{
+      "moodAlias": "unique 2-4 word English nickname for segment 0",
+      "musicSelection": "unique track title/style for segment 0",
+      "moodColor": "#HEX (vary colors, not just blue)",
   "lighting": {"brightness": 0-100, "temperature": 2000-6500},
   "backgroundIcon": {
-    "category": "one of: sun_soft | moon_calm | cloud_soft | rain_light | snow_soft | fog_mist | leaf_gentle | tree_peace | flower_soft | wave_slow | mountain_silhouette | forest_deep | star_sparkle | breeze_wind | candle_warm | coffee_mug | book_focus | sofa_relax | window_light | lamp_soft | clock_slow | fireplace_cozy | heart_soft | sparkle_energy | bubble_thought | orb_glow | pulse_calm | target_focus | wave_brain | meditation_pose"
+        "category": "one icon key from catalog above"
   },
   "backgroundWind": {"direction": 0-360, "speed": 0-10},
   "animationSpeed": 0-10,
   "iconOpacity": 0-1
-}`;
+    },
+    ... (repeat for segments 1-9, each with UNIQUE values)
+  ]
+}
+
+Important:
+- Generate 10 distinct segments in the "segments" array
+- Use ONLY icon keys from the catalog above
+- Vary colors, icons, music, and wind parameters across segments
+- Each segment should feel unique while maintaining mood coherence`;
 }
 

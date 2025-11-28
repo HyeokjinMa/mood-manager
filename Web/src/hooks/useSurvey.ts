@@ -66,11 +66,11 @@ export function useSurvey() {
         throw new Error("Failed to save preferences");
       }
 
-      toast.success("설문이 완료되었습니다!");
+      toast.success("Survey completed!");
       setShowSurvey(false);
     } catch (error) {
       console.error("Error saving survey:", error);
-      toast.error("설문 저장 중 오류가 발생했습니다.");
+      toast.error("Failed to save survey. Please try again.");
     }
   };
 
@@ -112,7 +112,7 @@ export function useSurvey() {
         if (!skipResponse.ok) throw new Error("Failed to skip survey");
       }
 
-      toast.success("설문을 건너뛰었습니다. (모든 항목을 긍정으로 처리했습니다)");
+      toast.success("Survey skipped. (All items set to positive)");
       setShowSurvey(false);
     } catch (error) {
       console.error("Error skipping survey:", error);

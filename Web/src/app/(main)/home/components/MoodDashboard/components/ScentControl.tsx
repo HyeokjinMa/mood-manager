@@ -2,9 +2,10 @@
 // File: src/app/(main)/home/components/MoodDashboard/components/ScentControl.tsx
 // ======================================================
 
-import { TbSpray } from "react-icons/tb";
 import type { Mood } from "@/types/mood";
 import { hexToRgba } from "@/lib/utils";
+import ScentIcon from "@/components/icons/ScentIcon";
+import { BUTTON, TRANSITION, HOVER } from "@/lib/constants/designTokens";
 
 interface ScentControlProps {
   mood: Mood;
@@ -16,6 +17,14 @@ export default function ScentControl({ mood, onScentClick, moodColor }: ScentCon
   // 무드 색상 사용 (투명도 낮게 - 더 진하게)
   const buttonColor = moodColor || mood.color;
   
+  // 디버깅 로그
+  console.log("[ScentControl] Render:", {
+    scentType: mood.scent.type,
+    moodColor: moodColor,
+    buttonColor: buttonColor,
+    defaultColor: mood.color,
+  });
+  
   return (
     <div className="flex items-center justify-end gap-1.5 mb-2">
       <span className="text-sm text-gray-700">{mood.scent.name}</span>
@@ -24,13 +33,15 @@ export default function ScentControl({ mood, onScentClick, moodColor }: ScentCon
           e.stopPropagation();
           onScentClick();
         }}
-        className="w-7 h-7 rounded-full shadow flex items-center justify-center hover:scale-105 transition cursor-pointer"
+        className="w-6 h-6 rounded-full shadow-sm flex items-center justify-center transition hover:scale-105 cursor-pointer"
         style={{ backgroundColor: hexToRgba(buttonColor, 0.85) }} // 투명도 85% (더 진하게)
         title="Change scent"
       >
-        <TbSpray
+        <ScentIcon
+          scentType={mood.scent.type}
           size={16}
-          style={{ color: "#ffffff" }} // 흰색 아이콘으로 대비 확보
+          className="w-4 h-4"
+          color="#ffffff" // 아이콘 그림은 흰색으로 고정
         />
       </button>
     </div>

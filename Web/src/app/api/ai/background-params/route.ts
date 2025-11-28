@@ -176,12 +176,58 @@ export async function POST(request: NextRequest) {
             { role: "user", content: prompt },
           ],
           response_format: { type: "json_object" },
-          temperature: 0.7,
-          max_tokens: 500,
+          temperature: 0.9, // 다양성 증가 (0.7 → 0.9)
+          max_tokens: 3000, // 10개 세그먼트를 위한 충분한 토큰 (500 → 3000)
         });
 
         const rawResponse = JSON.parse(completion.choices[0].message.content || "{}");
+        
+        // ===== LLM 원시 응답 로깅 =====
+        console.log("\n" + "=".repeat(80));
+        console.log("🎨 [LLM API] Raw Response from OpenAI:");
+        console.log("=".repeat(80));
+        console.log(JSON.stringify(rawResponse, null, 2));
+        console.log("=".repeat(80) + "\n");
+        
         const validatedResponse = validateAndNormalizeResponse(rawResponse);
+        
+        // ===== 검증된 응답 로깅 =====
+        console.log("\n" + "=".repeat(80));
+        console.log("✅ [LLM API] Validated Response (10 segments):");
+        console.log("=".repeat(80));
+        if ('segments' in validatedResponse && Array.isArray(validatedResponse.segments)) {
+          console.log(`Total segments: ${validatedResponse.segments.length}`);
+          validatedResponse.segments.forEach((seg, idx) => {
+            console.log(`\n--- Segment ${idx} ---`);
+            console.log(`  moodAlias: "${seg.moodAlias}"`);
+            console.log(`  musicSelection: "${seg.musicSelection}"`);
+            console.log(`  moodColor: "${seg.moodColor}"`);
+            console.log(`  backgroundIcon: { name: "${seg.backgroundIcon.name}", category: "${seg.backgroundIcon.category}" }`);
+            console.log(`  backgroundWind: { direction: ${seg.backgroundWind.direction}, speed: ${seg.backgroundWind.speed} }`);
+            console.log(`  animationSpeed: ${seg.animationSpeed}, iconOpacity: ${seg.iconOpacity}`);
+          });
+          
+          // 컬러 중복 체크
+          const colors = validatedResponse.segments.map(s => s.moodColor.toLowerCase());
+          const colorCounts = colors.reduce((acc, color) => {
+            acc[color] = (acc[color] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>);
+          const duplicates = Object.entries(colorCounts).filter(([_, count]) => count > 1);
+          if (duplicates.length > 0) {
+            console.log(`\n⚠️  Color duplicates found:`);
+            duplicates.forEach(([color, count]) => {
+              console.log(`  ${color}: ${count} times`);
+            });
+          } else {
+            console.log(`\n✅ All colors are unique!`);
+          }
+        } else {
+          console.log("⚠️  Single segment response (not array):");
+          console.log(JSON.stringify(validatedResponse, null, 2));
+        }
+        console.log("=".repeat(80) + "\n");
+        
         setCachedResponse(cacheKey, validatedResponse);
         return NextResponse.json({ ...validatedResponse, source: "openai" });
       } catch (openaiError) {

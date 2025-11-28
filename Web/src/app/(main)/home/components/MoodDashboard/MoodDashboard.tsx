@@ -41,6 +41,8 @@ interface MoodDashboardProps {
   onSongChange: (mood: Mood) => void;
   backgroundParams?: BackgroundParams | null;
   onRefreshRequest?: () => void;
+  allSegmentsParams?: BackgroundParams[] | null;
+  setBackgroundParams?: (params: BackgroundParams | null) => void;
 }
 
 export default function MoodDashboard({
@@ -50,6 +52,8 @@ export default function MoodDashboard({
   onSongChange,
   backgroundParams,
   onRefreshRequest,
+  allSegmentsParams,
+  setBackgroundParams,
 }: MoodDashboardProps) {
   // 무드스트림 관리
   const {
@@ -100,6 +104,8 @@ export default function MoodDashboard({
     currentMood: mood,
     setCurrentSegmentIndex,
     onMoodChange,
+    allSegmentsParams,
+    setBackgroundParams,
   });
 
   // 새로고침 버튼 핸들러 래핑 - 메모이제이션
@@ -149,7 +155,7 @@ export default function MoodDashboard({
         maxReached={maxReached}
       />
 
-      <ScentControl mood={mood} onScentClick={handleScentClick} moodColor={accentColor} />
+      <ScentControl mood={mood} onScentClick={handleScentClick} moodColor={baseColor} />
 
       <AlbumSection 
         mood={mood} 

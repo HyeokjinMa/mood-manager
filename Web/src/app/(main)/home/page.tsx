@@ -62,7 +62,7 @@ export default function HomePage() {
   if (status === "loading" || status === "unauthenticated") {
     return (
       <div className="flex flex-col h-screen overflow-hidden relative items-center justify-center">
-        <p className="text-gray-500">로딩 중...</p>
+        <p className="text-gray-500">Loading...</p>
       </div>
     );
   }
@@ -73,7 +73,7 @@ export default function HomePage() {
 
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-gray-500">디바이스 목록을 불러오는 중...</p>
+          <p className="text-gray-500">Loading devices...</p>
         </div>
       ) : (
         <HomeContent

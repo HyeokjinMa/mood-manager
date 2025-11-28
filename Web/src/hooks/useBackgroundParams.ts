@@ -35,17 +35,48 @@ export interface BackgroundParams {
   source?: string; // "openai" | "mock-no-key" | "cache" 등
 }
 
+export interface BackgroundParamsResponse {
+  segments?: BackgroundParams[]; // 10개 세그먼트 배열
+  // 단일 세그먼트 (하위 호환성)
+  moodAlias?: string;
+  musicSelection?: string;
+  moodColor?: string;
+  lighting?: {
+    brightness: number;
+    temperature?: number;
+  };
+  backgroundIcon?: {
+    name: string;
+    category: string;
+  };
+  backgroundWind?: {
+    direction: number;
+    speed: number;
+  };
+  animationSpeed?: number;
+  iconOpacity?: number;
+  iconCount?: number;
+  iconSize?: number;
+  particleEffect?: boolean;
+  gradientColors?: string[];
+  transitionDuration?: number;
+  source?: string;
+}
+
 /**
  * 무드스트림 기반 배경 파라미터 훅
  * 
  * @param moodStream - 무드스트림 (null이면 호출 안 함)
  * @param shouldFetch - OpenAI 호출 여부 (새로고침 버튼 클릭 시에만 true)
+ * @param currentSegmentIndex - 현재 세그먼트 인덱스 (0-9)
  */
 export function useBackgroundParams(
   moodStream: MoodStream | null,
-  shouldFetch: boolean = false
+  shouldFetch: boolean = false,
+  currentSegmentIndex: number = 0
 ) {
   const [backgroundParams, setBackgroundParams] = useState<BackgroundParams | null>(null);
+  const [allSegmentsParams, setAllSegmentsParams] = useState<BackgroundParams[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -86,9 +117,37 @@ export function useBackgroundParams(
           throw new Error("Failed to fetch background params");
         }
 
-        const data = await response.json();
-        console.log("[BackgroundParams] LLM response source:", data.source);
-        setBackgroundParams(data);
+        const data: any = await response.json();
+        console.log("\n" + "=".repeat(80));
+        console.log("📥 [useBackgroundParams] Received response from API:");
+        console.log("=".repeat(80));
+        console.log(`Source: ${data.source || 'unknown'}`);
+        console.log(`Has segments: ${data.segments ? 'yes' : 'no'}`);
+        if (data.segments && Array.isArray(data.segments)) {
+          console.log(`Segment count: ${data.segments.length}`);
+          console.log("\nFull response:");
+          console.log(JSON.stringify(data, null, 2));
+        } else {
+          console.log("\nSingle segment response:");
+          console.log(JSON.stringify(data, null, 2));
+        }
+        console.log("=".repeat(80) + "\n");
+        
+        // 10개 세그먼트 배열 응답 처리
+        if (data.segments && Array.isArray(data.segments) && data.segments.length > 0) {
+          setAllSegmentsParams(data.segments);
+          // 현재 세그먼트 인덱스에 맞는 값 사용
+          const segmentIndex = Math.max(0, Math.min(currentSegmentIndex, data.segments.length - 1));
+          const currentSegmentParam = data.segments[segmentIndex] || data.segments[0];
+          setBackgroundParams(currentSegmentParam);
+        } else if (data.moodAlias || data.moodColor) {
+          // 단일 세그먼트 응답 (하위 호환성)
+          setBackgroundParams(data as BackgroundParams);
+        } else {
+          // 응답 형식이 예상과 다를 경우 기본값 사용
+          console.warn("[BackgroundParams] Unexpected response format:", data);
+          throw new Error("Invalid response format");
+        }
       } catch (error) {
         console.error("Error fetching background params:", error);
         // 에러 발생 시 기본값 사용
@@ -120,8 +179,21 @@ export function useBackgroundParams(
     }
 
     fetchBackgroundParams();
-  }, [moodStream?.streamId, shouldFetch, moodStream]); // streamId가 변경될 때만 재요청
+  }, [moodStream?.streamId, shouldFetch, moodStream, currentSegmentIndex]); // streamId가 변경될 때만 재요청
 
-  return { backgroundParams, isLoading };
+  // 세그먼트 인덱스가 변경될 때 올바른 세그먼트 파라미터 사용
+  useEffect(() => {
+    if (allSegmentsParams && allSegmentsParams.length > 0) {
+      const currentSegmentParam = allSegmentsParams[currentSegmentIndex] || allSegmentsParams[0];
+      setBackgroundParams(currentSegmentParam);
+    }
+  }, [currentSegmentIndex, allSegmentsParams]);
+
+  return { 
+    backgroundParams, 
+    isLoading,
+    allSegmentsParams, // 세그먼트별 파라미터 배열 노출
+    setBackgroundParams, // 외부에서 직접 설정 가능하도록
+  };
 }
 

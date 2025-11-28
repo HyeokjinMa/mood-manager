@@ -61,11 +61,24 @@ export default function HomeContent({
   const { devices, setDevices, expandedId, setExpandedId, onOpenAddModal, onDeleteRequest } = deviceState;
   const onBackgroundParamsChange = backgroundState?.onChange;
   // 무드스트림 관리
-  const { moodStream, isLoading: isLoadingMoodStream } = useMoodStream();
+  const { 
+    moodStream, 
+    isLoading: isLoadingMoodStream,
+    currentSegmentIndex,
+  } = useMoodStream();
   
   // LLM 배경 파라미터 관리 (새로고침 시에만 호출)
   const [shouldFetchLLM, setShouldFetchLLM] = useState(false);
-  const { backgroundParams, isLoading: isLoadingParams } = useBackgroundParams(moodStream, shouldFetchLLM);
+  const { 
+    backgroundParams, 
+    isLoading: isLoadingParams,
+    allSegmentsParams,
+    setBackgroundParams,
+  } = useBackgroundParams(
+    moodStream, 
+    shouldFetchLLM,
+    currentSegmentIndex
+  );
   
   // OpenAI 호출 완료 후 플래그 리셋 및 상위로 전달
   useEffect(() => {
@@ -114,7 +127,7 @@ export default function HomeContent({
   if (isLoadingMoodStream && !moodStream) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-gray-500">무드스트림을 불러오는 중...</p>
+        <p className="text-gray-500">Loading mood stream...</p>
       </div>
     );
   }
@@ -146,6 +159,8 @@ export default function HomeContent({
             onSongChange={onSongChange}
             backgroundParams={backgroundParams}
             onRefreshRequest={handleRefreshRequest}
+            allSegmentsParams={allSegmentsParams}
+            setBackgroundParams={setBackgroundParams}
           />
         </div>
 
