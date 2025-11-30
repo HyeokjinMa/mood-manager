@@ -118,18 +118,17 @@ export async function GET() {
     }
 
     // ------------------------------------------------------------
-    // 5) 감정 이벤트 (타임스탬프 배열 형식)
+    // 5) 감정 이벤트 (ML 서버에서 실시간으로 받은 카운트 기반)
     // ------------------------------------------------------------
     const signals = await fetchDailySignals(USER_ID);
 
-    // TODO: Firestore에서 실제 타임스탬프 배열 조회
-    // 현재는 Mock 데이터 (count 기반)
+    // ML 서버에서 분류한 Laughter, Sigh, Negative 카운트 기반
+    // 타임스탬프는 현재 시간으로 채움 (TODO: 실제 이벤트 발생 시간 저장 필요)
     const emotionEvents = {
       laughter: Array(signals.laugh_count || 0).fill(Date.now()),
       sigh: Array(signals.sigh_count || 0).fill(Date.now()),
-      anger: [],
-      sadness: [],
-      neutral: signals.laugh_count === 0 && signals.sigh_count === 0 ? [Date.now()] : [],
+      negative: Array(signals.negative_count || 0).fill(Date.now()),
+      neutral: signals.laugh_count === 0 && signals.sigh_count === 0 && signals.negative_count === 0 ? [Date.now()] : [],
     };
 
     // ------------------------------------------------------------
