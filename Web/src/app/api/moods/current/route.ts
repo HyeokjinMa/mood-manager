@@ -59,7 +59,7 @@ export async function GET() {
   const session = sessionOrError;
 
   // 2. 목업 모드 확인 (관리자 계정)
-  if (checkMockMode(session)) {
+  if (await checkMockMode(session)) {
     console.log("[GET /api/moods/current] 목업 모드: 관리자 계정");
     const mockData = getMockMoodStream();
     return NextResponse.json({

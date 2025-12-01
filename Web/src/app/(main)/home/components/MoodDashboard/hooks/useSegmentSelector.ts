@@ -7,7 +7,7 @@
 
 import { useCallback } from "react";
 import type { Mood } from "@/types/mood";
-import type { MoodStream } from "@/hooks/useMoodStream";
+import type { MoodStream } from "@/hooks/useMoodStream/types";
 import type { BackgroundParams } from "@/hooks/useBackgroundParams";
 import { convertSegmentMoodToMood } from "../utils/moodStreamConverter";
 

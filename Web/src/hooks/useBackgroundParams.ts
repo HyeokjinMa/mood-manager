@@ -7,7 +7,8 @@
  */
 
 import { useState, useEffect } from "react";
-import type { MoodStream } from "./useMoodStream";
+import type { MoodStream } from "./useMoodStream/types";
+import { handleAuthError } from "@/lib/utils/errorHandler";
 
 export interface BackgroundParams {
   moodAlias: string;
@@ -92,6 +93,11 @@ export function useBackgroundParams(
         return;
       }
 
+      // 이미 로딩 중이면 중복 호출 방지
+      if (isLoading) {
+        return;
+      }
+
       setIsLoading(true);
       try {
         const response = await fetch("/api/ai/background-params", {
@@ -107,17 +113,21 @@ export function useBackgroundParams(
           }),
         });
 
-        // 401 에러 시 로그인 페이지로 리다이렉트
-        if (response.status === 401) {
-          window.location.href = "/login";
+        // 401 에러 처리
+        if (handleAuthError(response)) {
           return;
         }
 
         if (!response.ok) {
+          console.error(
+            "[useBackgroundParams] /api/ai/background-params 응답 오류:",
+            response.status,
+            response.statusText
+          );
           throw new Error("Failed to fetch background params");
         }
 
-        const data: any = await response.json();
+        const data: BackgroundParamsResponse = await response.json();
         console.log("\n" + "=".repeat(80));
         console.log("📥 [useBackgroundParams] Received response from API:");
         console.log("=".repeat(80));
@@ -135,14 +145,24 @@ export function useBackgroundParams(
         
         // 10개 세그먼트 배열 응답 처리
         if (data.segments && Array.isArray(data.segments) && data.segments.length > 0) {
-          setAllSegmentsParams(data.segments);
+          // LLM source는 응답 최상위에만 있으므로, 각 세그먼트에 복사하여
+          // UI에서 세그먼트 단위로도 LLM 사용 여부를 표시할 수 있도록 한다.
+          const segmentsWithSource = data.segments.map((seg) => ({
+            ...seg,
+            source: data.source,
+          }));
+
+          setAllSegmentsParams(segmentsWithSource);
           // 현재 세그먼트 인덱스에 맞는 값 사용
-          const segmentIndex = Math.max(0, Math.min(currentSegmentIndex, data.segments.length - 1));
-          const currentSegmentParam = data.segments[segmentIndex] || data.segments[0];
+          const segmentIndex = Math.max(0, Math.min(currentSegmentIndex, segmentsWithSource.length - 1));
+          const currentSegmentParam = segmentsWithSource[segmentIndex] || segmentsWithSource[0];
           setBackgroundParams(currentSegmentParam);
         } else if (data.moodAlias || data.moodColor) {
           // 단일 세그먼트 응답 (하위 호환성)
-          setBackgroundParams(data as BackgroundParams);
+          setBackgroundParams({
+            ...(data as BackgroundParams),
+            source: data.source,
+          });
         } else {
           // 응답 형식이 예상과 다를 경우 기본값 사용
           console.warn("[BackgroundParams] Unexpected response format:", data);
@@ -179,7 +199,11 @@ export function useBackgroundParams(
     }
 
     fetchBackgroundParams();
-  }, [moodStream?.streamId, shouldFetch, moodStream, currentSegmentIndex]); // streamId가 변경될 때만 재요청
+  // LLM 호출은 "스트림이 새로 생성되었고(또는 교체되었고), 사용자가 새로고침을 눌렀을 때" 1회만 수행
+  // - streamId: 새로운 스트림 기준으로만 다시 호출
+  // - shouldFetch: 새로고침 버튼이 눌렸을 때만 true
+  // isLoading 변화만으로 재호출되지 않도록 의존성에서 제거
+  }, [moodStream?.streamId, shouldFetch]);
 
   // 세그먼트 인덱스가 변경될 때 올바른 세그먼트 파라미터 사용
   useEffect(() => {

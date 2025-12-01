@@ -42,7 +42,7 @@ export async function GET() {
     const session = sessionOrError;
 
     // 2. 목업 모드 확인 (관리자 계정)
-    if (checkMockMode(session)) {
+    if (await checkMockMode(session)) {
       console.log("[GET /api/devices] 목업 모드: 관리자 계정");
       return NextResponse.json({ devices: getMockDevices() });
     }
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     
     // 3. 목업 모드 확인 (관리자 계정)
-    if (checkMockMode(session)) {
+    if (await checkMockMode(session)) {
       console.log("[POST /api/devices] 목업 모드: 관리자 계정");
       const { type, name } = body;
       
@@ -219,6 +219,7 @@ export async function POST(request: NextRequest) {
         power: defaultSettings.power,
         brightness: defaultSettings.brightness,
         color: defaultSettings.color,
+        temperature: defaultSettings.temperature, // 색온도 추가
         scentType: defaultSettings.scentType,
         scentLevel: defaultSettings.scentLevel,
         scentInterval: defaultSettings.scentInterval,
@@ -259,6 +260,7 @@ function getDefaultDeviceSettings(type: string) {
     power: true,
     brightness: null,
     color: null,
+    temperature: null, // 색온도 추가
     scentType: null,
     scentLevel: null,
     scentInterval: null,
@@ -272,6 +274,7 @@ function getDefaultDeviceSettings(type: string) {
         ...baseSettings,
         brightness: 85,
         color: "#FFD966",
+        temperature: 4000, // 색온도 추가
         scentType: "Lavender",
         scentLevel: 7,
         scentInterval: 30,
@@ -283,6 +286,7 @@ function getDefaultDeviceSettings(type: string) {
         ...baseSettings,
         brightness: 75,
         color: "#FFD966",
+        temperature: 4000, // 색온도 추가
       };
     case "scent":
       return {

@@ -295,12 +295,13 @@ export function validateAndNormalizeResponse(
   if (rawResponse.segments && Array.isArray(rawResponse.segments)) {
     console.log(`\n📦 [validateResponse] Processing ${rawResponse.segments.length} segments...`);
     console.log(`\n📋 [validateResponse] Raw segments summary:`);
-    rawResponse.segments.forEach((seg: any, idx: number) => {
+    rawResponse.segments.forEach((seg, idx: number) => {
+      const segment = seg as RawLLMResponse["segments"] extends Array<infer T> ? T : RawLLMResponse;
       console.log(`  Segment ${idx}:`);
-      console.log(`    moodAlias: "${seg.moodAlias || 'MISSING'}"`);
-      console.log(`    musicSelection: "${seg.musicSelection || 'MISSING'}"`);
-      console.log(`    moodColor: "${seg.moodColor || 'MISSING'}"`);
-      console.log(`    backgroundIcon.category: "${seg.backgroundIcon?.category || 'MISSING'}"`);
+      console.log(`    moodAlias: "${String(segment.moodAlias || 'MISSING')}"`);
+      console.log(`    musicSelection: "${String(segment.musicSelection || 'MISSING')}"`);
+      console.log(`    moodColor: "${String(segment.moodColor || 'MISSING')}"`);
+      console.log(`    backgroundIcon.category: "${String(segment.backgroundIcon?.category || 'MISSING')}"`);
     });
     
     const validatedSegments = rawResponse.segments.map((segment, index) => {

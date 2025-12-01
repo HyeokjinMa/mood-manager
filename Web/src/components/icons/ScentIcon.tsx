@@ -76,7 +76,6 @@ export default function ScentIcon({
       size={typeof size === 'number' ? size : parseInt(String(size)) || 24} 
       className={className}
       color={iconColor}
-      style={{ color: iconColor }}
     />
   );
 }

@@ -36,7 +36,7 @@ export async function GET() {
     const session = sessionOrError;
 
     // 2. 목업 모드 확인 (관리자 계정)
-    if (checkMockMode(session)) {
+    if (await checkMockMode(session)) {
       console.log("[GET /api/auth/survey-status] 목업 모드: 관리자 계정");
       // 목업 모드에서는 항상 설문 미완료로 반환 (설문 페이지로 이동)
       return NextResponse.json({ hasSurvey: false, mock: true });

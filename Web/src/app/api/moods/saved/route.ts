@@ -45,9 +45,18 @@ export async function POST(request: NextRequest) {
     }
 
     // 목업 모드 확인 (관리자 계정)
-    if (checkMockMode(session)) {
+    if (await checkMockMode(session)) {
       console.log("[POST /api/moods/saved] 목업 모드: 관리자 계정");
+      console.log("[POST /api/moods/saved] 목업 모드 - 저장 데이터:", {
+        moodId,
+        moodName,
+        moodColor,
+        music,
+        scent,
+        preferenceCount,
+      });
       // 관리자 모드에서는 요청한 데이터를 그대로 반환
+      // 클라이언트에서 localStorage에 저장하므로 서버에서는 응답만 반환
       const savedMood = {
         id: `saved-${Date.now()}`,
         moodId,
@@ -61,6 +70,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         savedMood,
+        mock: true,
       });
     }
 
@@ -116,11 +126,13 @@ export async function GET() {
     const session = sessionOrError;
 
     // 목업 모드 확인 (관리자 계정)
-    if (checkMockMode(session)) {
+    if (await checkMockMode(session)) {
       console.log("[GET /api/moods/saved] 목업 모드: 관리자 계정");
       // 관리자 모드에서는 빈 배열 반환 (클라이언트에서 localStorage로 관리)
+      // 클라이언트에서 localStorage를 사용하므로 서버에서는 빈 배열 반환
       return NextResponse.json({
         savedMoods: [],
+        mock: true,
       });
     }
 

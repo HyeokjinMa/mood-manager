@@ -29,6 +29,7 @@ interface UserProfile {
 
 interface ProfileSectionProps {
   profile: UserProfile | null;
+  isAdminMode?: boolean;
   isEditingProfile: boolean;
   editedName: string;
   editedFamilyName: string;
@@ -50,6 +51,7 @@ interface ProfileSectionProps {
 
 export default function ProfileSection({
   profile,
+  isAdminMode = false,
   isEditingProfile,
   editedName,
   editedFamilyName,
@@ -90,7 +92,14 @@ export default function ProfileSection({
   return (
     <div className="bg-white border-b border-gray-200 px-4 py-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold">Profile</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold">Profile</h2>
+          {isAdminMode && (
+            <span className="inline-flex items-center rounded-full border border-yellow-500 bg-yellow-50 px-2 py-0.5 text-[11px] font-medium text-yellow-700">
+              Admin Mode
+            </span>
+          )}
+        </div>
         {!isEditingProfile ? (
           <button
             onClick={onEditClick}
@@ -253,34 +262,7 @@ export default function ProfileSection({
           )}
         </div>
 
-        {/* Phone */}
-        <div className="flex items-center text-sm">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-gray-400 mr-3 flex-shrink-0"
-          >
-            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-          </svg>
-          {isEditingProfile ? (
-            <input
-              type="tel"
-              value={editedPhone}
-              onChange={(e) => onPhoneChange(e.target.value)}
-              placeholder={profile?.phone ? "" : "Add phone number"}
-              className="flex-1 px-2 py-1 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-black"
-            />
-          ) : (
-            <span className="text-gray-600">{profile?.phone || "-"}</span>
-          )}
-        </div>
+        {/* Phone 필드는 서비스 정책상 수집하지 않으므로 UI에서 숨김 (API 구조는 유지) */}
       </div>
     </div>
   );

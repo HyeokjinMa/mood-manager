@@ -60,11 +60,11 @@ export async function requireAuth(): Promise<AuthSession | NextResponse> {
  * 목업 모드 여부 확인
  * 
  * @param session - AuthSession 또는 NextAuth 세션 객체
- * @returns 목업 모드 여부
+ * @returns 목업 모드 여부 (Promise)
  */
-export function checkMockMode(session: AuthSession | { user?: { email?: string; id?: string } } | null): boolean {
+export async function checkMockMode(session: AuthSession | { user?: { email?: string; id?: string } } | null): Promise<boolean> {
   if (!session || !session.user) {
     return false;
   }
-  return isMockMode(session as { user?: { email?: string; id?: string } });
+  return await isMockMode(session as { user?: { email?: string; id?: string } });
 }

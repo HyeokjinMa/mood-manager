@@ -5,7 +5,6 @@
 import type { Mood } from "@/types/mood";
 import { hexToRgba } from "@/lib/utils";
 import ScentIcon from "@/components/icons/ScentIcon";
-import { BUTTON, TRANSITION, HOVER } from "@/lib/constants/designTokens";
 
 interface ScentControlProps {
   mood: Mood;

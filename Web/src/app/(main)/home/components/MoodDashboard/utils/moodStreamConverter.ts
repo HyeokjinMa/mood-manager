@@ -6,7 +6,7 @@
  */
 
 import type { Mood, ScentType } from "@/types/mood";
-import type { MoodStreamSegment } from "@/hooks/useMoodStream";
+import type { MoodStreamSegment } from "@/hooks/useMoodStream/types";
 
 /**
  * MoodStreamSegment의 mood를 Mood 타입으로 변환
