@@ -8,7 +8,6 @@
 → debug_outputs/ 이하에 중간 산출물 + {user_id}_{date}_yesterday_model_meta.json 저장.
 
 ⚠️ 모든 인풋은 API에서만 받아온다.
-   - 유저 리스트: fetch_user_ids_for_day()
    - 유저별 하루 raw 데이터: fetch_day_raw_from_api()
 """
 
@@ -17,6 +16,8 @@ from typing import List, Dict, Any, Tuple
 from pathlib import Path
 from datetime import datetime, timedelta
 import json
+
+from flask import Flask, request, Response
 
 import numpy as np
 import pandas as pd
@@ -197,7 +198,7 @@ def make_sliding_windows(arr: np.ndarray, L: int) -> Tuple[np.ndarray, List[int]
     end_indices = []
     for end in range(L - 1, T):
         start = end - L + 1
-        windows.append(arr[start:end+1])
+        windows.append(arr[start:end + 1])
         end_indices.append(end)
 
     return np.stack(windows, axis=0), end_indices
@@ -243,8 +244,7 @@ def compute_markov_transition(labels: np.ndarray, K: int, step: int = 1) -> np.n
 def compute_endpoint_means(windows: np.ndarray, labels: np.ndarray, K: int) -> np.ndarray:
     """
     각 클러스터별 대표 벡터 μ_k를 계산.
-    - 기존: 각 윈도우의 마지막 한 시점(L-1)만 사용
-    - 변경: 마지막 3타임스텝(L-3, L-2, L-1)의 평균을 사용 (tail=3)
+    - 마지막 3타임스텝(L-3, L-2, L-1)의 평균을 사용 (tail=3)
       → '마지막 30분' 정도의 평균 상태를 대표로 본다 (10분 간격 기준).
     """
     N, L, D = windows.shape
@@ -255,7 +255,6 @@ def compute_endpoint_means(windows: np.ndarray, labels: np.ndarray, K: int) -> n
 
     for i in range(N):
         c = labels[i]
-        # 윈도우 끝 한 점이 아니라, 끝 3포인트 평균을 대표 상태로 사용
         tail_vec = windows[i, L - TAIL:L, :].mean(axis=0)  # shape (D,)
         endpoint_means[c] += tail_vec
         counts[c] += 1
@@ -265,7 +264,6 @@ def compute_endpoint_means(windows: np.ndarray, labels: np.ndarray, K: int) -> n
             endpoint_means[k] /= counts[k]
 
     return endpoint_means
-
 
 
 # ============================================================
@@ -306,6 +304,7 @@ def build_yesterday_model_from_raw(
 
     df_clusters = pd.DataFrame({
         "window_id": list(range(len(labels))),
+
         "end_timestamp": end_timestamps,
         "cluster": labels,
     })
@@ -385,28 +384,26 @@ def build_yesterday_model_from_raw(
 
 
 # ============================================================
-# 6. 유저 리스트/원데이 raw 데이터 API
+# 6. 실제 서비스 API에서 하루 raw 가져오는 함수 (템플릿)
 # ============================================================
 
 def fetch_day_raw_from_api(user_id: str, date: datetime) -> pd.DataFrame:
     """
-    실제 서비스 API에서 특정 user_id, date 하루(10분 간격) raw 데이터를 불러오는 함수.
+    실제 서비스 백엔드에서 하루(144개) raw 데이터를 가져오는 부분.
 
-    ⚠️ 실제 API 스펙에 맞게 구현 필요.
+    ⚠️ 여기는 나중에 실제 API 스펙에 맞게 수정하면 된다.
+       지금은 예시로 빈 DataFrame을 던지거나, NotImplementedError를 던지도록 해둠.
     """
-    # 예시:
-    # url = "https://your-service/api/mood/day"
-    # params = {
-    #     "user_id": user_id,
-    #     "date": date.strftime("%Y-%m-%d"),
-    # }
+    # 예시 형태 (실제 구현 시 참고용):
+    # url = "https://your-service/api/mood/raw/day"
+    # params = {"user_id": user_id, "date": date.strftime("%Y-%m-%d")}
     # r = requests.get(url, params=params, timeout=5)
     # r.raise_for_status()
-    # data = r.json()  # [{"timestamp": "...", "average_stress_index": ..., ...}, ...]
-    # df = pd.DataFrame(data)
+    # data = r.json()
+    # df = pd.DataFrame(data["rows"])
     # return df
 
-    raise NotImplementedError("fetch_day_raw_from_api() 안에 실제 하루 raw 데이터 API 로직을 구현하세요.")
+    raise NotImplementedError("fetch_day_raw_from_api()를 실제 서비스 API에 맞게 구현하세요.")
 
 
 # ============================================================
@@ -433,10 +430,99 @@ def build_yesterday_model_for_user(user_id: str, date: datetime) -> None:
 
 
 # ============================================================
-# 8. 메인: 여러 유저 전부 API로 처리
+# 8. Flask 서버: 어제 모델 빌드 POST API
 # ============================================================
 
-def run_yesterday_pipeline_for_user(user_id: str):
-    yesterday = datetime.today() - timedelta(days=1)
-    build_yesterday_model_for_user(user_id, yesterday)
+app = Flask(__name__)
 
+
+@app.route("/", methods=["GET"])
+def health():
+    return "Yesterday model build POST server is running.", 200
+
+
+@app.route("/build_yesterday", methods=["POST"])
+def build_yesterday_endpoint():
+    """
+    POST http://localhost:3001/build_yesterday
+    Body(JSON):
+    {
+      "user_id": "user_001",
+      "date": "2025-11-30"   # (선택) 없으면 서버 기준 어제 날짜로 처리
+    }
+    """
+    now = datetime.utcnow()
+
+    # 1) JSON 파싱
+    try:
+        payload = request.get_json(force=True, silent=False)
+    except Exception:
+        err = {"error": "invalid_json", "message": "유효한 JSON body가 필요합니다."}
+        body = json.dumps(err, ensure_ascii=False)
+        return Response(body, status=400,
+                        mimetype="application/json; charset=utf-8")
+
+    if not isinstance(payload, dict):
+        err = {"error": "invalid_payload", "message": "JSON body는 object 형태여야 합니다."}
+        body = json.dumps(err, ensure_ascii=False)
+        return Response(body, status=400,
+                        mimetype="application/json; charset=utf-8")
+
+    # 2) 필드 체크
+    user_id = payload.get("user_id")
+    if not user_id:
+        err = {"error": "missing_user_id", "message": "user_id가 body에 필요합니다."}
+        body = json.dumps(err, ensure_ascii=False)
+        return Response(body, status=400,
+                        mimetype="application/json; charset=utf-8")
+
+    date_str = payload.get("date")
+    if date_str:
+        try:
+            target_date = datetime.strptime(date_str, "%Y-%m-%d")
+        except ValueError:
+            err = {"error": "invalid_date",
+                   "message": "date는 YYYY-MM-DD 형식이어야 합니다."}
+            body = json.dumps(err, ensure_ascii=False)
+            return Response(body, status=400,
+                            mimetype="application/json; charset=utf-8")
+    else:
+        # date가 없으면 '오늘 기준 어제'
+        target_date = now - timedelta(days=1)
+
+    # 3) 빌드 실행
+    try:
+        build_yesterday_model_for_user(user_id, target_date)
+
+        prefix = f"{user_id}_{target_date.strftime('%Y%m%d')}"
+        model_meta_path = str(MODEL_DIR / f"{prefix}_yesterday_model_meta.json")
+
+        result = {
+            "user_id": user_id,
+            "target_date": target_date.strftime("%Y-%m-%d"),
+            "status": "success",
+            "model_meta_path": model_meta_path,
+        }
+        body = json.dumps(result, ensure_ascii=False)
+        return Response(body, status=200,
+                        mimetype="application/json; charset=utf-8")
+
+    except NotImplementedError as e:
+        err = {"error": "fetch_not_implemented", "message": str(e)}
+        body = json.dumps(err, ensure_ascii=False)
+        return Response(body, status=500,
+                        mimetype="application/json; charset=utf-8")
+
+    except Exception as e:
+        err = {"error": "internal_error", "message": str(e)}
+        body = json.dumps(err, ensure_ascii=False)
+        return Response(body, status=500,
+                        mimetype="application/json; charset=utf-8")
+
+
+# ============================================================
+# 9. 메인 (Flask 서버 실행)
+# ============================================================
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=3001, debug=True)
