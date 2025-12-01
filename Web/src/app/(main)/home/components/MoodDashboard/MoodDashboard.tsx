@@ -68,6 +68,7 @@ export default function MoodDashboard({
     setCurrentSegmentIndex,
     switchToNextStream,
     nextStreamAvailable,
+    isGeneratingNextStream,
   } = useMoodStream();
   
   // 무드 대시보드 상태 및 핸들러
@@ -77,11 +78,7 @@ export default function MoodDashboard({
     setPlaying,
     isSaved,
     setIsSaved,
-    handleScentClick,
-    handlePreviousSong,
-    handleNextSong,
     handleRefreshClick,
-    handleAlbumClick,
     handlePreferenceClick,
     preferenceCount,
     maxReached,
@@ -115,12 +112,9 @@ export default function MoodDashboard({
   // 음악 트랙 재생 관리 (3세그 구조)
   const {
     currentTrack,
-    currentTrackIndex,
     progress: trackProgress,
     totalProgress,
     segmentDuration,
-    goToNextTrack,
-    goToPreviousTrack,
     totalTracks,
   } = useMusicTrackPlayer({
     segment: currentSegment,
@@ -134,6 +128,16 @@ export default function MoodDashboard({
     },
   });
 
+  // 새로고침 버튼 스피너 상태
+  // - 스트림을 다시 불러오는 동안(isLoadingStream)
+  // - LLM 배경 파라미터를 다시 만드는 동안(isLLMLoading)
+  // - 다음 스트림을 백그라운드에서 생성하는 동안(isGeneratingNextStream)
+  // 위 세 경우 중 하나라도 true면 스피너를 돌린다.
+  const isRefreshing =
+    Boolean(isLLMLoading) ||
+    Boolean(isGeneratingNextStream) ||
+    Boolean(isLoadingStream);
+
   // 새로고침 버튼 핸들러 래핑 - 메모이제이션
   const handleRefreshWithStream = useCallback(() => {
     refreshMoodStream(); // 무드스트림 재생성
@@ -142,7 +146,9 @@ export default function MoodDashboard({
   }, [refreshMoodStream, handleRefreshClick, onRefreshRequest]);
 
   // 로딩 중 스켈레톤 표시
-  if (isLoading || isLoadingStream) {
+  // - 초기 콜드스타트 단계에서만 스켈레톤을 보여주고,
+  // - 이후 새로고침/다음 스트림 생성 중에는 직전 무드를 그대로 유지한다.
+  if (isLoading || (isLoadingStream && !moodStream)) {
     return <MoodDashboardSkeleton />;
   }
 
@@ -176,17 +182,19 @@ export default function MoodDashboard({
         onSaveToggle={setIsSaved}
         onRefresh={handleRefreshWithStream} // 무드스트림 재생성 포함
         llmSource={llmSource}
-        isRefreshing={!!isLLMLoading}
+        // 새로고침/스트림 생성 관련 작업이 진행되는 동안 스피너 표시
+        isRefreshing={isRefreshing}
         onPreferenceClick={handlePreferenceClick}
         preferenceCount={preferenceCount}
         maxReached={maxReached}
       />
 
-      <ScentControl mood={mood} onScentClick={handleScentClick} moodColor={baseColor} />
+      {/* V1: 향/앨범 개별 새로고침 기능은 제거하고, UI만 유지 (클릭 시 동작 없음) */}
+      <ScentControl mood={mood} onScentClick={() => {}} moodColor={baseColor} />
 
       <AlbumSection 
-        mood={mood} 
-        onAlbumClick={handleAlbumClick}
+        mood={mood}
+        onAlbumClick={undefined}
         musicSelection={backgroundParams?.musicSelection}
       />
 
@@ -196,25 +204,22 @@ export default function MoodDashboard({
         totalProgress={totalProgress}
         segmentDuration={segmentDuration}
         currentTrack={currentTrack}
-        currentTrackIndex={currentTrackIndex}
+        currentTrackIndex={0}
         totalTracks={totalTracks}
         playing={playing}
         onPlayToggle={() => setPlaying(!playing)}
         onPrevious={() => {
-          // 세그먼트 내 첫 번째 트랙이면 이전 세그먼트로, 아니면 이전 트랙으로
-          if (currentTrackIndex === 0) {
-            handlePreviousSong();
-          } else {
-            goToPreviousTrack();
-          }
+          // V1: 트랙 이동 대신 세그먼트 이동으로 단순화
+          if (!moodStream) return;
+          const prevIndex = Math.max(0, currentSegmentIndex - 1);
+          handleSegmentSelect(prevIndex);
         }}
         onNext={() => {
-          // 세그먼트 내 마지막 트랙이면 다음 세그먼트로, 아니면 다음 트랙으로
-          if (currentTrackIndex === totalTracks - 1) {
-            handleNextSong();
-          } else {
-            goToNextTrack();
-          }
+          // V1: 트랙 이동 대신 세그먼트 이동으로 단순화
+          if (!moodStream) return;
+          const lastIndex = moodStream.segments.length - 1;
+          const nextIndex = Math.min(lastIndex, currentSegmentIndex + 1);
+          handleSegmentSelect(nextIndex);
         }}
       />
 
