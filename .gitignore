@@ -64,5 +64,5 @@ next-env.d.ts
 **/.DS_Store
 
 # markov debug
-/markov/build_yesterday_model.py
-/markov/realtime_inference.py
+**/build_yesterday_model.py
+**/realtime_inference.py
