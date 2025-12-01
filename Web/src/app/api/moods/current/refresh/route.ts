@@ -30,7 +30,7 @@ export async function PUT() {
     const session = sessionOrError;
 
   // 2. 목업 모드 확인 (관리자 계정)
-  if (checkMockMode(session)) {
+  if (await checkMockMode(session)) {
     console.log("[PUT /api/moods/current/refresh] 목업 모드: 관리자 계정");
     try {
       const mockData = getMockMoodStream();

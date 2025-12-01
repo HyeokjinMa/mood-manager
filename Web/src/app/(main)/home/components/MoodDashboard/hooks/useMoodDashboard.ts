@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import type { Mood } from "@/types/mood";
 import { MOODS } from "@/types/mood";
-import type { MoodStreamSegment } from "@/hooks/useMoodStream";
+import type { MoodStreamSegment } from "@/hooks/useMoodStream/types";
 import { saveMood, deleteSavedMood, getSavedMoods, type SavedMood } from "@/lib/mock/savedMoodsStorage";
 import { ADMIN_EMAIL } from "@/lib/auth/mockMode";
 
@@ -362,12 +362,13 @@ export function useMoodDashboard({
         };
 
         if (isAdminMode) {
-          // 관리자 모드: localStorage에 저장
+          // 관리자 모드: localStorage에 저장하고 API 호출 스킵
           saveMood(savedMoodData);
           setIsSaved(true);
+          return; // API 호출하지 않음 (목업 모드 최적화)
         }
 
-        // API 호출 (관리자 모드에서도 호출 가능 - 목업 응답 반환)
+        // 일반 모드: API 호출
         const response = await fetch("/api/moods/saved", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

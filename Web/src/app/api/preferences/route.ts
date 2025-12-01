@@ -17,6 +17,233 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, checkMockMode } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
+import {
+  getMockScentPreference,
+  upsertMockScentPreference,
+  getMockGenrePreference,
+  upsertMockGenrePreference,
+  initializeMockPreferences,
+} from "@/lib/mock/mockPreferenceStore";
+
+/**
+ * 설문 완료 시 가중치 업데이트
+ * - 호 (초록색 유지): 가중치 +10 (초기 1 + 10 = 11)
+ * - 불호 (초록색 끔): 가중치 +1 (초기 1 + 1 = 2, 최소값 1 유지)
+ */
+async function updatePreferenceWeights(
+  userId: string,
+  scentLiked: string[],
+  scentDisliked: string[],
+  musicLiked: string[],
+  musicDisliked: string[],
+  isMockMode: boolean = false,
+) {
+  try {
+    // 목업 모드: 메모리 저장소 초기화
+    if (isMockMode) {
+      initializeMockPreferences(userId);
+    }
+
+    // 향 선호도 업데이트
+    // 호 (초록색 유지): 가중치 +10
+    for (const scentName of scentLiked) {
+      if (isMockMode) {
+        // 목업 모드: 메모리 저장소 사용
+        const existing = getMockScentPreference(userId, scentName);
+        const currentWeight = existing?.weight || 1;
+        const newWeight = currentWeight + 10; // 호: +10
+        upsertMockScentPreference(userId, scentName, newWeight);
+      } else {
+        // 일반 모드: DB 저장
+        const fragrance = await prisma.fragrance.findFirst({
+          where: { name: { equals: scentName, mode: "insensitive" } },
+        });
+
+        if (fragrance) {
+          // 현재 가중치 조회
+          const existing = await prisma.scentPreference.findUnique({
+            where: {
+              userId_scentId: {
+                userId,
+                scentId: fragrance.id,
+              },
+            },
+          });
+
+          const currentWeight = existing?.weight || 1;
+          const newWeight = currentWeight + 10; // 호: +10
+
+          await prisma.scentPreference.upsert({
+            where: {
+              userId_scentId: {
+                userId,
+                scentId: fragrance.id,
+              },
+            },
+            update: {
+              weight: newWeight,
+            },
+            create: {
+              userId,
+              scentId: fragrance.id,
+              weight: newWeight,
+            },
+          });
+        }
+      }
+    }
+
+    // 불호 (초록색 끔): 가중치 +1 (최소값 1 유지)
+    for (const scentName of scentDisliked) {
+      if (isMockMode) {
+        // 목업 모드: 메모리 저장소 사용
+        const existing = getMockScentPreference(userId, scentName);
+        const currentWeight = existing?.weight || 1;
+        const newWeight = Math.max(1, currentWeight + 1); // 불호: +1, 최소값 1
+        upsertMockScentPreference(userId, scentName, newWeight);
+      } else {
+        // 일반 모드: DB 저장
+        const fragrance = await prisma.fragrance.findFirst({
+          where: { name: { equals: scentName, mode: "insensitive" } },
+        });
+
+        if (fragrance) {
+          // 현재 가중치 조회
+          const existing = await prisma.scentPreference.findUnique({
+            where: {
+              userId_scentId: {
+                userId,
+                scentId: fragrance.id,
+              },
+            },
+          });
+
+          const currentWeight = existing?.weight || 1;
+          const newWeight = Math.max(1, currentWeight + 1); // 불호: +1, 최소값 1
+
+          await prisma.scentPreference.upsert({
+            where: {
+              userId_scentId: {
+                userId,
+                scentId: fragrance.id,
+              },
+            },
+            update: {
+              weight: newWeight,
+            },
+            create: {
+              userId,
+              scentId: fragrance.id,
+              weight: newWeight,
+            },
+          });
+        }
+      }
+    }
+
+    // 장르 선호도 업데이트
+    // 호 (초록색 유지): 가중치 +10
+    for (const genreName of musicLiked) {
+      if (isMockMode) {
+        // 목업 모드: 메모리 저장소 사용
+        const existing = getMockGenrePreference(userId, genreName);
+        const currentWeight = existing?.weight || 1;
+        const newWeight = currentWeight + 10; // 호: +10
+        upsertMockGenrePreference(userId, genreName, newWeight);
+      } else {
+        // 일반 모드: DB 저장
+        const genre = await prisma.genre.findUnique({
+          where: { name: genreName },
+        });
+
+        if (genre) {
+          // 현재 가중치 조회
+          const existing = await prisma.genrePreference.findUnique({
+            where: {
+              userId_genreId: {
+                userId,
+                genreId: genre.id,
+              },
+            },
+          });
+
+          const currentWeight = existing?.weight || 1;
+          const newWeight = currentWeight + 10; // 호: +10
+
+          await prisma.genrePreference.upsert({
+            where: {
+              userId_genreId: {
+                userId,
+                genreId: genre.id,
+              },
+            },
+            update: {
+              weight: newWeight,
+            },
+            create: {
+              userId,
+              genreId: genre.id,
+              weight: newWeight,
+            },
+          });
+        }
+      }
+    }
+
+    // 불호 (초록색 끔): 가중치 +1 (최소값 1 유지)
+    for (const genreName of musicDisliked) {
+      if (isMockMode) {
+        // 목업 모드: 메모리 저장소 사용
+        const existing = getMockGenrePreference(userId, genreName);
+        const currentWeight = existing?.weight || 1;
+        const newWeight = Math.max(1, currentWeight + 1); // 불호: +1, 최소값 1
+        upsertMockGenrePreference(userId, genreName, newWeight);
+      } else {
+        // 일반 모드: DB 저장
+        const genre = await prisma.genre.findUnique({
+          where: { name: genreName },
+        });
+
+        if (genre) {
+          // 현재 가중치 조회
+          const existing = await prisma.genrePreference.findUnique({
+            where: {
+              userId_genreId: {
+                userId,
+                genreId: genre.id,
+              },
+            },
+          });
+
+          const currentWeight = existing?.weight || 1;
+          const newWeight = Math.max(1, currentWeight + 1); // 불호: +1, 최소값 1
+
+          await prisma.genrePreference.upsert({
+            where: {
+              userId_genreId: {
+                userId,
+                genreId: genre.id,
+              },
+            },
+            update: {
+              weight: newWeight,
+            },
+            create: {
+              userId,
+              genreId: genre.id,
+              weight: newWeight,
+            },
+          });
+        }
+      }
+    }
+
+    console.log(`[updatePreferenceWeights] 가중치 업데이트 완료 (userId: ${userId})`);
+  } catch (error) {
+    console.error("[updatePreferenceWeights] 가중치 업데이트 실패:", error);
+    // 가중치 업데이트 실패는 치명적이지 않으므로 에러를 던지지 않음
+  }
+}
 
 /**
  * GET /api/preferences
@@ -37,18 +264,18 @@ export async function GET() {
     const session = sessionOrError;
 
     // 2. 목업 모드 확인 (관리자 계정)
-    if (checkMockMode(session)) {
+    if (await checkMockMode(session)) {
       console.log("[GET /api/preferences] 목업 모드: 관리자 계정");
-      // 목업 선호도 반환
+      // 목업 선호도 반환 (설문 완료 가정: 대부분 호, 일부 불호)
       return NextResponse.json({
         success: true,
         preferences: {
-          scentLiked: "Citrus,Floral,Woody",
-          scentDisliked: null,
+          scentLiked: "Citrus,Floral,Woody,Fresh,Sweet,Herbal,Fruity,Musk,Aromatic,Honey,Green,Marine,Powdery",
+          scentDisliked: "Spicy,Dry,Leathery",
           colorLiked: "warmWhite,skyBlue",
           colorDisliked: null,
-          musicLiked: "newage,classical",
-          musicDisliked: null,
+          musicLiked: "newage,classical,jazz,ambient,nature,meditation,piano,electronic",
+          musicDisliked: "guitar,orchestral",
         },
         mock: true,
       });
@@ -121,14 +348,7 @@ export async function POST(request: NextRequest) {
     }
     const session = sessionOrError;
 
-    // 2. 목업 모드 확인 (관리자 계정)
-    if (checkMockMode(session)) {
-      console.log("[POST /api/preferences] 목업 모드: 관리자 계정");
-      // 목업 모드에서는 저장하지 않고 성공 응답만 반환
-      return NextResponse.json({ success: true, mock: true });
-    }
-
-    // 3. 요청 본문 파싱
+    // 2. 요청 본문 파싱
     const body = await request.json();
     const {
       scentLiked,
@@ -138,6 +358,30 @@ export async function POST(request: NextRequest) {
       musicLiked,
       musicDisliked,
     } = body;
+
+    // 3. 목업 모드 확인 (관리자 계정)
+    const isMockMode = await checkMockMode(session);
+    if (isMockMode) {
+      console.log("[POST /api/preferences] 목업 모드: 관리자 계정");
+      console.log("[POST /api/preferences] 목업 모드 - 설문 데이터:", {
+        scentLiked: Array.isArray(scentLiked) ? scentLiked.length : 0,
+        scentDisliked: Array.isArray(scentDisliked) ? scentDisliked.length : 0,
+        musicLiked: Array.isArray(musicLiked) ? musicLiked.length : 0,
+        musicDisliked: Array.isArray(musicDisliked) ? musicDisliked.length : 0,
+      });
+      // 목업 모드: 실제 로직 실행 (메모리 저장소 사용, DB 저장 없음)
+      // 가중치 업데이트 로직을 실행하여 유효한 아웃풋 생성
+      await updatePreferenceWeights(
+        session.user.id,
+        Array.isArray(scentLiked) ? scentLiked : [],
+        Array.isArray(scentDisliked) ? scentDisliked : [],
+        Array.isArray(musicLiked) ? musicLiked : [],
+        Array.isArray(musicDisliked) ? musicDisliked : [],
+        true, // isMockMode = true
+      );
+      console.log("[POST /api/preferences] 목업 모드: 가중치 업데이트 완료 (메모리 저장소)");
+      return NextResponse.json({ success: true, mock: true });
+    }
 
     // 4. 배열을 쉼표로 구분된 문자열로 변환
     const scentLikedStr = Array.isArray(scentLiked) ? scentLiked.join(',') : (typeof scentLiked === 'string' ? scentLiked : null);
@@ -175,6 +419,16 @@ export async function POST(request: NextRequest) {
         where: { id: session.user.id },
         data: { hasSurvey: true },
       });
+
+      // 7. 가중치 시스템 업데이트 (ScentPreference, GenrePreference)
+      await updatePreferenceWeights(
+        session.user.id,
+        Array.isArray(scentLiked) ? scentLiked : [],
+        Array.isArray(scentDisliked) ? scentDisliked : [],
+        Array.isArray(musicLiked) ? musicLiked : [],
+        Array.isArray(musicDisliked) ? musicDisliked : [],
+        false, // isMockMode = false (일반 모드)
+      );
     } catch (dbError) {
       console.error("[POST /api/preferences] DB 저장 실패, 목업 모드로 처리:", dbError);
       // DB 저장 실패 시 목업 모드로 처리

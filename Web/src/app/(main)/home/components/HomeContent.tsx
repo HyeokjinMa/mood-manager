@@ -23,7 +23,6 @@ import { useDeviceSync } from "@/hooks/useDeviceSync";
 import type { Device } from "@/types/device";
 import type { Mood } from "@/types/mood";
 import type { BackgroundParams } from "@/hooks/useBackgroundParams";
-import { blendWithWhite } from "@/lib/utils";
 
 interface MoodState {
   current: Mood;
@@ -61,11 +60,37 @@ export default function HomeContent({
   const { devices, setDevices, expandedId, setExpandedId, onOpenAddModal, onDeleteRequest } = deviceState;
   const onBackgroundParamsChange = backgroundState?.onChange;
   // 무드스트림 관리
-  const { moodStream, isLoading: isLoadingMoodStream } = useMoodStream();
+  const { 
+    moodStream, 
+    isLoading: isLoadingMoodStream,
+    currentSegmentIndex,
+  } = useMoodStream();
   
   // LLM 배경 파라미터 관리 (새로고침 시에만 호출)
   const [shouldFetchLLM, setShouldFetchLLM] = useState(false);
-  const { backgroundParams, isLoading: isLoadingParams } = useBackgroundParams(moodStream, shouldFetchLLM);
+  const { 
+    backgroundParams, 
+    isLoading: isLoadingParams,
+    allSegmentsParams,
+    setBackgroundParams,
+  } = useBackgroundParams(
+    moodStream, 
+    shouldFetchLLM,
+    currentSegmentIndex
+  );
+
+  // V1: 초기 콜드스타트 1세그먼트가 준비되면,
+  // 그 세그먼트를 재생하는 동안 백그라운드에서
+  // 전처리 → (ML/마르코프 목업) → LLM 호출이 한 번 자동으로 돌도록 트리거.
+  // 이후에는 사용자가 새로고침을 눌렀을 때만 다시 호출.
+  const [initialLLMTriggered, setInitialLLMTriggered] = useState(false);
+
+  useEffect(() => {
+    if (!initialLLMTriggered && !isLoadingMoodStream && moodStream) {
+      setShouldFetchLLM(true);
+      setInitialLLMTriggered(true);
+    }
+  }, [initialLLMTriggered, isLoadingMoodStream, moodStream]);
   
   // OpenAI 호출 완료 후 플래그 리셋 및 상위로 전달
   useEffect(() => {
@@ -77,6 +102,9 @@ export default function HomeContent({
       onBackgroundParamsChange(backgroundParams);
     }
   }, [shouldFetchLLM, isLoadingParams, backgroundParams, onBackgroundParamsChange]);
+  
+  // 새로고침 버튼에서 사용할 LLM 로딩 상태
+  const isLLMLoading = shouldFetchLLM && isLoadingParams;
   
   // LLM 결과 및 무드 변경을 디바이스에 반영
   useDeviceSync({
@@ -114,7 +142,7 @@ export default function HomeContent({
   if (isLoadingMoodStream && !moodStream) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-gray-500">무드스트림을 불러오는 중...</p>
+        <p className="text-gray-500">Loading mood stream...</p>
       </div>
     );
   }
@@ -146,6 +174,9 @@ export default function HomeContent({
             onSongChange={onSongChange}
             backgroundParams={backgroundParams}
             onRefreshRequest={handleRefreshRequest}
+            allSegmentsParams={allSegmentsParams}
+            setBackgroundParams={setBackgroundParams}
+            isLLMLoading={isLLMLoading}
           />
         </div>
 

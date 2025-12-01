@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -43,13 +43,19 @@ model User {
   // 설문 여부
   hasSurvey       Boolean   @default(false)
 
+  // 관리자 여부
+  isAdmin         Boolean   @default(false)
+
   createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   // Relations
-  devices         Device[]
-  presets         Preset[]
-  preferences     UserPreferences?
-  inquiries       Inquiry[]
+  devices           Device[]
+  presets           Preset[]
+  preferences       UserPreferences?
+  inquiries         Inquiry[]
+  scentPreferences  ScentPreference[]
+  genrePreferences  GenrePreference[]
 }
 
 ///////////////////////////////////////////////////////
@@ -64,16 +70,23 @@ model Device {
   status          DeviceStatus @default(active)
   registeredAt    DateTime     @default(now())
 
+  // 연결 및 전원 상태
+  isConnected     Boolean      @default(false) // 현재 연결 상태
+  power           Boolean?    @default(false) // 전원 상태 (켜짐/꺼짐)
+
   // Device 제어용 필드
   battery         Int?
-  power           Boolean?
   brightness      Int?
   color           String?
+  temperature     Int?         // 색온도 (2000-6500K)
   scentType       String?
   scentLevel      Int?
   scentInterval   Int?
   volume          Int?
   nowPlaying      String?
+  
+  // 외부 디바이스 ID (예: Philips Wiz)
+  externalDeviceId String?     // 외부 디바이스 고유 ID
 
   // Preset 적용
   currentPresetId String?
@@ -84,6 +97,7 @@ model Device {
   // 인덱스 추가 (성능 향상)
   @@index([userId])
   @@index([currentPresetId])
+  @@index([userId, isConnected])
 }
 
 ///////////////////////////////////////////////////////
@@ -99,14 +113,17 @@ model Fragrance {
   operatingMin   Int
   componentsJson Json
 
-  presets        Preset[]
+  presets           Preset[]
+  scentPreferences   ScentPreference[]
 }
 
 model Light {
   id         Int      @id @default(autoincrement())
   name       String
-  color      String
+  color      String   // HEX 색상
   brightness Int
+  temperature Int?    // 색온도 (2000-6500K)
+  rgb        Json?    // RGB 배열 [r, g, b]
 
   presets    Preset[]
 }
@@ -116,9 +133,25 @@ model Sound {
   name           String
   fileUrl        String
   duration       Int?     // 곡 길이 (초 단위)
+  genreId        Int?     // 장르 ID (Genre 테이블 참조)
   componentsJson Json?    // { "genre": "newage", "mood": "calm", ... }
 
   presets        Preset[]
+  genre          Genre?   @relation(fields: [genreId], references: [id])
+}
+
+///////////////////////////////////////////////////////
+// GENRE (음악 장르)
+///////////////////////////////////////////////////////
+
+model Genre {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+
+  sounds            Sound[]
+  genrePreferences   GenrePreference[]
 }
 
 ///////////////////////////////////////////////////////
@@ -134,6 +167,7 @@ model Preset {
   name         String
   cluster      String?  // 무드 클러스터: '-' (부정), '0' (중립), '+' (긍정)
   isDefault    Boolean  @default(false) // 기본 무드 설정 여부
+  isStarred    Boolean  @default(false) // 별표 표시 (mood_set 저장)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   updatedType  String?  // all | scent | song | color
@@ -148,6 +182,7 @@ model Preset {
   // 인덱스 추가 (성능 향상)
   @@index([userId])
   @@index([userId, isDefault])
+  @@index([userId, isStarred])
 }
 
 ///////////////////////////////////////////////////////
@@ -158,25 +193,69 @@ model UserPreferences {
   id                  Int      @id @default(autoincrement())
   userId              String   @unique
 
-  // 향 선호도 (쉼표로 구분된 문자열)
+  // 향 선호도 (쉼표로 구분된 문자열) - 하위 호환성 유지
   // 예시: "Citrus,Floral,Woody"
-  scentLiked          String?  @db.VarChar(255)
-  scentDisliked       String?  @db.VarChar(255)
+  // 참고: 새로운 가중치 시스템은 ScentPreference 테이블 사용
+  scentLiked          String?
+  scentDisliked       String?
 
   // 색상 선호도 (쉼표로 구분된 문자열)
   // 예시: "warmWhite,skyBlue"
-  colorLiked          String?  @db.VarChar(255)
-  colorDisliked       String?  @db.VarChar(255)
+  colorLiked          String?
+  colorDisliked       String?
 
-  // 음악 장르 선호도 (쉼표로 구분된 문자열)
+  // 음악 장르 선호도 (쉼표로 구분된 문자열) - 하위 호환성 유지
   // 예시: "newage,classical,jazz"
-  musicLiked          String?  @db.VarChar(255)
-  musicDisliked       String?  @db.VarChar(255)
+  // 참고: 새로운 가중치 시스템은 GenrePreference 테이블 사용
+  musicLiked          String?
+  musicDisliked       String?
 
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+///////////////////////////////////////////////////////
+// SCENT PREFERENCE (향 선호도 가중치)
+///////////////////////////////////////////////////////
+
+model ScentPreference {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  scentId  Int      // Fragrance ID
+  weight   Int      @default(0) // 가중치 (초기 설문: 호+10, 불호+1, 하트 클릭: +3)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scent  Fragrance @relation(fields: [scentId], references: [id], onDelete: Cascade)
+
+  // 인덱스 추가 (성능 향상)
+  @@unique([userId, scentId])
+  @@index([userId])
+  @@index([userId, weight])
+}
+
+///////////////////////////////////////////////////////
+// GENRE PREFERENCE (장르 선호도 가중치)
+///////////////////////////////////////////////////////
+
+model GenrePreference {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  genreId  Int
+  weight   Int      @default(0) // 가중치 (초기 설문: 호+10, 불호+1, 하트 클릭: +3)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  genre  Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  // 인덱스 추가 (성능 향상)
+  @@unique([userId, genreId])
+  @@index([userId])
+  @@index([userId, weight])
 }
 
 ///////////////////////////////////////////////////////

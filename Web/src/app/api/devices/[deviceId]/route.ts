@@ -39,7 +39,7 @@ export async function DELETE(
     const session = sessionOrError;
 
     // 2. 목업 모드 확인 (관리자 계정)
-    if (checkMockMode(session)) {
+    if (await checkMockMode(session)) {
       console.log("[DELETE /api/devices/:deviceId] 목업 모드: 관리자 계정");
       // 관리자 모드에서는 항상 성공 응답 (실제 삭제는 클라이언트에서 처리)
       return NextResponse.json({ success: true });

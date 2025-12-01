@@ -19,6 +19,7 @@ interface MoodHeaderProps {
   preferenceCount?: number; // 현재 무드의 선호도 카운트 (0-3)
   maxReached?: boolean; // 최대 3번 도달 여부
   onDoubleClick?: (x: number, y: number) => void; // 대시보드 더블클릭 핸들러
+  isRefreshing?: boolean; // LLM 새로고침 진행 중 여부
 }
 
 export default function MoodHeader({
@@ -29,6 +30,7 @@ export default function MoodHeader({
   llmSource,
   onPreferenceClick,
   maxReached = false,
+  isRefreshing = false,
 }: MoodHeaderProps) {
   const [showHeartAnimation, setShowHeartAnimation] = useState(false);
   const [heartPosition, setHeartPosition] = useState<{ x: number; y: number } | null>(null);
@@ -77,11 +79,26 @@ export default function MoodHeader({
           >
             {mood.name}
           </div>
-          {llmSource && (
-            <span className="text-[10px] text-gray-500">
-              LLM: {llmSource}
-            </span>
-          )}
+          {/* LLM 사용 여부를 항상 명확하게 표시 */}
+          <span
+            className="inline-flex mt-0.5 max-w-[160px] items-center rounded-full bg-white/70 px-2 py-[1px] text-[9px] font-medium text-gray-600"
+            title={
+              llmSource
+                ? llmSource === "openai-fallback"
+                  ? "LLM: OpenAI only (without Markov pipeline)"
+                  : `LLM source: ${llmSource}`
+                : "LLM: 아직 호출되지 않았거나 목업 응답입니다."
+            }
+          >
+            {(() => {
+              if (!llmSource) return "LLM: idle/mock";
+              if (llmSource === "openai-fallback")
+                return "LLM: active (openai / no markov)";
+              if (llmSource.startsWith("openai") || llmSource === "cache")
+                return `LLM: active (${llmSource})`;
+              return `LLM: mock (${llmSource})`;
+            })()}
+          </span>
         </div>
         <div className="flex items-center gap-2">
           {/* 무드셋 저장 버튼 (별) */}
@@ -99,11 +116,21 @@ export default function MoodHeader({
           </button>
           {/* 새로고침 버튼 (무드 클러스터 내에서 변경) */}
           <button
-            onClick={onRefresh}
-            className="p-1.5 rounded-full bg-white/40 backdrop-blur hover:bg-white/60 transition text-gray-800"
-            title="Refresh mood (same mood cluster)"
+            onClick={isRefreshing ? undefined : onRefresh}
+            className={`p-1.5 rounded-full bg-white/40 backdrop-blur transition text-gray-800 ${
+              isRefreshing ? "opacity-70 cursor-wait" : "hover:bg-white/60"
+            }`}
+            title={
+              isRefreshing
+                ? "Refreshing... (LLM is generating new mood stream)"
+                : "Refresh mood (same mood cluster)"
+            }
           >
-            <RefreshCcw size={16} />
+            <RefreshCcw
+              size={16}
+              className={isRefreshing ? "animate-spin" : ""}
+              style={isRefreshing ? { animationDuration: "1.8s" } : undefined}
+            />
           </button>
         </div>
       </div>

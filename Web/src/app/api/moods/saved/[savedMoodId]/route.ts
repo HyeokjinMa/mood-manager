@@ -31,9 +31,10 @@ export async function DELETE(
     const { savedMoodId } = await params;
 
     // 목업 모드 확인 (관리자 계정)
-    if (checkMockMode(session)) {
+    if (await checkMockMode(session)) {
       console.log("[DELETE /api/moods/saved/:savedMoodId] 목업 모드: 관리자 계정");
-      // 관리자 모드에서는 항상 성공 응답 (클라이언트에서 삭제 처리)
+      console.log("[DELETE /api/moods/saved/:savedMoodId] 목업 모드 - 삭제 ID:", savedMoodId);
+      // 관리자 모드에서는 항상 성공 응답 (클라이언트에서 localStorage에서 삭제 처리)
       return NextResponse.json({
         success: true,
         deletedId: savedMoodId,

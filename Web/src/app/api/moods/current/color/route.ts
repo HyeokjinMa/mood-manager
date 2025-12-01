@@ -83,6 +83,7 @@ export async function PUT(request: NextRequest) {
             currentPresetId: preset.id,
             brightness: preset.light.brightness,
             color: preset.light.color,  // 조명 색상 사용
+            temperature: preset.light.temperature ?? undefined, // 색온도 추가
           },
         });
       })

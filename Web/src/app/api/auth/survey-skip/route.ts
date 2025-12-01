@@ -19,7 +19,7 @@ export async function POST() {
     const session = sessionOrError;
 
     // 2. 목업 모드 확인 (관리자 계정)
-    if (checkMockMode(session)) {
+    if (await checkMockMode(session)) {
       console.log("[POST /api/auth/survey-skip] 목업 모드: 관리자 계정");
       return NextResponse.json({ success: true, mock: true });
     }

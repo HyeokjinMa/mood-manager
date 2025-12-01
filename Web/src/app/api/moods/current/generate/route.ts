@@ -2,162 +2,80 @@
 /**
  * POST /api/moods/current/generate
  * 
- * 무드스트림 재생성 API
+ * 다음 무드스트림 생성 API (3세그 구조)
  * 
- * 예약된 세그먼트가 3개 이하일 때 호출
- * - 동일한 정보를 바탕으로 10개 세그먼트 생성
- * - 생성된 세그먼트는 뒤로 붙음
+ * 3개 세그먼트 생성 (각 세그먼트는 3곡 포함)
+ * - 각 세그먼트는 자연스러운 흐름의 3곡으로 구성
+ * - timestamp는 nextStartTime부터 시작
  */
 
 import { NextRequest, NextResponse } from "next/server";
-// import { getServerSession } from "next-auth";
-import { MOODS } from "@/types/mood";
-import { hexToRgb } from "@/lib/utils";
+import { requireAuth, checkMockMode } from "@/lib/auth/session";
+import { getMockMoodStream } from "@/lib/mock/mockData";
+import { chainSegments } from "@/lib/utils/segmentUtils";
+import type { MoodStream, MoodStreamSegment } from "@/hooks/useMoodStream/types";
 
 /**
- * [MOCK] 목업 모드
- * TODO: 시계열 + 마르코프 체인으로 실제 예측 구현
+ * POST /api/moods/current/generate
+ * 
+ * 다음 무드스트림 생성 (3세그 구조)
+ * 
+ * Request Body:
+ * - nextStartTime?: number - 다음 세그먼트 시작 시간 (밀리초)
+ * - segmentCount?: number - 생성할 세그먼트 수 (기본값: 3)
  */
 export async function POST(request: NextRequest) {
   try {
+    // 세션 확인
+    const sessionOrError = await requireAuth();
+    if (sessionOrError instanceof NextResponse) {
+      return sessionOrError;
+    }
+    const session = sessionOrError;
+
+    // 관리자 모드 확인
+    const isAdminMode = await checkMockMode(session);
+    if (isAdminMode) {
+      console.log("[POST /api/moods/current/generate] 목업 모드: 관리자 계정");
+    }
+
     const body = await request.json();
-    const { nextStartTime } = body; // 다음 세그먼트 시작 시간
-    
-    // TODO: 세션 확인
-    // const session = await getServerSession();
-    // if (!session) {
-    //   return NextResponse.json(
-    //     { error: "UNAUTHORIZED", message: "Authentication required" },
-    //     { status: 401 }
-    //   );
-    // }
+    const nextStartTime = body.nextStartTime || Date.now();
+    const segmentCount = body.segmentCount || 3;
 
-    // TODO: 시계열 + 마르코프 체인으로 1분 단위 예측값 생성
-    // const userId = session.user.id;
-    // const oneMinutePredictions = await generateOneMinutePredictions(userId, 30); // 30개 (30분치)
+    // TODO: 실제 시계열 + 마르코프 체인으로 예측 구현
+    // 현재는 목업 데이터 사용
+    let moodStream: MoodStream;
 
-    // [MOCK] 1분 단위 예측값 시뮬레이션 (30개)
-    const oneMinutePredictions: Array<{ timestamp: number; prediction: string }> = [];
-    const oneMinuteDuration = 60 * 1000; // 1분
-    const startTime = nextStartTime || Date.now();
-    
-    for (let i = 0; i < 30; i++) {
-      const predictions = ["VP", "VPP", "VPPP"];
-      const prediction = predictions[Math.floor(Math.random() * predictions.length)];
+    if (isAdminMode) {
+      // 목업 모드: 목업 데이터 사용
+      moodStream = getMockMoodStream();
       
-      oneMinutePredictions.push({
-        timestamp: startTime + i * oneMinuteDuration,
-        prediction,
-      });
+      // timestamp를 nextStartTime 기준으로 조정
+      moodStream.segments = chainSegments(nextStartTime, moodStream.segments);
+    } else {
+      // TODO: 실제 데이터베이스에서 사용자 데이터 조회 및 예측
+      // 현재는 목업 데이터 사용
+      moodStream = getMockMoodStream();
+      
+      // timestamp를 nextStartTime 기준으로 조정
+      moodStream.segments = chainSegments(nextStartTime, moodStream.segments);
     }
-    
-    // 3분 단위로 분절 (10개 세그먼트)
-    // 핵심: 하나의 무드스트림 내에서는 동일한 무드를 기반으로 함
-    const segments = [];
-    const segmentDuration = 3 * 60 * 1000; // 3분
-    
-    // 첫 번째 세그먼트의 무드 결정 (전체 스트림의 대표 무드)
-    const firstThreeMinutePredictions = oneMinutePredictions.slice(0, 3);
-    const firstPredictionCounts = firstThreeMinutePredictions.reduce((acc, p) => {
-      acc[p.prediction] = (acc[p.prediction] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-    
-    const firstDominantPrediction = Object.entries(firstPredictionCounts)
-      .sort((a, b) => b[1] - a[1])[0][0];
-    
-    // 전체 스트림의 대표 무드 결정 (10개 세그먼트 모두 동일한 무드 사용)
-    const streamMoodName = mapPredictionToMood(firstDominantPrediction);
-    const baseMood = MOODS.find(m => m.name === streamMoodName) || MOODS[0];
-    
-    // 10개 세그먼트 생성 (모두 동일한 무드 사용)
-    for (let i = 0; i < oneMinutePredictions.length; i += 3) {
-      const threeMinutePredictions = oneMinutePredictions.slice(i, i + 3);
-      
-      // 3분 동안의 예측값 중 가장 많이 나온 것 선택 (음악 장르/향 결정용)
-      const predictionCounts = threeMinutePredictions.reduce((acc, p) => {
-        acc[p.prediction] = (acc[p.prediction] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-      
-      const dominantPrediction = Object.entries(predictionCounts)
-        .sort((a, b) => b[1] - a[1])[0][0];
-      
-      // 음악 장르와 향은 세그먼트별로 다양할 수 있음 (무드는 동일)
-      const musicGenre = mapPredictionToGenre(dominantPrediction);
-      const scentType = mapPredictionToScent(dominantPrediction);
-      
-      segments.push({
-        id: `segment-${Date.now()}-${i}`,
-        timestamp: threeMinutePredictions[0].timestamp,
-        moodName: streamMoodName, // 동일한 무드 사용
-        musicGenre,
-        scentType,
-        // 기본 정보 (LLM이 나머지 정보 추가)
-        mood: baseMood,
-        music: {
-          genre: musicGenre,
-          title: baseMood.song.title,
-        },
-        scent: {
-          type: scentType,
-          name: baseMood.scent.name,
-        },
-        lighting: {
-          color: baseMood.color,
-          rgb: hexToRgb(baseMood.color),
-        },
-        duration: segmentDuration,
-      });
-    }
+
+    // segmentCount만큼만 반환
+    const segmentsToReturn = moodStream.segments.slice(0, segmentCount);
 
     return NextResponse.json({
-      segments, // 10개 세그먼트
-      streamId: `stream-${Date.now()}`,
+      currentMood: moodStream.currentMood,
+      moodStream: segmentsToReturn,
+      streamId: moodStream.streamId,
+      userDataCount: moodStream.userDataCount,
     });
   } catch (error) {
-    console.error("Error generating mood stream:", error);
+    console.error("[POST /api/moods/current/generate] Error:", error);
     return NextResponse.json(
       { error: "Failed to generate mood stream" },
       { status: 500 }
     );
   }
 }
-
-/**
- * 예측값을 무드로 매핑
- */
-function mapPredictionToMood(prediction: string): string {
-  const moodMap: Record<string, string> = {
-    "VP": "Deep Relax",
-    "VPP": "Focus Mode",
-    "VPPP": "Bright Morning",
-  };
-  return moodMap[prediction] || "Deep Relax";
-}
-
-/**
- * 예측값을 음악 장르로 매핑
- */
-function mapPredictionToGenre(prediction: string): string {
-  const genreMap: Record<string, string> = {
-    "VP": "newage",
-    "VPP": "classical",
-    "VPPP": "pop",
-  };
-  return genreMap[prediction] || "newage";
-}
-
-/**
- * 예측값을 향으로 매핑
- */
-function mapPredictionToScent(prediction: string): string {
-  const scentMap: Record<string, string> = {
-    "VP": "citrus",
-    "VPP": "woody",
-    "VPPP": "floral",
-  };
-  return scentMap[prediction] || "citrus";
-}
-
-

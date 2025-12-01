@@ -9,12 +9,17 @@
  */
 
 import { prisma } from "@/lib/prisma";
+import { seedAll } from "@/lib/db/seedFragrancesAndGenres";
 
 /**
  * 기본 Preset 컴포넌트 생성
  * 각 사용자마다 고유한 컴포넌트를 생성
  */
 async function createDefaultPresetComponents() {
+  // Fragrance & Genre 시드 데이터 확인/생성 (없으면 생성)
+  // 주의: 매 사용자마다 호출되지만 중복 체크로 인해 비효율은 최소화됨
+  await seedAll();
+  
   // 기본 Fragrance 생성
   const defaultFragrance = await prisma.fragrance.create({
     data: {
@@ -36,6 +41,8 @@ async function createDefaultPresetComponents() {
       name: "Warm White",
       color: "#FFD966",
       brightness: 80,
+      temperature: 4000, // 색온도 추가
+      rgb: [255, 217, 102], // RGB 배열 추가
     },
   });
 
@@ -87,6 +94,7 @@ export async function createDefaultUserSetup(userId: string) {
         power: true,
         brightness: 80,
         color: defaultLight.color,
+        temperature: defaultLight.temperature ?? 4000, // 색온도 추가
         scentType: defaultFragrance.name,
         scentLevel: 7,
         scentInterval: 30,
@@ -95,6 +103,9 @@ export async function createDefaultUserSetup(userId: string) {
         currentPresetId: defaultPreset.id,
       },
     });
+
+    // 4. 모든 Fragrance와 Genre에 초기 가중치 +1 부여
+    await initializeUserPreferences(userId);
 
     console.log("[createDefaultUserSetup] 기본 설정 생성 완료:", {
       userId,
@@ -109,6 +120,70 @@ export async function createDefaultUserSetup(userId: string) {
   } catch (error) {
     console.error("[createDefaultUserSetup] 기본 설정 생성 실패:", error);
     throw error;
+  }
+}
+
+/**
+ * 사용자의 모든 Fragrance와 Genre에 초기 가중치 +1 부여
+ */
+async function initializeUserPreferences(userId: string) {
+  try {
+    // 모든 Fragrance 조회
+    const allFragrances = await prisma.fragrance.findMany();
+    
+    // 모든 Genre 조회
+    const allGenres = await prisma.genre.findMany();
+
+    // 각 Fragrance에 대해 ScentPreference 생성 (weight = 1)
+    // 이미 존재하는 경우 스킵 (중복 생성 방지)
+    for (const fragrance of allFragrances) {
+      const existing = await prisma.scentPreference.findUnique({
+        where: {
+          userId_scentId: {
+            userId,
+            scentId: fragrance.id,
+          },
+        },
+      });
+
+      if (!existing) {
+        await prisma.scentPreference.create({
+          data: {
+            userId,
+            scentId: fragrance.id,
+            weight: 1, // 초기 가중치
+          },
+        });
+      }
+    }
+
+    // 각 Genre에 대해 GenrePreference 생성 (weight = 1)
+    // 이미 존재하는 경우 스킵 (중복 생성 방지)
+    for (const genre of allGenres) {
+      const existing = await prisma.genrePreference.findUnique({
+        where: {
+          userId_genreId: {
+            userId,
+            genreId: genre.id,
+          },
+        },
+      });
+
+      if (!existing) {
+        await prisma.genrePreference.create({
+          data: {
+            userId,
+            genreId: genre.id,
+            weight: 1, // 초기 가중치
+          },
+        });
+      }
+    }
+
+    console.log(`[initializeUserPreferences] 초기 가중치 부여 완료 (userId: ${userId})`);
+  } catch (error) {
+    console.error("[initializeUserPreferences] 초기 가중치 부여 실패:", error);
+    // 초기 가중치 부여 실패는 치명적이지 않으므로 에러를 던지지 않음
   }
 }
 

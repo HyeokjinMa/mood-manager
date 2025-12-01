@@ -21,9 +21,10 @@ import ProfileSection from "./components/ProfileSection";
 import MenuSection from "./components/MenuSection";
 import DeleteAccountModal from "./components/DeleteAccountModal";
 import { useProfile } from "./hooks/useProfile";
+import { ADMIN_EMAIL } from "@/lib/auth/mockMode";
 
 export default function MyPage() {
-  const { status } = useSession();
+  const { status, data: session } = useSession();
   const router = useRouter();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
@@ -49,6 +50,8 @@ export default function MyPage() {
     handleProfileUpdate,
     handleProfileCancel,
   } = useProfile();
+
+  const isAdminMode = session?.user?.email === ADMIN_EMAIL;
 
   const handleLogout = async () => {
     await signOut({ redirect: false });
@@ -142,6 +145,7 @@ export default function MyPage() {
           {/* Profile Section */}
           <ProfileSection
             profile={profile}
+            isAdminMode={isAdminMode}
             isEditingProfile={isEditingProfile}
             editedName={editedName}
             editedFamilyName={editedFamilyName}
