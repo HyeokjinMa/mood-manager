@@ -20,6 +20,7 @@ export function useMoodStream() {
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
   const [nextColdStartSegment, setNextColdStartSegment] = useState<MoodStreamSegment | null>(null);
   const isGeneratingRef = useRef(false); // 백그라운드 생성 중복 방지
+  const [isGeneratingNextStream, setIsGeneratingNextStream] = useState(false); // 다음 스트림 생성 중 UI 표시용
 
   // 콜드스타트 및 백그라운드 생성
   const { fetchMoodStream, generateBackgroundSegments } = useColdStart({
@@ -38,6 +39,7 @@ export function useMoodStream() {
     setMoodStream,
     setNextColdStartSegment,
     isGeneratingRef,
+    setIsGeneratingNextStream,
   });
 
   // 스트림 전환
@@ -92,6 +94,7 @@ export function useMoodStream() {
     setCurrentSegmentIndex,
     switchToNextStream,
     nextStreamAvailable,
+    isGeneratingNextStream,
   };
 }
 

@@ -14,6 +14,7 @@ interface UseAutoGenerationParams {
   setMoodStream: React.Dispatch<React.SetStateAction<MoodStream | null>>;
   setNextColdStartSegment: React.Dispatch<React.SetStateAction<MoodStreamSegment | null>>;
   isGeneratingRef: React.MutableRefObject<boolean>;
+  setIsGeneratingNextStream: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 /**
@@ -25,6 +26,7 @@ export function useAutoGeneration({
   setMoodStream,
   setNextColdStartSegment,
   isGeneratingRef,
+  setIsGeneratingNextStream,
 }: UseAutoGenerationParams) {
   const generateNextStream = useCallback(async () => {
     if (!moodStream || isGeneratingRef.current) {
@@ -38,6 +40,7 @@ export function useAutoGeneration({
     
     console.log("[useAutoGeneration] 1 segment remaining. Generating next stream...");
     isGeneratingRef.current = true;
+    setIsGeneratingNextStream(true);
     
     try {
       // 현재 스트림의 마지막 세그먼트의 종료 시점 계산
@@ -122,8 +125,9 @@ export function useAutoGeneration({
       console.error("[useAutoGeneration] Error generating next stream:", error);
     } finally {
       isGeneratingRef.current = false;
+      setIsGeneratingNextStream(false);
     }
-  }, [moodStream, currentSegmentIndex, setMoodStream, setNextColdStartSegment, isGeneratingRef]);
+  }, [moodStream, currentSegmentIndex, setMoodStream, setNextColdStartSegment, isGeneratingRef, setIsGeneratingNextStream]);
 
   return {
     generateNextStream,

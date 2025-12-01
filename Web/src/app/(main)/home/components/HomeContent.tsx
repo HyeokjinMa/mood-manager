@@ -104,7 +104,11 @@ export default function HomeContent({
   }, [shouldFetchLLM, isLoadingParams, backgroundParams, onBackgroundParamsChange]);
   
   // 새로고침 버튼에서 사용할 LLM 로딩 상태
-  const isLLMLoading = shouldFetchLLM && isLoadingParams;
+  // - 사용자가 새로고침을 누른 순간(shouldFetchLLM === true)부터
+  // - 실제 LLM 호출이 끝나서 isLoadingParams === false가 되고,
+  //   backgroundParams까지 채워져서 shouldFetchLLM이 false로 내려갈 때까지
+  // 전 구간을 "LLM 로딩 중"으로 간주한다.
+  const isLLMLoading = shouldFetchLLM || isLoadingParams;
   
   // LLM 결과 및 무드 변경을 디바이스에 반영
   useDeviceSync({

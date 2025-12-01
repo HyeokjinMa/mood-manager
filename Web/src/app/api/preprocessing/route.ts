@@ -2,7 +2,7 @@
 /**
  * [파일 역할]
  * - 오늘 날짜의 생체 데이터(raw_periodic)를 기반으로
- *   스트레스/수면/날씨/선호도/감정 데이터를 종합하여 반환하는 API
+ *   스트레스/수면/날씨/감정 카운트 데이터를 종합하여 반환하는 API
  *
  * [구성 요소]
  * 1) 평균 스트레스 지수
@@ -10,8 +10,7 @@
  * 3) 가장 최근 수면 점수 (수면 세션 기반)
  * 4) 가장 최근 수면 시간
  * 5) 날씨 정보
- * 6) 사용자 선호도 (향/조명/음악 Top3)
- * 7) 한숨/웃음 등 감정 신호
+ * 6) 감정 카운트(웃음/한숨/울음) + 누적 시간
  */
 
 import { NextResponse } from "next/server";
@@ -20,9 +19,7 @@ import { fetchTodayPeriodicRaw } from "@/backend/jobs/fetchTodayPeriodicRaw";
 import { calcTodaySleepScore } from "@/backend/jobs/calcTodaySleepScore";
 import { fetchWeather } from "@/lib/weather/fetchWeather";
 import { requireAuth, checkMockMode } from "@/lib/auth/session";
-
-// Emotion
-import { fetchDailySignals } from "@/lib/moodSignals/fetchDailySignals";
+import { getEmotionCounts, getAccumulationDuration } from "@/lib/emotionCounts/EmotionCountStore";
 
 // Stress
 import { calculateStressIndex } from "@/lib/stress/calculateStressIndex";
@@ -47,7 +44,7 @@ export async function GET() {
   const session = sessionOrError;
 
   // 관리자 모드 확인
-  if (checkMockMode(session)) {
+  if (await checkMockMode(session)) {
     console.log("[GET /api/preprocessing] 목업 모드: 관리자 계정");
     const { getMockPreprocessingData } = await import("@/lib/mock/mockData");
     return NextResponse.json(getMockPreprocessingData());
@@ -112,27 +109,19 @@ export async function GET() {
       latestSleepScore = sleepResult.score;
       latestSleepDuration = sleepResult.totalMinutes;
     } else {
-      // 수면 데이터 없을 때 기본값 (LLM Input 스펙 기준)
+      // 수면 데이터 없을 때 기본값
       latestSleepScore = 70;   // 중간 점수
       latestSleepDuration = 480; // 8시간
     }
 
     // ------------------------------------------------------------
-    // 5) 감정 이벤트 (ML 서버에서 실시간으로 받은 카운트 기반)
+    // 5) 감정 카운트 (누적 카운터 방식)
     // ------------------------------------------------------------
-    const signals = await fetchDailySignals(USER_ID);
-
-    // ML 서버에서 분류한 Laughter, Sigh, Negative 카운트 기반
-    // 타임스탬프는 현재 시간으로 채움 (TODO: 실제 이벤트 발생 시간 저장 필요)
-    const emotionEvents = {
-      laughter: Array(signals.laugh_count || 0).fill(Date.now()),
-      sigh: Array(signals.sigh_count || 0).fill(Date.now()),
-      negative: Array(signals.negative_count || 0).fill(Date.now()),
-      neutral: signals.laugh_count === 0 && signals.sigh_count === 0 && signals.negative_count === 0 ? [Date.now()] : [],
-    };
+    const emotionCounts = getEmotionCounts(USER_ID);
+    const accumulationDurationSeconds = getAccumulationDuration(USER_ID);
 
     // ------------------------------------------------------------
-    // 6) 최종 JSON 응답 (LLM Input 스펙에 맞춤)
+    // 6) 최종 JSON 응답 (Python + LLM 입력 스펙에 맞춤)
     // ------------------------------------------------------------
     return NextResponse.json(
       {
@@ -149,7 +138,23 @@ export async function GET() {
           sky: 1,
         },
 
-        emotionEvents: emotionEvents,
+        // 새로운 형식: 카운트 기반
+        emotionCounts: {
+          laughter: emotionCounts.laughter,
+          sigh: emotionCounts.sigh,
+          crying: emotionCounts.crying,
+        },
+        accumulationDurationSeconds,
+        lastResetTime: emotionCounts.lastResetTime,
+
+        // 하위 호환성: 타임스탬프 배열 (기존 코드 지원용, 현재는 비워둠)
+        emotionEvents: {
+          laughter: [],
+          sigh: [],
+          anger: [],
+          sadness: [],
+          neutral: [],
+        },
       },
       { status: 200 }
     );
