@@ -388,24 +388,6 @@ def build_yesterday_model_from_raw(
 # 6. 유저 리스트/원데이 raw 데이터 API
 # ============================================================
 
-def fetch_user_ids_for_day(date: datetime) -> List[str]:
-    """
-    date 기준으로 '어제 모델을 만들어야 할 유저 id 리스트'를
-    서비스 API에서 가져오는 함수.
-
-    ⚠️ 실제 API 스펙에 맞게 구현 필요.
-    """
-    # 예시:
-    # url = "https://your-service/api/users/active"
-    # params = {"date": date.strftime("%Y-%m-%d")}
-    # r = requests.get(url, params=params, timeout=5)
-    # r.raise_for_status()
-    # data = r.json()  # 예: {"user_ids": ["user_001", "user_002", ...]}
-    # return data["user_ids"]
-
-    raise NotImplementedError("fetch_user_ids_for_day() 안에 실제 유저 리스트 API 로직을 구현하세요.")
-
-
 def fetch_day_raw_from_api(user_id: str, date: datetime) -> pd.DataFrame:
     """
     실제 서비스 API에서 특정 user_id, date 하루(10분 간격) raw 데이터를 불러오는 함수.
@@ -454,14 +436,7 @@ def build_yesterday_model_for_user(user_id: str, date: datetime) -> None:
 # 8. 메인: 여러 유저 전부 API로 처리
 # ============================================================
 
-if __name__ == "__main__":
-    today = datetime.today()
-    yesterday = today - timedelta(days=1)
+def run_yesterday_pipeline_for_user(user_id: str):
+    yesterday = datetime.today() - timedelta(days=1)
+    build_yesterday_model_for_user(user_id, yesterday)
 
-    user_ids = fetch_user_ids_for_day(yesterday)
-
-    for uid in user_ids:
-        try:
-            build_yesterday_model_for_user(uid, yesterday)
-        except Exception as e:
-            print(f"[ERROR] Failed to build model for user={uid}: {e}")
