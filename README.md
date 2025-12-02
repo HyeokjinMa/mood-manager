@@ -43,8 +43,10 @@ The service analyzes biometric signals collected from the WearOS device (such as
 
   * **Real-time data bridge:** Relays data between the wearable device, ML server, and Web App.
   * **Data structure:**
-      * `users/{userId}/raw_periodic/{docId}` – biometric data  
-      * `users/{userId}/raw_events/{docId}` – audio events (Base64 WAV)
+      * `users/{userId}/raw_periodic/{docId}` – biometric data (heartRate, HRV, stress, etc.)
+      * `users/{userId}/raw_events/{docId}` – audio events (Base64 WAV, `ml_processed` status)
+        * **ML Processing Flow:** ML server queries `ml_processed == 'pending'`, processes audio, then updates to `'completed'`
+        * **Fields:** `audio_base64`, `timestamp`, `ml_processed` (required), `event_dbfs`, `event_duration_ms`, `event_type_guess` (ML unused)
 
 ### 3. ML Python Microservice
 
