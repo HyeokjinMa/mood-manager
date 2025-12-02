@@ -20,6 +20,7 @@ import BottomNav from "@/components/navigation/BottomNav";
 import ProfileSection from "./components/ProfileSection";
 import MenuSection from "./components/MenuSection";
 import DeleteAccountModal from "./components/DeleteAccountModal";
+import ChangePasswordModal from "./components/ChangePasswordModal";
 import { useProfile } from "./hooks/useProfile";
 import { ADMIN_EMAIL } from "@/lib/auth/mockMode";
 
@@ -29,6 +30,7 @@ export default function MyPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   const {
     profile,
@@ -40,6 +42,9 @@ export default function MyPage() {
     editedPhone,
     profileImage,
     isUpdating,
+    nameError,
+    familyNameError,
+    birthDateError,
     setIsEditingProfile,
     setEditedName,
     setEditedFamilyName,
@@ -154,6 +159,9 @@ export default function MyPage() {
             editedPhone={editedPhone}
             profileImage={profileImage}
             isUpdating={isUpdating}
+            nameError={nameError}
+            familyNameError={familyNameError}
+            birthDateError={birthDateError}
             onEditClick={() => setIsEditingProfile(true)}
             onSave={handleProfileUpdate}
             onCancel={handleProfileCancel}
@@ -169,6 +177,7 @@ export default function MyPage() {
           <MenuSection
             onLogout={handleLogout}
             onDeleteAccount={() => setShowDeleteConfirm(true)}
+            onChangePassword={() => setShowChangePassword(true)}
           />
         </div>
       </div>
@@ -186,6 +195,12 @@ export default function MyPage() {
           setShowDeleteConfirm(false);
           setDeleteConfirmText("");
         }}
+      />
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        show={showChangePassword}
+        onClose={() => setShowChangePassword(false)}
       />
     </div>
   );

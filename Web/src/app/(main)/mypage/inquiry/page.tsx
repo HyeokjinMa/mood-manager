@@ -35,36 +35,29 @@ export default function InquiryPage() {
     setIsSubmitting(true);
 
     try {
-      // [MOCK] 1:1 문의 제출 (로컬 상태만 업데이트)
-      // TODO: 백엔드 API로 교체 필요
-      // API 명세:
-      // POST /api/inquiry
-      // - 인증: NextAuth session (쿠키 기반)
-      // - 요청: { subject: string, message: string }
-      // - 응답: { success: boolean, inquiryId: string }
-      // - 설명: 1:1 문의 제출 및 저장
+      const response = await fetch("/api/inquiry", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ subject, message }),
+      });
 
-      // Mock: Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to submit inquiry");
+      }
 
-      // const response = await fetch("/api/inquiry", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   credentials: "include",
-      //   body: JSON.stringify({ subject, message }),
-      // });
-
-      // if (!response.ok) {
-      //   const error = await response.json();
-      //   throw new Error(error.message || "Failed to submit inquiry");
-      // }
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.message || "Failed to submit inquiry");
+      }
 
       setIsSubmitted(true);
     } catch (error) {
       console.error("Error submitting inquiry:", error);
-      toast.error("Failed to submit inquiry. Please try again.");
+      toast.error(error instanceof Error ? error.message : "Failed to submit inquiry. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
