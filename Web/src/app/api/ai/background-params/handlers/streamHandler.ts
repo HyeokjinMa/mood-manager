@@ -104,7 +104,7 @@ export async function handleStreamMode({
   try {
     // ===== 2. Python 서버에서 감정 예측 받기 =====
     // PYTHON_SERVER_URL 이 없는 환경에서는 Python 단계를 건너뛰고
-    // 바로 LLM-only fallback 으로 진행한다.
+    // 바로 LLM-only fallback으로 진행
     if (!process.env.PYTHON_SERVER_URL) {
       console.warn(
         "[Stream Handler] PYTHON_SERVER_URL not set. Skipping Python step and using LLM-only fallback."
