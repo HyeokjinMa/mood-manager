@@ -62,7 +62,7 @@ export default function DeviceCardExpanded({
 
   return (
     <div
-      className={`p-4 rounded-xl shadow-md border relative animate-expand cursor-pointer transition-all min-h-[200px] backdrop-blur-sm
+      className={`p-4 rounded-xl shadow-md border relative animate-expand cursor-pointer transition-all duration-300 min-h-[200px] backdrop-blur-sm hover:shadow-lg
         ${device.power ? "" : "opacity-60"}
       `}
       style={{

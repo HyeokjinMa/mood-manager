@@ -32,7 +32,7 @@ export default function ScentControl({ mood, onScentClick, moodColor }: ScentCon
           e.stopPropagation();
           onScentClick();
         }}
-        className="w-6 h-6 rounded-full shadow-sm flex items-center justify-center transition hover:scale-105 cursor-pointer"
+        className="w-6 h-6 rounded-full shadow-sm flex items-center justify-center transition-all duration-300 hover:scale-105 cursor-pointer"
         style={{ backgroundColor: hexToRgba(buttonColor, 0.85) }} // 투명도 85% (더 진하게)
         title="Change scent"
       >

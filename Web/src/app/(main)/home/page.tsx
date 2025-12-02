@@ -59,10 +59,18 @@ export default function HomePage() {
   const { showSurvey, handleSurveyComplete, handleSurveySkip } = useSurvey();
 
   // 로딩 중이거나 인증되지 않은 경우 로딩 화면 표시
-  if (status === "loading" || status === "unauthenticated") {
+  if (status === "loading") {
     return (
       <div className="flex flex-col h-screen overflow-hidden relative items-center justify-center">
         <p className="text-gray-500">Loading...</p>
+      </div>
+    );
+  }
+
+  if (status === "unauthenticated") {
+    return (
+      <div className="flex flex-col h-screen overflow-hidden relative items-center justify-center">
+        <p className="text-red-500">Authentication required. Redirecting to login...</p>
       </div>
     );
   }
@@ -74,6 +82,13 @@ export default function HomePage() {
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center">
           <p className="text-gray-500">Loading devices...</p>
+        </div>
+      ) : devices.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-gray-500 mb-2">No devices found</p>
+            <p className="text-sm text-gray-400">Add a device to get started</p>
+          </div>
         </div>
       ) : (
         <HomeContent

@@ -45,7 +45,7 @@ export default function DeviceCardSmall({
   return (
     <div
       onClick={onClick}
-      className={`h-[100px] p-3 rounded-xl shadow-sm border cursor-pointer transition-all flex flex-col backdrop-blur-sm ${
+      className={`h-[100px] p-3 rounded-xl shadow-sm border cursor-pointer transition-all duration-300 flex flex-col backdrop-blur-sm hover:shadow-md hover:scale-[1.02] ${
         device.type === "manager" ? "justify-between" : "justify-start gap-2"
       }
         ${device.power ? "" : "opacity-60"}

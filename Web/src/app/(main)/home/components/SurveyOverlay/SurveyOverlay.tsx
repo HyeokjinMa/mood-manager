@@ -45,27 +45,27 @@ export default function SurveyOverlay({ onComplete, onSkip }: SurveyOverlayProps
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
 
-  // 향 더블클릭 처리 (싫어하는 항목 제거)
-  const handleScentDoubleClick = (scent: string) => {
+  // 향 클릭 처리 (호/불호 전환)
+  const handleScentClick = (scent: string) => {
     setScentDisliked((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(scent)) {
-        newSet.delete(scent);
+        newSet.delete(scent); // 불호 → 호
       } else {
-        newSet.add(scent);
+        newSet.add(scent); // 호 → 불호
       }
       return newSet;
     });
   };
 
-  // 음악 장르 더블클릭 처리 (싫어하는 항목 제거)
-  const handleMusicDoubleClick = (music: string) => {
+  // 음악 장르 클릭 처리 (호/불호 전환)
+  const handleMusicClick = (music: string) => {
     setMusicDisliked((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(music)) {
-        newSet.delete(music);
+        newSet.delete(music); // 불호 → 호
       } else {
-        newSet.add(music);
+        newSet.add(music); // 호 → 불호
       }
       return newSet;
     });
@@ -121,39 +121,28 @@ export default function SurveyOverlay({ onComplete, onSkip }: SurveyOverlayProps
             <>
               <h2 className="text-2xl font-bold mb-2">Scent Preferences</h2>
               <p className="text-gray-600 mb-6 text-sm">
-                Double-click (or double-tap) on scents you dislike to remove them. All other scents will be treated as preferred.
+                Click on scents to toggle your preference. Green = liked, Gray = disliked.
               </p>
 
               <div className="flex flex-wrap gap-2 mb-6 max-h-[60vh] overflow-y-auto">
-                {SCENT_OPTIONS.filter((scent) => !scentDisliked.has(scent)).map((scent) => (
-                  <button
-                    key={scent}
-                    type="button"
-                    onDoubleClick={() => handleScentDoubleClick(scent)}
-                    className="px-4 py-2 rounded-lg text-sm font-medium bg-green-500 text-white hover:bg-green-600 transition-all"
-                  >
-                    {scent}
-                  </button>
-                ))}
+                {SCENT_OPTIONS.map((scent) => {
+                  const isDisliked = scentDisliked.has(scent);
+                  return (
+                    <button
+                      key={scent}
+                      type="button"
+                      onClick={() => handleScentClick(scent)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        isDisliked
+                          ? "bg-gray-400 text-white hover:bg-gray-500 line-through"
+                          : "bg-green-500 text-white hover:bg-green-600"
+                      }`}
+                    >
+                      {scent}
+                    </button>
+                  );
+                })}
               </div>
-
-              {scentDisliked.size > 0 && (
-                <div className="mb-4">
-                  <p className="text-sm text-gray-500 mb-2">Removed scents (double-click to restore):</p>
-                  <div className="flex flex-wrap gap-2">
-                    {Array.from(scentDisliked).map((scent) => (
-                      <button
-                        key={scent}
-                        type="button"
-                        onDoubleClick={() => handleScentDoubleClick(scent)}
-                        className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-400 text-white hover:bg-gray-500 transition-all line-through"
-                      >
-                        {scent}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               <button
                 onClick={handleNext}
@@ -169,39 +158,28 @@ export default function SurveyOverlay({ onComplete, onSkip }: SurveyOverlayProps
             <>
               <h2 className="text-2xl font-bold mb-2">Music Genre Preferences</h2>
               <p className="text-gray-600 mb-6 text-sm">
-                Double-click (or double-tap) on music genres you dislike to remove them. All other genres will be treated as preferred.
+                Click on genres to toggle your preference. Green = liked, Gray = disliked.
               </p>
 
               <div className="flex flex-wrap gap-2 mb-6 max-h-[60vh] overflow-y-auto">
-                {MUSIC_OPTIONS.filter((music) => !musicDisliked.has(music)).map((music) => (
-                  <button
-                    key={music}
-                    type="button"
-                    onDoubleClick={() => handleMusicDoubleClick(music)}
-                    className="px-4 py-2 rounded-lg text-sm font-medium bg-green-500 text-white hover:bg-green-600 transition-all"
-                  >
-                    {music}
-                  </button>
-                ))}
+                {MUSIC_OPTIONS.map((music) => {
+                  const isDisliked = musicDisliked.has(music);
+                  return (
+                    <button
+                      key={music}
+                      type="button"
+                      onClick={() => handleMusicClick(music)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        isDisliked
+                          ? "bg-gray-400 text-white hover:bg-gray-500 line-through"
+                          : "bg-green-500 text-white hover:bg-green-600"
+                      }`}
+                    >
+                      {music}
+                    </button>
+                  );
+                })}
               </div>
-
-              {musicDisliked.size > 0 && (
-                <div className="mb-4">
-                  <p className="text-sm text-gray-500 mb-2">Removed genres (double-click to restore):</p>
-                  <div className="flex flex-wrap gap-2">
-                    {Array.from(musicDisliked).map((music) => (
-                      <button
-                        key={music}
-                        type="button"
-                        onDoubleClick={() => handleMusicDoubleClick(music)}
-                        className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-400 text-white hover:bg-gray-500 transition-all line-through"
-                      >
-                        {music}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               <div className="flex gap-3">
                 <button
