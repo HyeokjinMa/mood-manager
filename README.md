@@ -188,13 +188,13 @@ For production environments, ensure the following:
 
 ## Members
 
-| Name (KOR) | Name (ENG) | Department | Email |
-| :--- | :--- | :--- | :--- |
-| 마혁진 | Hyeokjin Ma | Information Systems | tema0311@hanyang.ac.kr |
-| 박새연 | Saeyeon Park | Information Systems | saeyeon0317@hanyang.ac.kr |
-| 안준성 | Junseong Ahn | Information Systems | lljs1113@hanyang.ac.kr |
-| 채희주 | Heejoo Chae | Information Systems | heeju0203@hanyang.ac.kr |
-| 최현우 | Hyeonwoo Choi | Information Systems | hhyyrr0713@hanyang.ac.kr |
+| Name | Department | Email |
+| :--- | :--- | :--- |
+| Hyeokjin Ma | Information Systems | tema0311@hanyang.ac.kr |
+| Saeyeon Park | Information Systems | saeyeon0317@hanyang.ac.kr |
+| Junseong Ahn | Information Systems | lljs1113@hanyang.ac.kr |
+| Heejoo Chae | Information Systems | heeju0203@hanyang.ac.kr |
+| Hyeonwoo Choi | Information Systems | hhyyrr0713@hanyang.ac.kr |
 
 ---
 

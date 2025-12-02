@@ -1,302 +1,276 @@
-# 설치 및 실행 가이드
+# Setup Guide
 
-이 문서는 프로젝트를 처음 다운로드한 팀원들이 프로젝트를 실행할 수 있도록 필요한 모든 정보를 제공합니다.
+Complete guide for setting up and running the Mood Manager project.
 
 ---
 
-## 필수 요구사항
+## Requirements
 
-### 1. Node.js 버전
+### 1. Node.js Version
 
-- **권장 버전**: Node.js 18.x 이상 (현재 개발 환경: v22.21.0)
-- **최소 버전**: Node.js 18.0.0
+- **Recommended**: Node.js 18.x or higher (current: v22.21.0)
+- **Minimum**: Node.js 18.0.0
 
-**Node.js 버전 확인**:
+**Check Node.js version**:
 ```bash
 node --version
 ```
 
-**Node.js 설치**:
-- 공식 사이트: https://nodejs.org/
-- 또는 nvm 사용 (권장): https://github.com/nvm-sh/nvm
+**Install Node.js**:
+- Official site: https://nodejs.org/
+- Or use nvm (recommended): https://github.com/nvm-sh/nvm
 
-**nvm 사용 시**:
+**Using nvm**:
 ```bash
-# 프로젝트 루트에 .nvmrc 파일이 있으면 자동으로 버전 전환
+# Auto-switch if .nvmrc file exists in project root
+cd Web
 nvm use
 
-# 또는 직접 버전 지정
+# Or specify version directly
 nvm install 22.21.0
 nvm use 22.21.0
 ```
 
-### 2. npm 버전
+### 2. npm Version
 
-- **권장 버전**: npm 10.x 이상 (현재 개발 환경: 10.9.4)
-- **최소 버전**: npm 8.0.0
+- **Recommended**: npm 10.x or higher (current: 10.9.4)
+- **Minimum**: npm 8.0.0
 
-**npm 버전 확인**:
+**Check npm version**:
 ```bash
 npm --version
 ```
 
-**npm 업데이트**:
+**Update npm**:
 ```bash
 npm install -g npm@latest
 ```
 
 ### 3. Git
 
-- Git이 설치되어 있어야 합니다.
-- 버전 확인: `git --version`
+Git must be installed for cloning the repository.
+
+### 4. PostgreSQL (for Production)
+
+- **Version**: PostgreSQL 14.x or higher
+- Required for V2 (database integration)
 
 ---
 
-## 설치 방법
+## Installation
 
-### 1. 프로젝트 클론
+### 1. Clone the Repository
 
 ```bash
 git clone <repository-url>
 cd mood-manager
 ```
 
-### 2. 의존성 설치
+### 2. Install Dependencies
 
 ```bash
+cd Web
 npm install
 ```
 
-**주의사항**:
-- `package-lock.json`이 있으면 자동으로 동일한 버전 설치
-- 설치 중 에러 발생 시:
-  ```bash
-  # 캐시 정리 후 재설치
-  npm cache clean --force
-  rm -rf node_modules package-lock.json
-  npm install
-  ```
+**Important**: All commands must be run from the `Web/` directory.
 
-### 3. 환경 변수 설정
+### 3. Configure Environment Variables
 
-프로젝트 루트에 `.env.local` 파일을 생성하고 다음 내용을 추가하세요:
+Create a `Web/.env.local` file and set the following environment variables:
 
 ```env
-# NextAuth 설정
+# NextAuth Configuration
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your-secret-key-here
 
-# Firebase 설정 (선택사항, 백엔드 연동 전까지는 불필요)
-# FIREBASE_API_KEY=your-api-key
-# FIREBASE_AUTH_DOMAIN=your-auth-domain
-# FIREBASE_PROJECT_ID=your-project-id
-# FIREBASE_STORAGE_BUCKET=your-storage-bucket
-# FIREBASE_MESSAGING_SENDER_ID=your-sender-id
-# FIREBASE_APP_ID=your-app-id
+# Database Connection (PostgreSQL)
+DATABASE_URL=postgresql://user:password@localhost:5432/moodmanager
 
-# OpenAI 설정 (선택사항, 현재 사용 안 함)
-# OPENAI_API_KEY=your-openai-key
+# OpenAI API (Optional, for LLM features)
+OPENAI_API_KEY=your-openai-api-key
 
-# 백엔드 URL (백엔드 연동 시)
-# BACKEND_URL=http://localhost:8000
-# 또는
-# NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+# Firebase Configuration (Optional, for Firestore integration)
+NEXT_PUBLIC_FIREBASE_API_KEY=your-firebase-api-key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-firebase-auth-domain
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-firebase-project-id
+NEXT_PUBLIC_FIREBASE_APP_ID=your-firebase-app-id
+FIREBASE_ADMIN_CREDENTIALS=your-firebase-admin-credentials-json
+
+# Python ML Server (Optional, for ML prediction)
+PYTHON_SERVER_URL=http://localhost:5000
+PYTHON_SERVER_TIMEOUT=30000
+PYTHON_SERVER_RETRY_MAX=3
+
+# ML API Authentication (Optional)
+ML_API_KEY=your-ml-api-key
 ```
 
-**`.env.local` 파일 예시**:
-```env
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=development-secret-key-change-in-production
-```
-
-**주의사항**:
-- `.env.local` 파일은 Git에 커밋하지 않습니다 (`.gitignore`에 포함됨)
-- 팀원 간 공유가 필요한 설정은 `.env.example` 파일을 참고하세요
+**Important Notes**:
+- `NEXTAUTH_SECRET` must be set to a strong random string in production
+- `DATABASE_URL` is the PostgreSQL connection string
+- If OpenAI API key is not provided, LLM features will use mock data
 
 ---
 
-## 실행 방법
+## Database Setup
 
-### 개발 서버 실행
+### Local Development (PostgreSQL)
+
+1. **Install PostgreSQL**
+
+   ```bash
+   # macOS (using Homebrew)
+   brew install postgresql@14
+   brew services start postgresql@14
+
+   # Ubuntu/Debian
+   sudo apt-get install postgresql-14
+
+   # Windows
+   # Download from https://www.postgresql.org/download/windows/
+   ```
+
+2. **Create Database**
+
+   ```bash
+   # Connect to PostgreSQL
+   psql -U postgres
+
+   # Create database
+   CREATE DATABASE moodmanager;
+
+   # Exit
+   \q
+   ```
+
+3. **Update Environment Variable**
+
+   ```env
+   DATABASE_URL=postgresql://postgres:password@localhost:5432/moodmanager
+   ```
+
+### Production (AWS RDS)
+
+1. **Get Connection Details**
+
+   - Host: `mood-manager-db.cd4iisicagg0.ap-northeast-2.rds.amazonaws.com`
+   - Port: `5432`
+   - User: `postgres`
+   - Password: `moodmanagerrds`
+
+2. **Set Environment Variable**
+
+   ```env
+   DATABASE_URL=postgresql://postgres:moodmanagerrds@mood-manager-db.cd4iisicagg0.ap-northeast-2.rds.amazonaws.com:5432/postgres?sslmode=require
+   ```
+
+   **Note**: Replace `postgres` with the actual database name if different.
+
+---
+
+## Database Migration
+
+### 1. Generate Prisma Client
 
 ```bash
+cd Web
+npx prisma generate
+```
+
+### 2. Run Migrations
+
+**Development**:
+```bash
+npx prisma migrate dev
+```
+
+**Production**:
+```bash
+npx prisma migrate deploy
+```
+
+### 3. Verify Migration
+
+```bash
+# Open Prisma Studio
+npx prisma studio
+```
+
+### Migration Notes
+
+- **V1 (Mock Mode)**: Database migration is optional. You can test the full flow with mock data using the admin account (`admin@moodmanager.com` / `admin1234`).
+- **V2 (Production)**: Database migration is required for user data persistence.
+
+---
+
+## Running the Application
+
+### Development Mode
+
+```bash
+cd Web
 npm run dev
 ```
 
-서버가 시작되면 브라우저에서 `http://localhost:3000`으로 접속할 수 있습니다.
+Access the application at `http://localhost:3000` in your browser.
 
-### 프로덕션 빌드
+### Production Build
 
 ```bash
-# 빌드
+cd Web
 npm run build
-
-# 프로덕션 서버 실행
-npm run start
-```
-
-### 린트 실행
-
-```bash
-npm run lint
+npm start
 ```
 
 ---
 
-## 주요 의존성 버전
+## Admin Mode (Mock Mode)
 
-### 핵심 프레임워크
-- **Next.js**: 15.5.6
-- **React**: 19.1.0
-- **React DOM**: 19.1.0
-- **TypeScript**: ^5
+In V1, you can test the full flow without a real database:
 
-### 주요 라이브러리
-- **next-auth**: ^4.24.13
-- **firebase**: ^12.5.0
-- **tailwindcss**: ^4
-- **lucide-react**: ^0.546.0
-- **react-hot-toast**: ^2.6.0
-- **react-icons**: ^5.5.0
+- **Email**: `admin@moodmanager.com`
+- **Password**: `admin1234`
 
-전체 의존성 목록은 `package.json`을 참고하세요.
+In Admin Mode:
+- Create/delete devices with mock data
+- Manage mood sets based on localStorage
+- Make actual LLM calls (if API key is provided)
 
 ---
 
-## 문제 해결
+## Troubleshooting
 
-### 1. `npm install` 실패
+### Common Issues
 
-**에러**: `ERESOLVE unable to resolve dependency tree`
+1. **Port 3000 already in use**
+   ```bash
+   # Kill process on port 3000
+   lsof -ti:3000 | xargs kill -9
+   ```
 
-**해결 방법**:
-```bash
-# npm 캐시 정리
-npm cache clean --force
+2. **Prisma Client not generated**
+   ```bash
+   npx prisma generate
+   ```
 
-# node_modules 및 package-lock.json 삭제 후 재설치
-rm -rf node_modules package-lock.json
-npm install
-```
+3. **Database connection failed**
+   - Check `DATABASE_URL` environment variable
+   - Verify PostgreSQL is running
+   - Check firewall settings
 
-### 2. `npm run dev` 실행 시 에러
-
-**에러**: `Error: Cannot find module`
-
-**해결 방법**:
-```bash
-# 의존성 재설치
-rm -rf node_modules package-lock.json
-npm install
-```
-
-### 3. 포트 3000이 이미 사용 중
-
-**에러**: `Port 3000 is already in use`
-
-**해결 방법**:
-```bash
-# 다른 포트 사용
-PORT=3001 npm run dev
-
-# 또는 기존 프로세스 종료
-# macOS/Linux
-lsof -ti:3000 | xargs kill -9
-# Windows
-netstat -ano | findstr :3000
-taskkill /PID <PID> /F
-```
-
-### 4. Turbopack 관련 에러
-
-**에러**: `Turbopack` 관련 에러
-
-**해결 방법**:
-```bash
-# package.json의 scripts에서 --turbopack 제거 후 실행
-# 또는 Next.js 버전 확인
-npm list next
-```
-
-### 5. TypeScript 타입 에러
-
-**에러**: TypeScript 컴파일 에러
-
-**해결 방법**:
-```bash
-# TypeScript 재설치
-npm install --save-dev typescript@latest
-
-# 타입 정의 재설치
-npm install --save-dev @types/node @types/react @types/react-dom
-```
-
-### 6. 모듈을 찾을 수 없음
-
-**에러**: `Module not found: Can't resolve`
-
-**해결 방법**:
-```bash
-# 의존성 재설치
-rm -rf node_modules package-lock.json .next
-npm install
-```
+4. **Module not found errors**
+   ```bash
+   # Clear node_modules and reinstall
+   rm -rf node_modules package-lock.json
+   npm install
+   ```
 
 ---
 
-## 프로젝트 구조 확인
+## Additional Resources
 
-프로젝트가 올바르게 설치되었는지 확인:
-
-```bash
-# 주요 디렉토리 확인
-ls -la src/
-ls -la src/app/
-ls -la src/components/
-
-# package.json 확인
-cat package.json
-```
-
----
-
-## 추가 설정 (선택사항)
-
-### 1. VS Code 확장 프로그램 (권장)
-
-- ESLint
-- Prettier
-- Tailwind CSS IntelliSense
-- TypeScript and JavaScript Language Features
-
-### 2. Git 설정
-
-```bash
-# .gitignore 확인
-cat .gitignore
-
-# 환경 변수 파일이 커밋되지 않았는지 확인
-git status
-```
-
----
-
-## 다음 단계
-
-설치가 완료되면 다음 문서를 참고하세요:
-
-1. **프로젝트 구조**: `docs/PROJECT_STRUCTURE.md`
-2. **API 명세**: `docs/API_SPECIFICATION.md`
-3. **무드스트림 아키텍처**: `docs/MOOD_STREAM_ARCHITECTURE.md`
-4. **LLM 입력 파라미터**: `docs/LLM_INPUT_PARAMETERS.md`
-
----
-
-## 질문이나 문제가 있나요?
-
-프로젝트 실행 중 문제가 발생하면:
-
-1. 이 문서의 "문제 해결" 섹션 확인
-2. `docs/README.md`의 문서 목록 확인
-3. 팀원에게 문의
-
+- **Project Structure**: See `PROJECT_STRUCTURE.md`
+- **API Specification**: See `API_SPECIFICATION.md`
+- **Firestore Structure**: See `FIRESTORE_STRUCTURE.md`
+- **V2 Development Plan**: See `V2_DEVELOPMENT_PLAN.md`
