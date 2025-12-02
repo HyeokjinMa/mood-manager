@@ -3,11 +3,11 @@
 // ======================================================
 
 /*
-  [MoodReplaceModal 역할]
+  [MoodReplaceModal Role]
   
-  - 무드 카드 클릭 시 현재 세그먼트를 대체할지 확인하는 팝업
-  - DeviceDeleteModal과 동일한 스타일
-  - 확인 및 취소 기능
+  - Popup to confirm replacing current segment when mood card is clicked
+  - Same style as DeviceDeleteModal
+  - Confirmation and cancel functionality
 */
 
 "use client";
@@ -47,7 +47,7 @@ export default function MoodReplaceModal({
           Replace Current Segment
         </h2>
 
-        {/* 무드 정보 */}
+        {/* Mood information */}
         <div 
           className="flex items-center gap-3 mb-6 p-3 rounded-lg"
           style={{
@@ -66,12 +66,12 @@ export default function MoodReplaceModal({
           </div>
         </div>
 
-        {/* 확인 메시지 */}
+        {/* Confirmation message */}
         <p className="text-center text-gray-600 mb-6 text-sm">
           Replace the current mood segment with this saved mood? This will immediately switch to the selected mood.
         </p>
 
-        {/* 버튼 */}
+        {/* Buttons */}
         <div className="flex gap-3">
           <button
             onClick={onCancel}

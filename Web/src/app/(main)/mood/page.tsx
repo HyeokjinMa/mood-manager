@@ -15,7 +15,7 @@ import { blendWithWhite } from "@/lib/utils";
 import { getSavedMoods, deleteSavedMood, initializeSampleMoods, type SavedMood as SavedMoodType } from "@/lib/mock/savedMoodsStorage";
 import { ADMIN_EMAIL } from "@/lib/auth/mockMode";
 
-// 한 페이지에 6개(2 x 3) 무드 카드를 보여주기 위한 페이지당 개수
+// Number of mood cards per page (2 x 3 grid)
 const MOODS_PER_PAGE = 6;
 
 export default function MoodSetPage() {
@@ -29,22 +29,22 @@ export default function MoodSetPage() {
   const [moodToDelete, setMoodToDelete] = useState<SavedMoodType | null>(null);
   const [moodToReplace, setMoodToReplace] = useState<SavedMoodType | null>(null);
 
-  // 저장된 무드 목록 조회
+  // Fetch saved moods
   useEffect(() => {
     const fetchSavedMoods = async () => {
       try {
         if (isAdminMode) {
-          // 관리자 모드: localStorage에서 읽기 (API 호출 스킵)
-          initializeSampleMoods(); // 샘플 데이터 초기화 (이미 있으면 무시)
+          // Admin mode: Read from localStorage (skip API call)
+          initializeSampleMoods(); // Initialize sample data (ignored if already exists)
           const savedMoods = getSavedMoods();
-          // savedAt 기준으로 최신순 정렬
+          // Sort by savedAt (newest first)
           savedMoods.sort((a, b) => b.savedAt - a.savedAt);
           setSavedMoods(savedMoods);
           setIsLoading(false);
-          return; // API 호출하지 않음 (목업 모드 최적화)
+          return; // Skip API call (mock mode optimization)
         }
         
-        // 일반 모드: API 호출
+        // Normal mode: API call
         const response = await fetch("/api/moods/saved", {
           credentials: "include",
         });
@@ -61,30 +61,30 @@ export default function MoodSetPage() {
     fetchSavedMoods();
   }, [isAdminMode]);
 
-  // 페이지네이션 계산
+  // Pagination calculation
   const totalPages = Math.ceil(savedMoods.length / MOODS_PER_PAGE);
   const startIndex = (currentPage - 1) * MOODS_PER_PAGE;
   const endIndex = startIndex + MOODS_PER_PAGE;
   const currentMoods = savedMoods.slice(startIndex, endIndex);
 
-  // 무드 삭제
+  // Delete mood
   const handleDelete = async (savedMoodId: string) => {
     try {
       if (isAdminMode) {
-        // 관리자 모드: localStorage에서 삭제 (API 호출 스킵)
+        // Admin mode: Delete from localStorage (skip API call)
         deleteSavedMood(savedMoodId);
         setSavedMoods((prev) => prev.filter((m) => m.id !== savedMoodId));
         
-        // 현재 페이지에 아이템이 없으면 이전 페이지로 이동
+        // Move to previous page if current page has no items
         const remainingMoods = savedMoods.filter((m) => m.id !== savedMoodId);
         const newTotalPages = Math.ceil(remainingMoods.length / MOODS_PER_PAGE);
         if (currentPage > newTotalPages && newTotalPages > 0) {
           setCurrentPage(newTotalPages);
         }
-        return; // API 호출하지 않음 (목업 모드 최적화)
+        return; // Skip API call (mock mode optimization)
       }
       
-      // 일반 모드: API 호출
+      // Normal mode: API call
       const response = await fetch(`/api/moods/saved/${savedMoodId}`, {
         method: "DELETE",
         credentials: "include",
@@ -92,7 +92,7 @@ export default function MoodSetPage() {
       if (response.ok) {
         setSavedMoods((prev) => prev.filter((m) => m.id !== savedMoodId));
         
-        // 현재 페이지에 아이템이 없으면 이전 페이지로 이동
+        // Move to previous page if current page has no items
         const remainingMoods = savedMoods.filter((m) => m.id !== savedMoodId);
         const newTotalPages = Math.ceil(remainingMoods.length / MOODS_PER_PAGE);
         if (currentPage > newTotalPages && newTotalPages > 0) {
@@ -104,28 +104,28 @@ export default function MoodSetPage() {
     }
   };
 
-  // 무드 적용 (세그먼트 교체 확인 모달 표시)
+  // Apply mood (show replace segment confirmation modal)
   const handleApply = (savedMood: SavedMoodType) => {
     setMoodToReplace(savedMood);
   };
 
-  // 세그먼트 교체 확인
+  // Confirm segment replacement
   const handleReplaceConfirm = async () => {
     if (!moodToReplace) return;
     
     try {
-      // API 호출 (관리자 모드에서도 호출 가능 - 목업 응답 반환)
+      // API call (admin mode can also call - returns mock response)
       const response = await fetch(`/api/moods/saved/${moodToReplace.id}/apply`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          replaceCurrentSegment: true, // 현재 세그먼트를 대체
+          replaceCurrentSegment: true, // Replace current segment
         }),
       });
       
       if (response.ok) {
-        // 홈으로 이동하여 변경된 무드 확인
+        // Navigate to home to see the changed mood
         router.push("/home");
       }
     } catch (error) {
@@ -138,7 +138,7 @@ export default function MoodSetPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-500">로딩 중...</div>
+        <div className="text-gray-500">Loading...</div>
       </div>
     );
   }
@@ -161,17 +161,17 @@ export default function MoodSetPage() {
             </div>
           ) : (
             <>
-              {/* 무드 카드 - 2 x 3 그리드 구조 */}
+              {/* Mood cards - 2 x 3 grid layout */}
               <div className="flex-1">
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   {currentMoods.map((savedMood) => {
-                    // 파스텔 컬러 적용
+                    // Apply pastel color
                     const pastelColor = blendWithWhite(savedMood.moodColor, 0.85);
                     
                     return (
                       <div
                         key={savedMood.id}
-                        className="relative rounded-xl p-3 cursor-pointer transition-transform hover:scale-[1.02] shadow-sm flex flex-col gap-2"
+                        className="relative rounded-xl p-3 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-md flex flex-col gap-2"
                         style={{
                           backgroundColor: pastelColor,
                           border: `1px solid ${savedMood.moodColor}60`,
@@ -179,19 +179,19 @@ export default function MoodSetPage() {
                         onDoubleClick={() => handleApply(savedMood)}
                         onClick={() => {}}
                       >
-                        {/* 삭제 버튼 */}
+                        {/* Delete button */}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setMoodToDelete(savedMood);
                           }}
-                          className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/10 flex items-center justify-center text-gray-700 hover:text-red-500 transition text-[11px] z-10"
+                          className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/10 flex items-center justify-center text-gray-700 hover:bg-red-500 hover:text-white transition-all duration-200 text-[11px] z-10"
                           title="Delete"
                         >
                           ×
                         </button>
 
-                        {/* 무드 정보 - 단일 세그먼트 카드 */}
+                        {/* Mood information - single segment card */}
                         <div className="flex-1 flex flex-col gap-1">
                           <p className="text-xs font-semibold text-gray-700 truncate">
                             {savedMood.moodName}
@@ -217,7 +217,7 @@ export default function MoodSetPage() {
                 </div>
               </div>
 
-              {/* 페이지네이션 */}
+              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between mt-4 pb-4">
                   <button
@@ -254,7 +254,7 @@ export default function MoodSetPage() {
       
       <BottomNav />
 
-      {/* 삭제 확인 모달 */}
+      {/* Delete confirmation modal */}
       {moodToDelete && (
         <MoodDeleteModal
           savedMood={moodToDelete}
@@ -266,7 +266,7 @@ export default function MoodSetPage() {
         />
       )}
 
-      {/* 세그먼트 교체 확인 모달 */}
+      {/* Replace segment confirmation modal */}
       {moodToReplace && (
         <MoodReplaceModal
           savedMood={moodToReplace}

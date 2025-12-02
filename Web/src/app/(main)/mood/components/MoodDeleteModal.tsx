@@ -3,11 +3,11 @@
 // ======================================================
 
 /*
-  [MoodDeleteModal 역할]
+  [MoodDeleteModal Role]
   
-  - 무드셋 삭제 확인 팝업
-  - DeviceDeleteModal과 동일한 스타일
-  - 삭제 확인 및 취소 기능
+  - Mood set deletion confirmation popup
+  - Same style as DeviceDeleteModal
+  - Delete confirmation and cancel functionality
 */
 
 "use client";
@@ -47,7 +47,7 @@ export default function MoodDeleteModal({
           Delete Mood
         </h2>
 
-        {/* 무드 정보 */}
+        {/* Mood information */}
         <div 
           className="flex items-center gap-3 mb-6 p-3 rounded-lg"
           style={{
@@ -66,12 +66,12 @@ export default function MoodDeleteModal({
           </div>
         </div>
 
-        {/* 확인 메시지 */}
+        {/* Confirmation message */}
         <p className="text-center text-gray-600 mb-6 text-sm">
           Are you sure you want to delete this mood? This action cannot be undone.
         </p>
 
-        {/* 버튼 */}
+        {/* Buttons */}
         <div className="flex gap-3">
           <button
             onClick={onCancel}
