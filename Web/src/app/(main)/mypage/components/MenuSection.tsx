@@ -61,10 +61,13 @@ export default function MenuSection({ onLogout, onDeleteAccount, onChangePasswor
       {/* Change Password */}
       <button
         onClick={onChangePassword}
-        className="w-full flex items-center px-4 py-4 border-b border-gray-200 hover:bg-gray-50 transition text-left"
+        className="w-full flex items-center justify-between px-4 py-4 border-b border-gray-200 hover:bg-gray-50 transition text-left"
       >
-        <Key size={20} className="text-gray-400 mr-3" />
-        <span className="text-gray-700">Change Password</span>
+        <div className="flex items-center">
+          <Key size={20} className="text-gray-400 mr-3" />
+          <span className="text-gray-700">Change Password</span>
+        </div>
+        <span className="text-gray-400">›</span>
       </button>
 
       {/* Logout */}

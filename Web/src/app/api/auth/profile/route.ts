@@ -67,12 +67,14 @@ export async function GET() {
         phone: true,
         profileImageUrl: true,
         createdAt: true,
+        provider: true,
+        providerId: true,
       },
     });
 
     if (!user) {
       return NextResponse.json(
-        { error: "USER_NOT_FOUND", message: "사용자를 찾을 수 없습니다." },
+        { error: "USER_NOT_FOUND", message: "User not found" },
         { status: 404 }
       );
     }
@@ -95,15 +97,17 @@ export async function GET() {
       phone: user.phone || null,
       createdAt: user.createdAt.toISOString().split("T")[0],
       profileImageUrl: user.profileImageUrl || null,
+      provider: user.provider || null,
+      providerId: user.providerId || null,
     };
 
     return NextResponse.json({ profile });
   } catch (error) {
-    console.error("[GET /api/auth/profile] 프로필 조회 실패:", error);
+    console.error("[GET /api/auth/profile] Failed to fetch profile:", error);
     return NextResponse.json(
       {
         error: "INTERNAL_ERROR",
-        message: "프로필 조회 중 오류가 발생했습니다.",
+        message: "Failed to fetch profile",
       },
       { status: 500 }
     );
@@ -170,6 +174,8 @@ export async function PUT(request: NextRequest) {
           phone,
           createdAt: new Date().toISOString().split("T")[0],
           profileImageUrl,
+          provider: null,
+          providerId: null,
         },
       });
     }
@@ -188,7 +194,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json(
         {
           error: "INVALID_INPUT",
-          message: "이름과 성은 필수 입력 항목입니다.",
+          message: "Name and family name are required",
         },
         { status: 400 }
       );
@@ -202,7 +208,7 @@ export async function PUT(request: NextRequest) {
         return NextResponse.json(
           {
             error: "INVALID_INPUT",
-            message: "유효하지 않은 생년월일 형식입니다.",
+            message: "Invalid birth date format",
           },
           { status: 400 }
         );
@@ -214,7 +220,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json(
         {
           error: "INVALID_INPUT",
-          message: "성별은 male 또는 female이어야 합니다.",
+          message: "Gender must be 'male' or 'female'",
         },
         { status: 400 }
       );
@@ -228,7 +234,7 @@ export async function PUT(request: NextRequest) {
         return NextResponse.json(
           {
             error: "INVALID_INPUT",
-            message: "프로필 사진은 이미지 파일이어야 합니다.",
+            message: "Profile image must be an image file",
           },
           { status: 400 }
         );
@@ -239,7 +245,7 @@ export async function PUT(request: NextRequest) {
         return NextResponse.json(
           {
             error: "INVALID_INPUT",
-            message: "프로필 사진은 최대 5MB까지 업로드 가능합니다.",
+            message: "Profile image must be less than 5MB",
           },
           { status: 400 }
         );
@@ -283,6 +289,8 @@ export async function PUT(request: NextRequest) {
         phone: true,
         profileImageUrl: true,
         createdAt: true,
+        provider: true,
+        providerId: true,
       },
     });
 
@@ -303,15 +311,17 @@ export async function PUT(request: NextRequest) {
       phone: updatedUser.phone || null,
       createdAt: updatedUser.createdAt.toISOString().split("T")[0],
       profileImageUrl: updatedUser.profileImageUrl || null,
+      provider: updatedUser.provider || null,
+      providerId: updatedUser.providerId || null,
     };
 
     return NextResponse.json({ profile });
   } catch (error) {
-    console.error("[PUT /api/auth/profile] 프로필 업데이트 실패:", error);
+    console.error("[PUT /api/auth/profile] Failed to update profile:", error);
     return NextResponse.json(
       {
         error: "INTERNAL_ERROR",
-        message: "프로필 업데이트 중 오류가 발생했습니다.",
+        message: "Failed to update profile",
       },
       { status: 500 }
     );
