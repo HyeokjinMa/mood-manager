@@ -2,22 +2,22 @@
 
 **AI-Based Personalized Mood Management System for Smart Homes**
 
-Mood Manager is an AI-powered service that analyzes biometric signals and audio events from WearOS devices to generate personalized mood streams. The system controls lighting, scents, and sound in smart home environments through a virtual device called the **Manager**.
+Mood Manager is an AI-powered service that analyzes biometric signals and audio events from WearOS devices to generate personalized mood streams. The system controls lighting, scents, and sound in smart home environments through a system called the **Manager**.
 
 ---
 
 ## Overview
 
-Mood Manager is a multimodal AI service that analyzes users' psychological and physical states based on biometric information (heart rate, HRV, stress indicators) and audio events (laughter, sighs, anger, sadness detection) collected from WearOS devices. The system recommends optimized lighting, scent, and sound environments accordingly.
+Mood Manager is a multimodal AI service that analyzes users' psychological and physical states based on biometric information (heart rate, HRV, stress indicators) and audio events (laughter, sighs, anger, sadness detection) collected from WearOS devices. The system recommends personalized lighting, scent, and sound environments accordingly.
 
-The system operates based on the following pipeline: **WearOS → Firebase → ML Analysis Server → Next.js Web App → Emotion Prediction (LLM/ML Model) → Mood Expansion (LLM) → Output Device Control**.
+The system operates based on the following pipeline: **WearOS → Firebase → ML Analysis Server → Next.js Web App → Emotion Prediction (Markov Chain) → Mood Expansion (LLM) → Output Device Control**.
 
 ### Key Features
 
-- **Real-time Biometric Data Collection**: Collects heart rate, HRV, and stress indicators from WearOS devices at 1-minute intervals
-- **Audio Event Classification**: Detects laughter, sighs, anger, and sadness using ML models
-- **Personalized Mood Generation**: Generates 10-segment (30-minute) mood streams by combining user preferences and external factors (weather, etc.)
-- **Smart Home Control**: Simulates Manager device for integrated control of lighting, scents, and music
+- **Real-time Biometric Data Collection**: Collects heart rate, HRV, and respiratory rate from WearOS devices at 5 minutes intervals
+- **Audio Event Classification**: Detects laughter, sighs, anger, and sadness using fine-tuned audio ML model
+- **Personalized Mood Generation**: Generates 10-segment (30-minute) mood streams by combining current user states, user preferences, and external factors (weather, etc.)
+- **Smart Home Control**: Manages a home device for integrated control of lighting, scents, and music
 - **User Authentication & Profile Management**: NextAuth-based authentication, social login (Google, Kakao, Naver), and profile management
 - **Mood Save & Management**: Save, delete, and replace generated mood segments
 
@@ -28,9 +28,9 @@ The system operates based on the following pipeline: **WearOS → Firebase → M
 ### 1. WearOS Layer
 
 - **Kotlin-based Native App**: Application optimized for wearable devices
-- **Health Services API**: Collects heart rate, HRV, stress indicators, and movement data in real-time
+- **Health Services API**: Collects heart rate, HRV, respiratory rate, and movement data in real-time
 - **Audio Processing**: Captures 2-second audio using AudioRecord, calculates RMS/dBFS to filter silent segments, and converts PCM data to WAV/Base64
-- **Foreground Service**: Maintains a stable 1-minute loop to collect data continuously in the background
+- **Foreground Service**: Maintains a stable 5 minutes loop to collect data continuously in the background
 - **Data Upload**: Uploads collected biometric and audio data to user-specific collections in Firestore
 
 ### 2. Firebase Layer
@@ -39,7 +39,7 @@ The system operates based on the following pipeline: **WearOS → Firebase → M
 - **Data Structure**:
   - `users/{userId}/raw_periodic/{docId}`: Biometric data (heartRate, HRV, stress, etc.)
   - `users/{userId}/raw_events/{docId}`: Audio events (Base64 WAV, `ml_processed` status)
-    - **ML Processing Flow**: ML server queries documents with `ml_processed == 'pending'`, processes them, and updates to `'completed'`
+    - **ML Processing Flow**: ML server queries documents with `ml_processed == 'pending'`, processes them, and updates to `'done'`
     - **Required Fields**: `audio_base64`, `timestamp`, `ml_processed`
 
 ### 3. ML Python Microservice
@@ -54,9 +54,7 @@ The system operates based on the following pipeline: **WearOS → Firebase → M
 - **Data Collection**: Receives biometric data and ML-classified audio events from Firestore
 - **Preprocessing**: Preprocesses biometric/audio data into valid numerical features and combines with user preferences and external data (weather, etc.)
 - **Mood Generation**: Two-stage processing for mood generation
-  - **Stage 1 (Emotion Prediction)**: Generates 10 emotion segments (30 minutes)
-    - **Current**: LLM-based prediction (temperature: 0.3, consistency required)
-    - **Future**: Time-series + Markov chain model (replaces LLM for better consistency and performance)
+  - **Stage 1 (Emotion Prediction)**: Time-series + Markov chain model
   - **Stage 2 (Mood Expansion)**: Expands emotion segments into detailed mood outputs with colors, music, scents, and lighting (uses LLM, temperature: 0.7, creativity required)
 - **Dashboard**: Visualizes the final inferred mood and simulates home environment control
 - **Database**: User data management through PostgreSQL (Prisma ORM)
