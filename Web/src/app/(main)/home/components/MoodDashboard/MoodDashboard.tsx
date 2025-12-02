@@ -162,7 +162,7 @@ export default function MoodDashboard({
         />
       )}
       <div
-        className="rounded-xl px-3 mb-1 w-full backdrop-blur-sm border transition-colors transition-opacity duration-700 ease-out"
+        className="rounded-xl px-3 mb-1 w-full backdrop-blur-sm border transition-all duration-500 ease-in-out"
         style={{
           // 무드 컬러를 투명도 높게 카드 배경으로 사용 (뒤 파티클이 비치도록)
           backgroundColor: hexToRgba(baseColor, 0.25),
@@ -171,6 +171,7 @@ export default function MoodDashboard({
           paddingBottom: "8px",
         }}
         onDoubleClick={(e) => handleDashboardDoubleClick(e, currentSegment)}
+        key={`dashboard-${currentSegmentIndex}`}
       >
       <MoodHeader
         mood={{
