@@ -72,18 +72,14 @@ def generate_periodic_data() -> Dict[str, Any]:
 
 # Event 데이터 생성
 def generate_event_data(event_type: str = None) -> Dict[str, Any]:
-    """오디오 이벤트 데이터 생성"""
-    if event_type is None:
-        event_type = random.choice(["laughter", "sigh", "silence"])
+    """오디오 이벤트 데이터 생성
     
+    ML 서버에서 사용하지 않는 필드(event_dbfs, event_duration_ms, event_type_guess)는 제외합니다.
+    """
     return {
         "audio_base64": generate_dummy_audio_base64(),
         "timestamp": firestore.SERVER_TIMESTAMP,
         "ml_processed": "pending",  # ML 처리 대기 상태
-        "event_dbfs": round(random.uniform(-40.0, -10.0), 2),  # ML 미사용 필드
-        "event_duration_ms": random.randint(1000, 3000),  # ML 미사용 필드
-        "event_type_guess": event_type,  # ML 미사용 필드
-        "is_fallback": False,
     }
 
 
@@ -100,9 +96,9 @@ def send_periodic_data(db: firestore.Client, user_id: str):
     print(f"[{datetime.now().strftime('%H:%M:%S')}] Periodic 데이터 전송: HR={data['heartRate']}, Stress={data['stress']}")
 
 
-def send_event_data(db: firestore.Client, user_id: str, event_type: str = None):
+def send_event_data(db: firestore.Client, user_id: str):
     """Event 데이터를 Firestore에 전송"""
-    data = generate_event_data(event_type)
+    data = generate_event_data()
     doc_ref = (
         db.collection("users")
         .document(user_id)
@@ -110,8 +106,7 @@ def send_event_data(db: firestore.Client, user_id: str, event_type: str = None):
         .document()
     )
     doc_ref.set(data)
-    event_type_display = data['event_type_guess']
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] Event 데이터 전송: type={event_type_display}, ml_processed={data['ml_processed']}")
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] Event 데이터 전송: ml_processed={data['ml_processed']}")
 
 
 def main():

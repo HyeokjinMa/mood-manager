@@ -81,10 +81,8 @@ python generate_demo_data.py --user-id demo-user-001
 - `audio_base64`: 더미 WAV 오디오 (Base64)
 - `timestamp`: 서버 타임스탬프
 - `ml_processed`: `"pending"` (ML 처리 대기)
-- `event_dbfs`: -40.0 ~ -10.0 dBFS (ML 미사용)
-- `event_duration_ms`: 1000-3000ms (ML 미사용)
-- `event_type_guess`: "laughter", "sigh", "silence" 중 랜덤 (ML 미사용)
-- `is_fallback`: `false`
+
+**참고:** ML 서버에서 사용하지 않는 필드(`event_dbfs`, `event_duration_ms`, `event_type_guess`)는 생성하지 않습니다.
 
 ## 발표 시나리오
 
