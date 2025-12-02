@@ -1,86 +1,105 @@
 # Documentation
 
-이 디렉토리에는 프로젝트의 핵심 문서가 포함되어 있습니다.
+This directory contains essential documentation for the Mood Manager project.
 
 ---
 
-## 문서 목록
+## Document List
 
-### 프로젝트 구조 및 개요
-- **[PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md)**: 프로젝트 구조 및 WearOS 앱 정보
-  - 웹앱 구조 (Next.js)
-  - WearOS 앱 상세 정보
-  - 구조 개선 제안 (선택사항)
-  - Monorepo 전환 정보
+### Setup & Installation
+- **[SETUP_GUIDE.md](./SETUP_GUIDE.md)**: Complete setup guide including installation, database configuration, and migration
 
-### API 관련
-- **[API_SPECIFICATION.md](./API_SPECIFICATION.md)**: 전체 API 명세서 (무드스트림, 전처리, LLM 등)
+### Project Structure
+- **[PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md)**: Project structure and WearOS app information
 
-### 구현 및 아키텍처
-- **[REFACTORING_PLAN.md](./REFACTORING_PLAN.md)**: 최종 리팩토링 계획 및 향후 작업 정리 (데이터 플로우, 타입 정의, 구현 계획 포함)
+### API & Data
+- **[API_SPECIFICATION.md](./API_SPECIFICATION.md)**: Complete API specification
+- **[FIRESTORE_STRUCTURE.md](./FIRESTORE_STRUCTURE.md)**: Firestore data structure specification
 
-### 설치 및 실행
-- **[SETUP_GUIDE.md](./SETUP_GUIDE.md)**: 프로젝트 설치 및 실행 가이드 (버전 정보, 문제 해결 포함)
-- **[DATABASE_SETUP.md](./DATABASE_SETUP.md)**: 데이터베이스 설정 가이드
+### Development Plans
+- **[V2_DEVELOPMENT_PLAN.md](./V2_DEVELOPMENT_PLAN.md)**: V2 development plan (DB integration and device control)
 
 ---
 
-## 빠른 참조
+## Quick Reference
 
-### 프론트엔드 개발자
-1. 프로젝트 구조: `PROJECT_STRUCTURE.md` - 전체 구조 및 WearOS 앱 정보
-2. API 사용: `API_SPECIFICATION.md` - API 명세 확인
-3. 리팩토링 계획: `REFACTORING_PLAN.md` - 최종 리팩토링 계획 및 향후 작업 (데이터 플로우, 타입 정의 포함)
+### Frontend Developers
+1. **Project Structure**: `PROJECT_STRUCTURE.md` - Overall structure and WearOS app info
+2. **API Usage**: `API_SPECIFICATION.md` - API endpoint specifications
+3. **Setup**: `SETUP_GUIDE.md` - Installation and configuration
 
-### 백엔드 개발자
-1. API 명세: `API_SPECIFICATION.md` - 모든 API 엔드포인트 명세
-2. 리팩토링 계획: `REFACTORING_PLAN.md` - 최종 리팩토링 계획 및 향후 작업 (데이터 플로우, 타입 정의 포함)
-3. 프로젝트 구조: `PROJECT_STRUCTURE.md` - WearOS 앱 데이터 전송 구조
+### Backend Developers
+1. **API Specification**: `API_SPECIFICATION.md` - All API endpoints
+2. **Database**: `SETUP_GUIDE.md` - Database setup and migration
+3. **Firestore**: `FIRESTORE_STRUCTURE.md` - Firestore data structure
 
-### 프로젝트 관리자
-1. 리팩토링 계획: `REFACTORING_PLAN.md` - 최종 리팩토링 계획 및 향후 작업
-2. 프로젝트 구조: `PROJECT_STRUCTURE.md` - 전체 프로젝트 구조
+### Project Managers
+1. **Development Plan**: `V2_DEVELOPMENT_PLAN.md` - V2 implementation roadmap
+2. **Project Structure**: `PROJECT_STRUCTURE.md` - Overall project structure
 
 ---
 
-## 현재 프로젝트 상태
+## Current Project Status
 
-### 프론트엔드
-- ✅ 모든 페이지 구현 완료 (9개 페이지)
-- ✅ API Routes 구현 완료 (21개, 목업 모드)
-- ✅ Toast Notification, Error Boundary 적용
-- ✅ 로딩 스켈레톤 UI 추가
-- ✅ 코드 분리 완료 (모든 페이지 300라인 이하)
-- ✅ Home 컴포넌트 리팩토링 완료 (커스텀 훅 분리, Props 그룹화)
-- ✅ TypeScript 타입 안정성 향상 (`any` 타입 제거)
-- ✅ 관리자 모드 완전 구현 (localStorage 기반 무드셋 관리)
-- ⚠️ 실제 데이터베이스 연동 대기 중 (Prisma 스키마 준비 완료, 실제 데이터 저장/조회 미구현)
-- ⚠️ 시계열+마르코프 체인 모델 구현 대기 중 (현재는 LLM 2단계 처리로 대체 계획)
+### Frontend
+- ✅ All pages implemented (9 pages)
+- ✅ API Routes implemented (21 endpoints, mock mode)
+- ✅ Toast Notification, Error Boundary applied
+- ✅ Loading skeleton UI added
+- ✅ Code separation completed (all pages under 300 lines)
+- ✅ TypeScript type safety improved (no `any` types)
+- ✅ Admin mode fully implemented (localStorage-based mood set management)
+- ⚠️ Database integration pending (Prisma schema ready, actual data save/retrieve not implemented)
+- ⚠️ Time-series + Markov chain model implementation pending (currently using LLM 2-stage processing)
 
-### WearOS 앱
-- ✅ 완성된 v4 버전
-- ✅ Firebase 연동 완료
-- ✅ Firestore 데이터 전송 정상 작동
-- ✅ Health Services 연동
-- ✅ Audio Event 수집
+### WearOS App
+- ✅ Completed v4 version
+- ✅ Firebase integration complete
+- ✅ Firestore data transmission working
+- ✅ Health Services integration
+- ✅ Audio Event collection
 
-### 개발 환경
+### Development Environment
 - ✅ Next.js 15.5.6
 - ✅ React 19.1.0
 - ✅ TypeScript 5.9.3
 - ✅ Prisma 6.19.0
-- ✅ OpenAI API 통합 (gpt-4o-mini)
+- ✅ OpenAI API integration (gpt-4o-mini)
 
 ---
 
-## 핵심 문서 요약
+## Document Summary
 
-### REFACTORING_PLAN.md
-최종 리팩토링 계획 및 향후 작업 정리
-- 현재 완료된 작업 요약
-- 리팩토링 단계별 계획 (Phase 1-3)
-- 데이터 플로우 (전처리 → LLM 1차 → LLM 2차)
-- 타입 정의 (PreprocessedData, EmotionSegment, MoodSegment)
-- 사용자 선호도 시스템
-- 단기/중기/장기 향후 작업
-- 우선순위 매트릭스
+### SETUP_GUIDE.md
+Complete installation and setup guide
+- Requirements (Node.js, npm, PostgreSQL)
+- Installation steps
+- Environment variable configuration
+- Database setup (local and production)
+- Database migration guide
+- Troubleshooting
+
+### PROJECT_STRUCTURE.md
+Project structure and organization
+- Web app structure (Next.js)
+- WearOS app details
+- Directory organization
+
+### API_SPECIFICATION.md
+Complete API specification
+- All API endpoints
+- Request/response formats
+- Authentication requirements
+
+### FIRESTORE_STRUCTURE.md
+Firestore data structure
+- Collection structure
+- Data fields
+- ML processing flow
+
+### V2_DEVELOPMENT_PLAN.md
+V2 development roadmap
+- Current status analysis
+- Phase-by-phase implementation plan
+- Database integration
+- Device control integration
