@@ -42,9 +42,6 @@ export default function MyPage() {
     editedPhone,
     profileImage,
     isUpdating,
-    nameError,
-    familyNameError,
-    birthDateError,
     setIsEditingProfile,
     setEditedName,
     setEditedFamilyName,
@@ -159,9 +156,6 @@ export default function MyPage() {
             editedPhone={editedPhone}
             profileImage={profileImage}
             isUpdating={isUpdating}
-            nameError={nameError}
-            familyNameError={familyNameError}
-            birthDateError={birthDateError}
             onEditClick={() => setIsEditingProfile(true)}
             onSave={handleProfileUpdate}
             onCancel={handleProfileCancel}

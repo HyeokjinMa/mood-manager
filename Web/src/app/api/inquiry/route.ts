@@ -1,79 +1,84 @@
 // src/app/api/inquiry/route.ts
 /**
- * 1:1 문의 API
- * 
- * 사용자가 1:1 문의를 제출하고 저장
+ * [파일 역할]
+ * - 1:1 문의 제출 API 엔드포인트
+ * - 사용자 문의를 DB에 저장
+ *
+ * [사용되는 위치]
+ * - 마이페이지의 1:1 문의 페이지에서 호출
+ * - POST /api/inquiry
+ *
+ * [주의사항]
+ * - 인증이 필요한 엔드포인트
+ * - subject와 message는 필수 입력 항목
+ * - 문의는 관리자가 확인 후 답변 가능
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
-import { requireAuth, checkMockMode } from "@/lib/auth/session";
+import { validateRequiredFields } from "@/lib/utils/validation";
 
+/**
+ * POST /api/inquiry
+ *
+ * 1:1 문의 제출
+ *
+ * 요청 필드:
+ * - subject (required): 문의 제목
+ * - message (required): 문의 내용
+ *
+ * 응답:
+ * - 성공: { success: true, inquiryId: string }
+ * - 실패: { error: "ERROR_CODE", message: "에러 메시지" }
+ */
 export async function POST(request: NextRequest) {
   try {
-    // 1. 인증 확인
-    const session = await requireAuth();
-    if (session instanceof NextResponse) {
-      return session; // 401 응답
+    // 1. 세션 검증
+    const sessionOrError = await requireAuth();
+    if (sessionOrError instanceof NextResponse) {
+      return sessionOrError; // 401 응답 반환
     }
+    const session = sessionOrError;
 
-    const { subject, message } = await request.json();
+    // 2. 요청 본문 파싱
+    const body = await request.json();
 
-    // 2. 필수 필드 검증
-    if (!subject || !message) {
+    // 3. 필수 필드 검증
+    const validation = validateRequiredFields(body, ["subject", "message"]);
+    if (!validation.valid) {
       return NextResponse.json(
-        { error: "INVALID_INPUT", message: "Subject and message are required." },
+        {
+          error: "INVALID_INPUT",
+          message: "문의 제목과 내용은 필수 입력 항목입니다.",
+        },
         { status: 400 }
       );
     }
 
-    // 3. 길이 검증
-    if (subject.length > 200) {
-      return NextResponse.json(
-        { error: "INVALID_INPUT", message: "Subject must be 200 characters or less." },
-        { status: 400 }
-      );
-    }
+    const { subject, message } = body;
 
-    if (message.length > 5000) {
-      return NextResponse.json(
-        { error: "INVALID_INPUT", message: "Message must be 5000 characters or less." },
-        { status: 400 }
-      );
-    }
+    // 4. 문의 생성
+    const inquiry = await prisma.inquiry.create({
+      data: {
+        userId: session.user.id,
+        subject: subject.trim(),
+        message: message.trim(),
+      },
+    });
 
-    // 4. Mock 모드 확인
-    const isMockMode = await checkMockMode(session);
-    if (isMockMode) {
-      // Mock 모드: 문의는 저장하지 않고 성공 응답만 반환
-      return NextResponse.json({
-        success: true,
-        inquiryId: "mock-inquiry-id",
-        message: "Inquiry submitted successfully (mock mode).",
-      });
-    }
-
-    // 5. DB에 문의 저장 (V2에서 구현)
-    // TODO: V2에서 inquiry 테이블 생성 후 활성화
-    // const inquiry = await prisma.inquiry.create({
-    //   data: {
-    //     userId: session.user.id,
-    //     subject,
-    //     message,
-    //     status: "pending",
-    //   },
-    // });
-
-    // 현재는 Mock 응답 반환
+    // 5. 성공 응답
     return NextResponse.json({
       success: true,
-      inquiryId: "inquiry-id-placeholder",
-      message: "Inquiry submitted successfully. We'll get back to you soon.",
+      inquiryId: `inquiry-${inquiry.id}`,
     });
   } catch (error) {
-    console.error("[Inquiry] Error:", error);
+    console.error("[POST /api/inquiry] 문의 제출 실패:", error);
     return NextResponse.json(
-      { error: "INTERNAL_ERROR", message: "Failed to submit inquiry. Please try again." },
+      {
+        error: "INTERNAL_ERROR",
+        message: "문의 제출 중 오류가 발생했습니다.",
+      },
       { status: 500 }
     );
   }

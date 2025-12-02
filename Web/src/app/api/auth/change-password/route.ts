@@ -6,101 +6,110 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
-import { requireAuth, checkMockMode } from "@/lib/auth/session";
 import { verifyPassword, hashPassword, validatePasswordStrength } from "@/lib/auth/password";
+import { isAdminAccount } from "@/lib/auth/mockMode";
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. 인증 확인
-    const session = await requireAuth();
-    if (session instanceof NextResponse) {
-      return session; // 401 응답
-    }
+    const session = await getServerSession(authOptions);
 
-    const { currentPassword, newPassword } = await request.json();
-
-    // 2. 필수 필드 검증
-    if (!currentPassword || !newPassword) {
+    if (!session || !session.user) {
       return NextResponse.json(
-        { error: "INVALID_INPUT", message: "Current password and new password are required." },
-        { status: 400 }
-      );
-    }
-
-    // 3. Mock 모드 확인
-    const isMockMode = await checkMockMode(session);
-    if (isMockMode) {
-      // Mock 모드: 비밀번호 변경은 허용하지 않음 (관리자 계정은 변경 불가)
-      return NextResponse.json(
-        { error: "MOCK_MODE", message: "Password change is not available in admin mode." },
-        { status: 403 }
-      );
-    }
-
-    // 4. 사용자 조회
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { id: true, email: true, password: true },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "USER_NOT_FOUND", message: "User not found." },
-        { status: 404 }
-      );
-    }
-
-    // 5. 소셜 로그인 사용자는 비밀번호가 없음
-    if (!user.password) {
-      return NextResponse.json(
-        { error: "NO_PASSWORD", message: "This account does not have a password. Please use social login." },
-        { status: 400 }
-      );
-    }
-
-    // 6. 현재 비밀번호 확인
-    const isCurrentPasswordValid = await verifyPassword(currentPassword, user.password);
-    if (!isCurrentPasswordValid) {
-      return NextResponse.json(
-        { error: "INVALID_PASSWORD", message: "Current password is incorrect." },
+        { error: "UNAUTHORIZED", message: "Authentication required" },
         { status: 401 }
       );
     }
 
-    // 7. 새 비밀번호와 현재 비밀번호가 같은지 확인
-    const isSamePassword = await verifyPassword(newPassword, user.password);
-    if (isSamePassword) {
+    const { currentPassword, newPassword } = await request.json();
+
+    if (!currentPassword || !newPassword) {
       return NextResponse.json(
-        { error: "SAME_PASSWORD", message: "New password must be different from current password." },
+        { error: "INVALID_INPUT", message: "Current password and new password are required" },
         { status: 400 }
       );
     }
 
-    // 8. 새 비밀번호 강도 검증
+    const userId = (session.user as { id?: string }).id;
+    if (!userId) {
+      return NextResponse.json(
+        { error: "UNAUTHORIZED", message: "User ID not found" },
+        { status: 401 }
+      );
+    }
+
+    // Admin account: Check password directly
+    if (userId === "admin-mock-user-id" || isAdminAccount(session.user.email || "")) {
+      if (currentPassword !== "admin1234") {
+        return NextResponse.json(
+          { error: "INVALID_PASSWORD", message: "Current password is incorrect" },
+          { status: 400 }
+        );
+      }
+      // Admin account password change is not persisted (mock mode)
+      return NextResponse.json({
+        success: true,
+        message: "Password changed successfully (mock mode)",
+      });
+    }
+
+    // Regular user: Check from database
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { password: true },
+    });
+
+    if (!user || !user.password) {
+      return NextResponse.json(
+        { error: "USER_NOT_FOUND", message: "User not found or password not set" },
+        { status: 404 }
+      );
+    }
+
+    // Verify current password
+    const isCurrentPasswordValid = await verifyPassword(currentPassword, user.password);
+    if (!isCurrentPasswordValid) {
+      return NextResponse.json(
+        { error: "INVALID_PASSWORD", message: "Current password is incorrect" },
+        { status: 400 }
+      );
+    }
+
+    // Validate new password strength
     const passwordValidation = validatePasswordStrength(newPassword);
     if (!passwordValidation.valid) {
       return NextResponse.json(
-        { error: "WEAK_PASSWORD", message: passwordValidation.message || "Password is too weak." },
+        { error: "WEAK_PASSWORD", message: passwordValidation.message },
         { status: 400 }
       );
     }
 
-    // 9. 비밀번호 해싱 및 업데이트
+    // Check if new password is same as current password
+    const isSamePassword = await verifyPassword(newPassword, user.password);
+    if (isSamePassword) {
+      return NextResponse.json(
+        { error: "SAME_PASSWORD", message: "New password must be different from current password" },
+        { status: 400 }
+      );
+    }
+
+    // Hash and update password
     const hashedNewPassword = await hashPassword(newPassword);
     await prisma.user.update({
-      where: { id: user.id },
+      where: { id: userId },
       data: { password: hashedNewPassword },
     });
 
     return NextResponse.json({
       success: true,
-      message: "Password changed successfully.",
+      message: "Password changed successfully",
     });
   } catch (error) {
     console.error("[Change Password] Error:", error);
     return NextResponse.json(
-      { error: "INTERNAL_ERROR", message: "Failed to change password. Please try again." },
+      { error: "INTERNAL_ERROR", message: "Failed to change password" },
       { status: 500 }
     );
   }

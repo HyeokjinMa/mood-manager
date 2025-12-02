@@ -27,37 +27,67 @@ export default function InquiryPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!subject || !message) {
-      toast.error("Please fill in all fields.");
+    // Validation
+    if (!subject.trim()) {
+      toast.error("Subject is required.");
+      return;
+    }
+    if (subject.trim().length < 3) {
+      toast.error("Subject must be at least 3 characters.");
+      return;
+    }
+    if (subject.trim().length > 100) {
+      toast.error("Subject must be less than 100 characters.");
+      return;
+    }
+    if (!message.trim()) {
+      toast.error("Message is required.");
+      return;
+    }
+    if (message.trim().length < 10) {
+      toast.error("Message must be at least 10 characters.");
+      return;
+    }
+    if (message.trim().length > 2000) {
+      toast.error("Message must be less than 2000 characters.");
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/inquiry", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ subject, message }),
-      });
+      // [MOCK] 1:1 문의 제출 (로컬 상태만 업데이트)
+      // TODO: 백엔드 API로 교체 필요
+      // API 명세:
+      // POST /api/inquiry
+      // - 인증: NextAuth session (쿠키 기반)
+      // - 요청: { subject: string, message: string }
+      // - 응답: { success: boolean, inquiryId: string }
+      // - 설명: 1:1 문의 제출 및 저장
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to submit inquiry");
-      }
+      // Mock: Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.message || "Failed to submit inquiry");
-      }
+      // const response = await fetch("/api/inquiry", {
+      //   method: "POST",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //   },
+      //   credentials: "include",
+      //   body: JSON.stringify({ subject, message }),
+      // });
 
+      // if (!response.ok) {
+      //   const error = await response.json();
+      //   throw new Error(error.message || "Failed to submit inquiry");
+      // }
+
+      toast.success("Inquiry submitted successfully. We'll get back to you soon.");
       setIsSubmitted(true);
     } catch (error) {
       console.error("Error submitting inquiry:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to submit inquiry. Please try again.");
+      const errorMessage = error instanceof Error ? error.message : "Failed to submit inquiry. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
