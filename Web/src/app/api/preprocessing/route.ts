@@ -45,7 +45,7 @@ export async function GET() {
 
   // 관리자 모드 확인
   if (await checkMockMode(session)) {
-    console.log("[GET /api/preprocessing] 목업 모드: 관리자 계정");
+    console.log("[GET /api/preprocessing] Mock mode: Admin account");
     const { getMockPreprocessingData } = await import("@/lib/mock/mockData");
     return NextResponse.json(getMockPreprocessingData());
   }
@@ -62,7 +62,7 @@ export async function GET() {
     try {
       todayRawData = await fetchTodayPeriodicRaw(USER_ID);
     } catch (error) {
-      console.warn("[preprocessing] Firestore 조회 실패, 목업 데이터 반환:", error);
+      console.warn("[preprocessing] Firestore query failed, returning mock data:", error);
       // [MOCK] Firestore 조회 실패 시 목업 데이터 반환
       const { getMockPreprocessingData } = await import("@/lib/mock/mockData");
       return NextResponse.json(getMockPreprocessingData());
@@ -70,7 +70,7 @@ export async function GET() {
 
     if (todayRawData.length === 0) {
       // [MOCK] 데이터가 없을 경우 목업 데이터 반환 (UI FLOW 확인용)
-      console.log("[preprocessing] 데이터 없음, 목업 데이터 반환");
+      console.log("[preprocessing] No data found, returning mock data");
       const { getMockPreprocessingData } = await import("@/lib/mock/mockData");
       return NextResponse.json(getMockPreprocessingData());
     }
@@ -94,7 +94,7 @@ export async function GET() {
     try {
       weather = await fetchWeather();
     } catch (err) {
-      console.warn("[preprocessing] 날씨 조회 실패:", err);
+      console.warn("[preprocessing] Weather query failed:", err);
     }
 
     // ------------------------------------------------------------
@@ -159,7 +159,7 @@ export async function GET() {
       { status: 200 }
     );
   } catch (err) {
-    console.error("[preprocessing] 에러 발생:", err);
+    console.error("[preprocessing] Error occurred:", err);
     return NextResponse.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
 }

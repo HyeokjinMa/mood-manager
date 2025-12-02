@@ -40,7 +40,7 @@ export async function GET() {
 
     // 2. 목업 모드 확인 (관리자 계정)
     if (await checkMockMode(session)) {
-      console.log("[GET /api/auth/profile] 목업 모드: 관리자 계정");
+      console.log("[GET /api/auth/profile] Mock mode: Admin account");
       return NextResponse.json({
         profile: {
           email: session.user.email || "admin@moodmanager.com",
@@ -146,7 +146,7 @@ export async function PUT(request: NextRequest) {
 
     // 2. 목업 모드 확인 (관리자 계정)
     if (await checkMockMode(session)) {
-      console.log("[PUT /api/auth/profile] 목업 모드: 관리자 계정");
+      console.log("[PUT /api/auth/profile] Mock mode: Admin account");
       // 목업 모드에서는 요청한 데이터를 그대로 반환
       const formData = await request.formData();
       const name = (formData.get("name") as string) || "Admin";
