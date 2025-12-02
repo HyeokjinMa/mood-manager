@@ -9,14 +9,14 @@ import ScentIcon from "@/components/icons/ScentIcon";
 interface ScentControlProps {
   mood: Mood;
   onScentClick: () => void;
-  moodColor?: string; // LLM 추천 무드 색상
+  moodColor?: string; // LLM recommended mood color
 }
 
 export default function ScentControl({ mood, onScentClick, moodColor }: ScentControlProps) {
-  // 무드 색상 사용 (투명도 낮게 - 더 진하게)
+  // 무드 색상을 사용한다 (투명도 낮게 설정하여 더 진하게 표시)
   const buttonColor = moodColor || mood.color;
   
-  // 디버깅 로그
+  // debug log
   console.log("[ScentControl] Render:", {
     scentType: mood.scent.type,
     moodColor: moodColor,
@@ -33,14 +33,14 @@ export default function ScentControl({ mood, onScentClick, moodColor }: ScentCon
           onScentClick();
         }}
         className="w-6 h-6 rounded-full shadow-sm flex items-center justify-center transition-all duration-300 hover:scale-105 cursor-pointer"
-        style={{ backgroundColor: hexToRgba(buttonColor, 0.85) }} // 투명도 85% (더 진하게)
+        style={{ backgroundColor: hexToRgba(buttonColor, 0.85) }} // 85% opacity (darker)
         title="Change scent"
       >
         <ScentIcon
           scentType={mood.scent.type}
           size={16}
           className="w-4 h-4"
-          color="#ffffff" // 아이콘 그림은 흰색으로 고정
+          color="#ffffff" // icon color fixed to white
         />
       </button>
     </div>

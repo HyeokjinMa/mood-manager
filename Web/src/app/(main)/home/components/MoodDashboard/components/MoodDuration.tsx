@@ -60,7 +60,7 @@ export default function MoodDuration({
               e.stopPropagation();
               onNextStreamSelect?.();
             }}
-            title="다음 스트림으로 전환"
+            title="Switch to next stream"
           >
             →
           </button>
@@ -91,7 +91,7 @@ export default function MoodDuration({
                 backgroundColor,
                 opacity,
               }}
-              title={`${idx + 1}번째 세그먼트로 이동`}
+              title={`Go to segment ${idx + 1}`}
             />
           );
         })}
