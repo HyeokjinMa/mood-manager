@@ -24,6 +24,12 @@ import { verifyPassword } from "@/lib/auth/password";
 import { normalizePhoneNumber } from "@/lib/utils/validation";
 import { isAdminAccount } from "@/lib/auth/mockMode";
 
+// Validate NEXTAUTH_SECRET in production
+if (process.env.NODE_ENV === "production" && (!process.env.NEXTAUTH_SECRET || process.env.NEXTAUTH_SECRET === "development-secret-key-change-in-production")) {
+  console.error("[NextAuth] ⚠️ WARNING: NEXTAUTH_SECRET is not set or using default value in production!");
+  console.error("[NextAuth] Please set a strong random secret in production environment.");
+}
+
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET || "development-secret-key-change-in-production",
   

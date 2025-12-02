@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: "INVALID_INPUT",
-          message: "문의 제목과 내용은 필수 입력 항목입니다.",
+          message: "Subject and message are required",
         },
         { status: 400 }
       );
@@ -73,11 +73,11 @@ export async function POST(request: NextRequest) {
       inquiryId: `inquiry-${inquiry.id}`,
     });
   } catch (error) {
-    console.error("[POST /api/inquiry] 문의 제출 실패:", error);
+    console.error("[POST /api/inquiry] Failed to submit inquiry:", error);
     return NextResponse.json(
       {
         error: "INTERNAL_ERROR",
-        message: "문의 제출 중 오류가 발생했습니다.",
+        message: "Failed to submit inquiry",
       },
       { status: 500 }
     );

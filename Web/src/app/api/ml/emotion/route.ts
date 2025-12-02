@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     // 입력 검증
     if (!docId || !result || !confidence || !timestamp) {
-      console.warn("[ML Emotion] 필수 파라미터 누락:", { docId, result, confidence, timestamp });
+      console.warn("[ML Emotion] Missing required parameters:", { docId, result, confidence, timestamp });
       return NextResponse.json(
         {
           success: false,
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
 
     // result 값 검증
     if (!["Laughter", "Sigh", "Negative"].includes(result)) {
-      console.warn(`[ML Emotion] 잘못된 result 값: ${result}`);
+      console.warn(`[ML Emotion] Invalid result value: ${result}`);
       return NextResponse.json(
         {
           success: false,
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
     incrementEmotionCount(userId, result as "Laughter" | "Sigh" | "Negative", confidenceNum);
 
     console.log(
-      `[ML Emotion] 수신 완료 - docId: ${docId}, result: ${result}, confidence: ${confidence}, timestamp: ${timestamp}`
+      `[ML Emotion] Received - docId: ${docId}, result: ${result}, confidence: ${confidence}, timestamp: ${timestamp}`
     );
 
     return NextResponse.json({
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
       message: "Emotion event recorded",
     });
   } catch (error) {
-    console.error("[ML Emotion] 에러 발생:", error);
+    console.error("[ML Emotion] Error occurred:", error);
     return NextResponse.json(
       {
         success: false,

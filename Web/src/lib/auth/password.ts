@@ -34,8 +34,8 @@ export async function hashPassword(password: string): Promise<string> {
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     return hashedPassword;
   } catch (error) {
-    console.error("[hashPassword] 비밀번호 해싱 실패:", error);
-    throw new Error("비밀번호 해싱에 실패했습니다.");
+    console.error("[hashPassword] Password hashing failed:", error);
+    throw new Error("Failed to hash password");
   }
 }
 
@@ -60,7 +60,7 @@ export async function verifyPassword(
     const isMatch = await bcrypt.compare(password, hashedPassword);
     return isMatch;
   } catch (error) {
-    console.error("[verifyPassword] 비밀번호 검증 실패:", error);
+    console.error("[verifyPassword] Password verification failed:", error);
     return false;
   }
 }
@@ -89,7 +89,7 @@ export function validatePasswordStrength(password: string): {
   if (password.length < 6) {
     return {
       valid: false,
-      message: "비밀번호는 최소 6자 이상이어야 합니다.",
+      message: "Password must be at least 6 characters long",
     };
   }
 
