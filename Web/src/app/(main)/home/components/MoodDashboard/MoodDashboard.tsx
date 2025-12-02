@@ -194,7 +194,7 @@ export default function MoodDashboard({
 
       <AlbumSection 
         mood={mood}
-        onAlbumClick={undefined}
+        onAlbumClick={() => {}}
         musicSelection={backgroundParams?.musicSelection}
       />
 
