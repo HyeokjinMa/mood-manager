@@ -45,14 +45,11 @@ class AudioEventService : Service() {
     private val TEST_USER_ID = "testUser"
 
     private val EVENT_INTERVAL_MS = 60 * 1000L  // 1분
-    private val DUMMY_INTERVAL_MS = 60 * 60 * 1000L // 1시간
 
     private val db = Firebase.firestore
 
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var runnable: Runnable
-
-    private var lastRealEventTimestamp = 0L
 
     private val NOTIFICATION_CHANNEL_ID = "AudioEventChannel"
     private val NOTIFICATION_ID = 2
@@ -89,46 +86,22 @@ class AudioEventService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     // -------------------------------------------------------------
-    // 🔥 핵심 로직: 실제 이벤트 발생 시 저장 + 없으면 필요 시 더미 생성
+    // 🔥 핵심 로직: 1분마다 더미 이벤트 생성
     // -------------------------------------------------------------
     private fun captureAndMaybeSend() {
-
         val now = System.currentTimeMillis()
 
-        // 1) 실 오디오 녹음
-        val features = recordShortAudio()
-        val eventType = guessEventType(features)
+        // 1분마다 더미 이벤트 생성 (테스트용)
+        val dummyType = if ((0..1).random() == 0) "laughter" else "sigh"
+        Log.d(TAG, "🔥 Creating dummy audio event type=$dummyType")
 
-        if (!features.isSilent && eventType != "unknown") {
+        // 더미 오디오 Base64 생성 (간단한 더미 WAV)
+        val dummyBase64 = generateDummyAudioBase64()
 
-            // 👍 real event 저장
-            saveEvent(
-                timestamp = now,
-                eventType = eventType,
-                dbfs = features.dbfsLevel,
-                duration = features.durationMs,
-                base64 = features.audioBase64
-            )
-
-            lastRealEventTimestamp = now
-            return
-        }
-
-        // 2) 실 이벤트 없음 → 더미 여부 판단
-        if (now - lastRealEventTimestamp > DUMMY_INTERVAL_MS) {
-            val dummyType = if ((0..1).random() == 0) "laughter" else "sigh"
-            Log.d(TAG, "🔥 Creating dummy audio event type=$dummyType")
-
-            saveEvent(
-                timestamp = now,
-                eventType = dummyType,
-                dbfs = 70,
-                duration = 2000,
-                base64 = null
-            )
-
-            lastRealEventTimestamp = now
-        }
+        saveEvent(
+            timestamp = now,
+            base64 = dummyBase64
+        )
     }
 
     // -------------------------------------------------------------
@@ -136,18 +109,12 @@ class AudioEventService : Service() {
     // -------------------------------------------------------------
     private fun saveEvent(
         timestamp: Long,
-        eventType: String,
-        dbfs: Int,
-        duration: Int,
         base64: String?
     ) {
         val data = hashMapOf<String, Any?>(
             "timestamp" to timestamp,
-            "event_type_guess" to eventType,
-            "event_dbfs" to dbfs,
-            "event_duration_ms" to duration,
             "audio_base64" to base64,
-            "is_fallback" to true
+            "ml_processed" to "pending"  // ML 처리 대기 상태
         )
 
         db.collection("users")
@@ -155,11 +122,23 @@ class AudioEventService : Service() {
             .collection("raw_events")
             .add(data)
             .addOnSuccessListener {
-                Log.d(TAG, "✅ Audio event saved: $eventType")
+                Log.d(TAG, "✅ Audio event saved to Firestore (ml_processed=pending)")
             }
             .addOnFailureListener { e ->
                 Log.e(TAG, "❌ Failed to save audio event", e)
             }
+    }
+
+    // -------------------------------------------------------------
+    // 더미 오디오 Base64 생성 (간단한 더미 WAV)
+    // -------------------------------------------------------------
+    private fun generateDummyAudioBase64(): String {
+        // 간단한 더미 WAV 헤더 + 더미 PCM 데이터
+        val sampleRate = 8000
+        val durationMs = 2000
+        val samples = sampleRate * durationMs / 1000
+        val pcm = ShortArray(samples) { (Math.random() * Short.MAX_VALUE).toInt().toShort() }
+        return wavPcmToBase64(pcm, sampleRate)
     }
 
     // -------------------------------------------------------------
