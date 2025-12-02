@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 관리자 계정은 항상 사용 가능 (Mock 모드)
-    if (isAdminAccount(email, "")) {
+    if (isAdminAccount(email)) {
       return NextResponse.json({ available: true });
     }
 
