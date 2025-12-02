@@ -35,6 +35,8 @@ export function useRegisterForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [emailAvailable, setEmailAvailable] = useState<boolean | null>(null);
   const [passwordStrength, setPasswordStrength] = useState<"weak" | "medium" | "strong" | null>(null);
   const [passwordsMatch, setPasswordsMatch] = useState<boolean | null>(null);
 
@@ -68,6 +70,51 @@ export function useRegisterForm() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
+
+  // 이메일 중복 체크 (디바운스)
+  useEffect(() => {
+    if (!email || isSocialSignup) {
+      setEmailAvailable(null);
+      setEmailError("");
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      setEmailAvailable(null);
+      setEmailError("");
+      return;
+    }
+
+    const checkEmailTimeout = setTimeout(async () => {
+      setIsCheckingEmail(true);
+      setEmailError("");
+
+      try {
+        const response = await fetch("/api/auth/check-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+
+        const data = await response.json();
+
+        if (data.available) {
+          setEmailAvailable(true);
+          setEmailError("");
+        } else {
+          setEmailAvailable(false);
+          setEmailError(data.message || "This email is already registered");
+        }
+      } catch (err) {
+        console.error("[Email Check] Error:", err);
+        setEmailAvailable(null);
+      } finally {
+        setIsCheckingEmail(false);
+      }
+    }, 500); // 500ms 디바운스
+
+    return () => clearTimeout(checkEmailTimeout);
+  }, [email, isSocialSignup]);
 
   // 비밀번호 강도 계산
   const calculatePasswordStrength = (password: string): "weak" | "medium" | "strong" | null => {
@@ -326,6 +373,8 @@ export function useRegisterForm() {
     showConfirmPassword,
     errorMsg,
     emailError,
+    isCheckingEmail,
+    emailAvailable,
     passwordStrength,
     passwordsMatch,
     isSocialSignup,
