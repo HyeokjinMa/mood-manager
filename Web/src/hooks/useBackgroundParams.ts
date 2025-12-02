@@ -108,7 +108,7 @@ export function useBackgroundParams(
             mode: "stream",
             segments: moodStream.segments, // 10개 세그먼트 전체 전달
             // 대시보드 새로고침 시에는 항상 새로운 LLM 응답을 받기 위해
-            // 캐시를 강제로 우회한다.
+            // 캐시 강제 우회
             forceFresh: true,
           }),
         });
@@ -146,7 +146,7 @@ export function useBackgroundParams(
         // 10개 세그먼트 배열 응답 처리
         if (data.segments && Array.isArray(data.segments) && data.segments.length > 0) {
           // LLM source는 응답 최상위에만 있으므로, 각 세그먼트에 복사하여
-          // UI에서 세그먼트 단위로도 LLM 사용 여부를 표시할 수 있도록 한다.
+          // UI에서 세그먼트 단위로도 LLM 사용 여부 표시 가능하도록
           const segmentsWithSource = data.segments.map((seg) => ({
             ...seg,
             source: data.source,
