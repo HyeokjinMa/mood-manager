@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.wear.compose.foundation.lazy.ScalingLazyListState
+import androidx.wear.compose.material.Card
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
@@ -98,22 +99,53 @@ class MainActivity : ComponentActivity() {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(16.dp),
+                            .padding(horizontal = 8.dp, vertical = 12.dp),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        // App Title
                         Text(
                             text = "Mood Manager",
-                            style = MaterialTheme.typography.title1,
+                            style = MaterialTheme.typography.title2,
                             textAlign = TextAlign.Center
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "데이터 수집 중...",
-                            style = MaterialTheme.typography.body1,
-                            color = MaterialTheme.colors.primary,
-                            textAlign = TextAlign.Center
-                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        // Status Card (Next.js style)
+                        Card(
+                            modifier = Modifier.padding(horizontal = 4.dp),
+                            onClick = { /* Status detail */ }
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "Status",
+                                    style = MaterialTheme.typography.caption2,
+                                    textAlign = TextAlign.Center
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Active",
+                                    style = MaterialTheme.typography.body1,
+                                    color = MaterialTheme.colors.primary,
+                                    textAlign = TextAlign.Center
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Collecting Data",
+                                    style = MaterialTheme.typography.caption1,
+                                    textAlign = TextAlign.Center
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Firestore Connected",
+                                    style = MaterialTheme.typography.caption2,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
                     }
                 }
             }

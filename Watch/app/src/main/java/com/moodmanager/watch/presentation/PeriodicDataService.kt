@@ -291,7 +291,7 @@ class PeriodicDataService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val serviceChannel = NotificationChannel(
                 NOTIFICATION_CHANNEL_ID,
-                "Mood Manager Data Collection",
+                "Biometric Data Collection",
                 NotificationManager.IMPORTANCE_LOW
             )
             val manager = getSystemService(NotificationManager::class.java)
@@ -302,7 +302,7 @@ class PeriodicDataService : Service() {
     private fun createNotification(): Notification {
         return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setContentTitle("Mood Manager")
-            .setContentText("데이터를 수집 중입니다...")
+            .setContentText("Collecting biometric data...")
             .setSmallIcon(R.mipmap.ic_launcher)
             .setOngoing(true)
             .build()
