@@ -8,6 +8,8 @@ interface EmailSectionProps {
   email: string;
   emailError: string;
   emailDisabled?: boolean;
+  isCheckingEmail?: boolean;
+  emailAvailable?: boolean | null;
   onEmailChange: (value: string) => void;
   onErrorClear: () => void;
   onEnterKey: () => void;
@@ -18,6 +20,8 @@ export default function EmailSection({
   email,
   emailError,
   emailDisabled = false,
+  isCheckingEmail = false,
+  emailAvailable = null,
   onEmailChange,
   onErrorClear,
   onEnterKey,
@@ -27,7 +31,7 @@ export default function EmailSection({
     <div className="flex flex-col space-y-2">
       <label className="text-sm text-gray-600">Email</label>
       <div className={`flex items-center px-3 py-2 border rounded-md ${
-        emailError ? "border-red-500" : ""
+        emailError ? "border-red-500" : emailAvailable === true ? "border-green-500" : ""
       } ${emailDisabled ? "bg-gray-100" : ""}`}>
         <Mail size={18} className="text-gray-400 mr-2" />
         <input
@@ -47,8 +51,17 @@ export default function EmailSection({
             if (e.key === "Enter") onEnterKey();
           }}
         />
+        {isCheckingEmail && (
+          <span className="text-xs text-gray-500 ml-2">Checking...</span>
+        )}
+        {!isCheckingEmail && emailAvailable === true && (
+          <span className="text-xs text-green-500 ml-2">✓ Available</span>
+        )}
       </div>
       {emailError && <p className="text-red-500 text-xs">{emailError}</p>}
+      {!emailError && emailAvailable === true && (
+        <p className="text-green-500 text-xs">This email is available</p>
+      )}
     </div>
   );
 }

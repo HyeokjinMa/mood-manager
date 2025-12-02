@@ -37,6 +37,8 @@ export default function RegisterForm({ form }: RegisterFormProps) {
     showConfirmPassword,
     errorMsg,
     emailError,
+    isCheckingEmail,
+    emailAvailable,
     passwordStrength,
     passwordsMatch,
     isSocialSignup,
@@ -121,6 +123,8 @@ export default function RegisterForm({ form }: RegisterFormProps) {
         email={email}
         emailError={emailError}
         emailDisabled={isEmailDisabled}
+        isCheckingEmail={isCheckingEmail}
+        emailAvailable={emailAvailable}
         onEmailChange={(value) => {
           setEmail(value);
           setErrorMsg("");
