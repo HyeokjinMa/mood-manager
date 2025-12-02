@@ -30,6 +30,9 @@ export function useProfile() {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [nameError, setNameError] = useState("");
+  const [familyNameError, setFamilyNameError] = useState("");
+  const [birthDateError, setBirthDateError] = useState("");
 
   // 프로필 정보 조회 함수
   const fetchProfile = useCallback(async () => {
@@ -74,11 +77,16 @@ export function useProfile() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (!file.type.startsWith("image/")) {
-        toast.error("Please select an image file.");
+      // Validate image type
+      const validImageTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+      if (!validImageTypes.includes(file.type)) {
+        toast.error("Please select a valid image file (JPG, PNG, or WEBP).");
         return;
       }
-      if (file.size > 5 * 1024 * 1024) {
+
+      // Validate image size (max 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
         toast.error("Image size must be less than 5MB.");
         return;
       }
@@ -93,9 +101,70 @@ export function useProfile() {
   };
 
   const handleProfileUpdate = async () => {
-    if (!editedName.trim() || !editedFamilyName.trim()) {
-      toast.error("Name and Family Name are required.");
+    // Reset errors
+    setNameError("");
+    setFamilyNameError("");
+    setBirthDateError("");
+
+    // Validation: Name and Family Name are required
+    if (!editedName.trim()) {
+      setNameError("Name is required.");
+      toast.error("Name is required.");
       return;
+    }
+    if (!editedFamilyName.trim()) {
+      setFamilyNameError("Family name is required.");
+      toast.error("Family name is required.");
+      return;
+    }
+
+    // Validation: Name length (1-50 characters)
+    if (editedName.trim().length > 50) {
+      setNameError("Name must be 50 characters or less.");
+      toast.error("Name must be 50 characters or less.");
+      return;
+    }
+    if (editedFamilyName.trim().length > 50) {
+      setFamilyNameError("Family name must be 50 characters or less.");
+      toast.error("Family name must be 50 characters or less.");
+      return;
+    }
+
+    // Validation: Birth date format (if provided)
+    if (editedBirthDate) {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(editedBirthDate)) {
+        setBirthDateError("Birth date must be in YYYY-MM-DD format.");
+        toast.error("Birth date must be in YYYY-MM-DD format.");
+        return;
+      }
+
+      // Validate actual date
+      const parsedDate = new Date(editedBirthDate);
+      if (isNaN(parsedDate.getTime())) {
+        setBirthDateError("Invalid birth date.");
+        toast.error("Invalid birth date.");
+        return;
+      }
+
+      // Validate age (must be 12 or older)
+      const today = new Date();
+      const birth = new Date(editedBirthDate);
+      let age = today.getFullYear() - birth.getFullYear();
+      const monthDiff = today.getMonth() - birth.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+        age--;
+      }
+      if (age < 12) {
+        setBirthDateError("You must be 12 years or older.");
+        toast.error("You must be 12 years or older.");
+        return;
+      }
+      if (age > 120) {
+        setBirthDateError("Invalid birth date.");
+        toast.error("Invalid birth date.");
+        return;
+      }
     }
 
     setIsUpdating(true);
@@ -181,6 +250,9 @@ export function useProfile() {
     editedPhone,
     profileImage,
     isUpdating,
+    nameError,
+    familyNameError,
+    birthDateError,
     setIsEditingProfile,
     setEditedName,
     setEditedFamilyName,

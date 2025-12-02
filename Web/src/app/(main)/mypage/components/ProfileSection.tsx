@@ -38,6 +38,9 @@ interface ProfileSectionProps {
   editedPhone: string;
   profileImage: string | null;
   isUpdating: boolean;
+  nameError?: string;
+  familyNameError?: string;
+  birthDateError?: string;
   onEditClick: () => void;
   onSave: () => void;
   onCancel: () => void;
@@ -60,6 +63,9 @@ export default function ProfileSection({
   editedPhone,
   profileImage,
   isUpdating,
+  nameError,
+  familyNameError,
+  birthDateError,
   onEditClick,
   onSave,
   onCancel,
@@ -172,20 +178,34 @@ export default function ProfileSection({
         <div className="flex-1">
           {isEditingProfile ? (
             <div className="space-y-2">
-              <input
-                type="text"
-                value={editedFamilyName}
-                onChange={(e) => onFamilyNameChange(e.target.value)}
-                placeholder="Family Name"
-                className="w-full px-2 py-1 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-black"
-              />
-              <input
-                type="text"
-                value={editedName}
-                onChange={(e) => onNameChange(e.target.value)}
-                placeholder="Name"
-                className="w-full px-2 py-1 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-black"
-              />
+              <div>
+                <input
+                  type="text"
+                  value={editedFamilyName}
+                  onChange={(e) => onFamilyNameChange(e.target.value)}
+                  placeholder="Family Name"
+                  className={`w-full px-2 py-1 border rounded-md text-sm focus:outline-none focus:ring-2 ${
+                    familyNameError ? "border-red-500 focus:ring-red-500" : "focus:ring-black"
+                  }`}
+                />
+                {familyNameError && (
+                  <p className="text-red-500 text-xs mt-1">{familyNameError}</p>
+                )}
+              </div>
+              <div>
+                <input
+                  type="text"
+                  value={editedName}
+                  onChange={(e) => onNameChange(e.target.value)}
+                  placeholder="Name"
+                  className={`w-full px-2 py-1 border rounded-md text-sm focus:outline-none focus:ring-2 ${
+                    nameError ? "border-red-500 focus:ring-red-500" : "focus:ring-black"
+                  }`}
+                />
+                {nameError && (
+                  <p className="text-red-500 text-xs mt-1">{nameError}</p>
+                )}
+              </div>
             </div>
           ) : (
             <>
@@ -210,12 +230,19 @@ export default function ProfileSection({
         <div className="flex items-center text-sm">
           <Calendar size={16} className="text-gray-400 mr-3 flex-shrink-0" />
           {isEditingProfile ? (
-            <input
-              type="date"
-              value={editedBirthDate}
-              onChange={(e) => onBirthDateChange(e.target.value)}
-              className="flex-1 px-2 py-1 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-black"
-            />
+            <div className="flex-1">
+              <input
+                type="date"
+                value={editedBirthDate}
+                onChange={(e) => onBirthDateChange(e.target.value)}
+                className={`w-full px-2 py-1 border rounded-md text-sm focus:outline-none focus:ring-2 ${
+                  birthDateError ? "border-red-500 focus:ring-red-500" : "focus:ring-black"
+                }`}
+              />
+              {birthDateError && (
+                <p className="text-red-500 text-xs mt-1">{birthDateError}</p>
+              )}
+            </div>
           ) : (
             <span className="text-gray-600">
               {profile?.birthDate

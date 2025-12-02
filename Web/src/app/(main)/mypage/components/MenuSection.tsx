@@ -11,14 +11,15 @@
 "use client";
 
 import Link from "next/link";
-import { HelpCircle, MessageSquare, Shield, LogOut, Trash2 } from "lucide-react";
+import { HelpCircle, MessageSquare, Shield, LogOut, Trash2, Key } from "lucide-react";
 
 interface MenuSectionProps {
   onLogout: () => void;
   onDeleteAccount: () => void;
+  onChangePassword: () => void;
 }
 
-export default function MenuSection({ onLogout, onDeleteAccount }: MenuSectionProps) {
+export default function MenuSection({ onLogout, onDeleteAccount, onChangePassword }: MenuSectionProps) {
   return (
     <div className="bg-white mt-4">
       {/* QNA */}
@@ -56,6 +57,15 @@ export default function MenuSection({ onLogout, onDeleteAccount }: MenuSectionPr
         </div>
         <span className="text-gray-400">›</span>
       </Link>
+
+      {/* Change Password */}
+      <button
+        onClick={onChangePassword}
+        className="w-full flex items-center px-4 py-4 border-b border-gray-200 hover:bg-gray-50 transition text-left"
+      >
+        <Key size={20} className="text-gray-400 mr-3" />
+        <span className="text-gray-700">Change Password</span>
+      </button>
 
       {/* Logout */}
       <button
