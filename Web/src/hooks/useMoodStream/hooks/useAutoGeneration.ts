@@ -1,6 +1,6 @@
 /**
  * 자동 스트림 생성 로직
- * 1세그 남았을 때 자동으로 다음 스트림 생성
+ * 8, 9, 10번째 세그먼트일 때 자동으로 다음 스트림을 생성한다
  */
 
 import { useCallback } from "react";
@@ -18,7 +18,7 @@ interface UseAutoGenerationParams {
 }
 
 /**
- * 다음 스트림 생성 (1세그 남았을 때 자동 호출)
+ * 다음 스트림을 생성한다 (8, 9, 10번째 세그먼트일 때 자동 호출)
  */
 export function useAutoGeneration({
   moodStream,
@@ -33,12 +33,19 @@ export function useAutoGeneration({
       return;
     }
     
+    // 10개 세그먼트 기준으로 8, 9, 10번째 세그먼트일 때 자동 생성
+    // currentSegmentIndex가 7, 8, 9일 때 (remaining이 3, 2, 1일 때)
     const remaining = moodStream.segments.length - currentSegmentIndex - 1;
-    if (remaining !== 1) {
-      return; // 1세그 남았을 때만 실행
+    const clampedTotal = 10; // 항상 10개 세그먼트로 표시
+    const clampedIndex = currentSegmentIndex >= clampedTotal ? clampedTotal - 1 : currentSegmentIndex;
+    const remainingFromClamped = clampedTotal - clampedIndex - 1;
+    
+    // 8, 9, 10번째 세그먼트일 때 (remaining이 3 이하일 때) 자동 생성
+    if (remainingFromClamped > 3 || remainingFromClamped <= 0) {
+      return;
     }
     
-    console.log("[useAutoGeneration] 1 segment remaining. Generating next stream...");
+    console.log(`[useAutoGeneration] Segment ${clampedIndex + 1}/10 (${remainingFromClamped} remaining). Generating next stream...`);
     isGeneratingRef.current = true;
     setIsGeneratingNextStream(true);
     

@@ -15,11 +15,11 @@ interface MoodHeaderProps {
   onSaveToggle: () => void;
   onRefresh: () => void;
   llmSource?: string;
-  onPreferenceClick?: () => void; // 선호도 클릭 핸들러
-  preferenceCount?: number; // 현재 무드의 선호도 카운트 (0-3)
-  maxReached?: boolean; // 최대 3번 도달 여부
-  onDoubleClick?: (x: number, y: number) => void; // 대시보드 더블클릭 핸들러
-  isRefreshing?: boolean; // LLM 새로고침 진행 중 여부
+  onPreferenceClick?: () => void; // preference click handler
+  preferenceCount?: number; // current mood preference count (0-3)
+  maxReached?: boolean; // max 3 times reached
+  onDoubleClick?: (x: number, y: number) => void; // dashboard double-click handler
+  isRefreshing?: boolean; // LLM refresh in progress
 }
 
 export default function MoodHeader({
@@ -36,19 +36,19 @@ export default function MoodHeader({
   const [heartPosition, setHeartPosition] = useState<{ x: number; y: number } | null>(null);
   const [lastClickTime, setLastClickTime] = useState(0);
 
-  // 더블클릭 감지
+  // 더블클릭을 감지한다
   const handleDoubleClick = (e: React.MouseEvent) => {
     const now = Date.now();
     const timeSinceLastClick = now - lastClickTime;
 
     if (timeSinceLastClick < 300) {
-      // 더블클릭 감지 (300ms 이내)
+      // 300ms 이내 더블클릭이 감지되면 선호도 추가
       if (!maxReached && onPreferenceClick) {
         setHeartPosition({ x: e.clientX, y: e.clientY });
         setShowHeartAnimation(true);
         onPreferenceClick();
       }
-      setLastClickTime(0); // 리셋
+      setLastClickTime(0); // reset
     } else {
       setLastClickTime(now);
     }
@@ -73,13 +73,13 @@ export default function MoodHeader({
             onDoubleClick={handleDoubleClick}
             title={
               maxReached
-                ? "최대 선호도 카운트(3)에 도달했습니다"
-                : "더블클릭하여 선호도 표시 (최대 3번)"
+                ? "Maximum preference count (3) reached"
+                : "Double-click to add preference (max 3 times)"
             }
           >
             {mood.name}
           </div>
-          {/* LLM 사용 여부를 항상 명확하게 표시 */}
+          {/* LLM 사용 여부를 항상 명확하게 표시한다 */}
           <span
             className="inline-flex mt-0.5 max-w-[160px] items-center rounded-full bg-white/70 px-2 py-[1px] text-[9px] font-medium text-gray-600"
             title={
@@ -87,7 +87,7 @@ export default function MoodHeader({
                 ? llmSource === "openai-fallback"
                   ? "LLM: OpenAI only (without Markov pipeline)"
                   : `LLM source: ${llmSource}`
-                : "LLM: 아직 호출되지 않았거나 목업 응답입니다."
+                : "LLM: Not called yet or mock response"
             }
           >
             {(() => {
@@ -101,7 +101,7 @@ export default function MoodHeader({
           </span>
         </div>
         <div className="flex items-center gap-2">
-          {/* 무드셋 저장 버튼 (별) */}
+          {/* mood set save button (star) */}
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -110,11 +110,11 @@ export default function MoodHeader({
             className={`p-1.5 rounded-full bg-white/40 backdrop-blur hover:bg-white/60 transition ${
               isSaved ? "text-yellow-500" : "text-gray-400"
             }`}
-            title={isSaved ? "저장된 무드 (클릭하여 제거)" : "무드 저장하기"}
+            title={isSaved ? "Saved mood (click to remove)" : "Save mood"}
           >
             <Star size={16} fill={isSaved ? "currentColor" : "none"} strokeWidth={isSaved ? 0 : 1.5} />
           </button>
-          {/* 새로고침 버튼 (무드 클러스터 내에서 변경) */}
+          {/* refresh button (change within mood cluster) */}
           <button
             onClick={isRefreshing ? () => {} : onRefresh}
             disabled={isRefreshing}

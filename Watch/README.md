@@ -1,12 +1,12 @@
 # Mood Manager - Wear OS
 
-**무드매니저(Mood Manager)** 프로젝트의 Wear OS 데이터 수집 앱입니다.
+Wear OS data collection app for the **Mood Manager** project.
 
-Health Services API와 AudioRecord를 통해 사용자의 생체 신호(심박수, HRV, 스트레스 지표)와 음성 이벤트(웃음/한숨)를 수집하여 **Firebase Firestore**로 전송합니다.
+Collects user biometric signals (heart rate, HRV, stress indicators) and audio events (laughter, sighs) through Health Services API and AudioRecord, then sends them to **Firebase Firestore**.
 
 ---
 
-## 🛠️ 기술 스택
+## Technology Stack
 
 - **Language**: Kotlin
 - **Platform**: Android / Wear OS SDK
@@ -16,166 +16,168 @@ Health Services API와 AudioRecord를 통해 사용자의 생체 신호(심박�
   - Firebase SDK (Firestore, Storage)
   - Health Services API
   - AudioRecord API
-- **Background**: ForegroundService (1분 주기 데이터 수집)
+- **Background**: ForegroundService (1-minute interval data collection)
 
 ---
 
-## 📁 프로젝트 구조
+## Project Structure
 
 ```
-apps/watch/
+Watch/
 ├── app/
 │   ├── src/main/
 │   │   ├── java/com/moodmanager/watch/presentation/
-│   │   │   ├── MainActivity.kt          # 메인 액티비티
-│   │   │   ├── PeriodicDataService.kt  # 주기적 생체 데이터 수집 서비스
-│   │   │   ├── AudioEventService.kt     # 오디오 이벤트 수집 서비스
-│   │   │   ├── FirebaseViewModel.kt    # Firestore 데이터 전송 로직
-│   │   │   └── theme/Theme.kt          # UI 테마
-│   │   ├── res/                        # 리소스 파일
-│   │   └── AndroidManifest.xml        # 앱 매니페스트
-│   ├── google-services.json           # Firebase 설정 파일 (Git 제외)
-│   └── build.gradle.kts               # 앱 빌드 설정
-├── build.gradle.kts                   # 프로젝트 빌드 설정
-└── README.md                          # 이 파일
+│   │   │   ├── MainActivity.kt          # Main activity
+│   │   │   ├── PeriodicDataService.kt  # Periodic biometric data collection service
+│   │   │   ├── AudioEventService.kt     # Audio event collection service
+│   │   │   ├── FirebaseViewModel.kt    # Firestore data transmission logic
+│   │   │   └── theme/Theme.kt          # UI theme
+│   │   ├── res/                        # Resource files
+│   │   └── AndroidManifest.xml        # App manifest
+│   ├── google-services.json           # Firebase configuration file (Git excluded)
+│   └── build.gradle.kts               # App build configuration
+├── build.gradle.kts                   # Project build configuration
+└── README.md                          # This file
 ```
 
 ---
 
-## 🔧 설정
+## Setup
 
-### 1. Firebase 설정
+### 1. Firebase Configuration
 
-1. [Firebase Console](https://console.firebase.google.com/)에서 프로젝트 생성 또는 기존 프로젝트 선택
-2. Android 앱 추가:
-   - 패키지 이름: `com.moodmanager.watch`
-   - 앱 닉네임: `Mood Manager Watch`
-3. `google-services.json` 파일 다운로드
-4. `app/google-services.json.example` 파일을 참고하여 실제 `app/google-services.json` 파일 생성
-   - 또는 다운로드한 파일을 `app/` 폴더에 직접 배치
+1. Create a project or select an existing project in [Firebase Console](https://console.firebase.google.com/)
+2. Add Android app:
+   - Package name: `com.moodmanager.watch`
+   - App nickname: `Mood Manager Watch`
+3. Download `google-services.json` file
+4. Create actual `app/google-services.json` file based on `app/google-services.json.example`
+   - Or place the downloaded file directly in the `app/` folder
 
-> ⚠️ **주의**: `google-services.json` 파일은 민감한 정보(API 키)를 포함하므로 Git에 커밋하지 마세요.  
-> `.gitignore`에 이미 제외되어 있으며, `google-services.json.example` 파일을 참고하세요.
+> ⚠️ **Warning**: The `google-services.json` file contains sensitive information (API keys) and should not be committed to Git.  
+> It is already excluded in `.gitignore`. Refer to `google-services.json.example` if needed.
 
-### 2. 로컬 설정
+### 2. Local Configuration
 
-`local.properties` 파일은 자동으로 생성되며, Android SDK 경로를 포함합니다.  
-이 파일은 Git에 커밋되지 않습니다 (`.gitignore`에 제외됨).
+The `local.properties` file is automatically generated and contains the Android SDK path.  
+This file is not committed to Git (excluded in `.gitignore`).
 
-### 3. 권한 설정
+### 3. Permissions
 
-앱은 다음 권한을 요청합니다:
-- **인터넷**: Firestore 데이터 전송
-- **마이크**: 오디오 이벤트 수집 (`RECORD_AUDIO`)
-- **생체 센서**: Health Services API 사용 (`BODY_SENSORS`)
-- **Health Services**: 심박수, HRV, 호흡수, 수면 데이터 읽기
-- **포그라운드 서비스**: 백그라운드 데이터 수집
+The app requests the following permissions:
+- **Internet**: Firestore data transmission
+- **Microphone**: Audio event collection (`RECORD_AUDIO`)
+- **Body Sensors**: Health Services API usage (`BODY_SENSORS`)
+- **Health Services**: Read heart rate, HRV, respiratory rate, sleep data
+- **Foreground Service**: Background data collection
 
-권한은 런타임에 자동으로 요청됩니다.
+Permissions are automatically requested at runtime.
 
 ---
 
-## 🚀 빌드 및 실행
+## Build and Run
 
-### 필수 요구사항
+### Requirements
 
-- **Android Studio**: Otter | 2025.2.1 이상 권장
-- **JDK**: 17 이상
-- **Wear OS 에뮬레이터** 또는 **실제 Wear OS 기기**
+- **Android Studio**: Otter | 2025.2.1 or higher recommended
+- **JDK**: 17 or higher
+- **Wear OS Emulator** or **Physical Wear OS Device**
 
-### 빌드 단계
+### Build Steps
 
-1. **프로젝트 열기**
+1. **Open Project**
    ```bash
-   # Android Studio에서 apps/watch 폴더 열기
+   # Open apps/watch folder in Android Studio
    ```
 
-2. **Gradle 동기화**
-   - Android Studio에서 자동으로 동기화되거나
-   - `File > Sync Project with Gradle Files` 클릭
+2. **Gradle Sync**
+   - Automatically synced in Android Studio, or
+   - Click `File > Sync Project with Gradle Files`
 
-3. **Firebase 설정 확인**
-   - `app/google-services.json` 파일이 존재하는지 확인
-   - 파일이 없으면 Firebase Console에서 다운로드
+3. **Verify Firebase Configuration**
+   - Check if `app/google-services.json` file exists
+   - If not, download from Firebase Console
 
-4. **빌드 및 실행**
-   - Wear OS 에뮬레이터 또는 실제 기기 선택
-   - `Run > Run 'app'` 또는 `Shift + F10`
+4. **Build and Run**
+   - Select Wear OS emulator or physical device
+   - `Run > Run 'app'` or `Shift + F10`
 
 ---
 
-## 📊 데이터 구조
+## Data Structure
 
-### Firestore Collection 구조
+### Firestore Collection Structure
 
 ```
 users/
 └── {userId}/
-    ├── raw_periodic/    # 주기적 생체 데이터 (1분 간격)
-    └── raw_events/      # 오디오 이벤트 (웃음/한숨)
+    ├── raw_periodic/    # Periodic biometric data (1-minute intervals)
+    └── raw_events/      # Audio events (laughter/sighs)
 ```
 
-### 1. raw_periodic (주기적 생체 데이터)
+### 1. raw_periodic (Periodic Biometric Data)
 
-**수집 주기**: 1분  
-**수집 서비스**: `PeriodicDataService`  
-**문서 ID**: 타임스탬프(ms) 문자열
+**Collection Interval**: 1 minute  
+**Collection Service**: `PeriodicDataService`  
+**Document ID**: Timestamp (ms) string
 
-#### 데이터 필드
+#### Data Fields
 
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `timestamp` | number | Unix 타임스탬프 (ms) |
-| `heart_rate_avg` | number | 평균 심박수 (bpm) |
-| `heart_rate_min` | number | 최소 심박수 (bpm) |
-| `heart_rate_max` | number | 최대 심박수 (bpm) |
-| `hrv_sdnn` | number | 심박 변이도 (SDNN) |
-| `respiratory_rate_avg` | number | 평균 호흡수 (회/분) |
-| `movement_count` | number | 움직임 감지 횟수 |
-| `is_fallback` | boolean | 센서 실측 여부 플래그 |
+| Field | Type | Description |
+|------|------|-------------|
+| `timestamp` | number | Unix timestamp (ms) |
+| `heart_rate_avg` | number | Average heart rate (bpm) |
+| `heart_rate_min` | number | Minimum heart rate (bpm) |
+| `heart_rate_max` | number | Maximum heart rate (bpm) |
+| `hrv_sdnn` | number | Heart rate variability (SDNN) |
+| `respiratory_rate_avg` | number | Average respiratory rate (breaths/min) |
+| `movement_count` | number | Movement detection count |
+| `is_fallback` | boolean | Sensor measurement flag |
 
-#### 예시 경로
+#### Example Path
 ```
 users/testUser/raw_periodic/1763532000123
 ```
 
-### 2. raw_events (오디오 이벤트)
+### 2. raw_events (Audio Events)
 
-**수집 주기**: 1분마다 2초 녹음  
-**수집 서비스**: `AudioEventService`  
-**저장 조건**: 유효한 이벤트만 저장 (무음/unknown 제외)  
-**자동 생성**: 1시간 동안 이벤트가 없으면 더미 데이터 1개 자동 생성
+**Collection Interval**: 2-second recording every 1 minute  
+**Collection Service**: `AudioEventService`  
+**Storage Condition**: Only valid events are stored (silence/unknown excluded)  
+**Auto Generation**: If no events for 1 hour, 1 dummy data is automatically generated
 
-#### 데이터 필드
+#### Data Fields
 
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `timestamp` | number | 이벤트 발생 시간 (Unix ms) |
-| `event_type_guess` | string | `"laughter"` / `"sigh"` / `"unknown"` |
-| `event_dbfs` | number | 상대 음량 (0-100) |
-| `event_duration_ms` | number | 이벤트 지속 시간 (보통 2000ms) |
-| `audio_base64` | string? | Base64 인코딩된 WAV 오디오 (무음 시 null) |
-| `is_fallback` | boolean | 휴리스틱 기반 추정 여부 |
+| Field | Type | Description |
+|------|------|-------------|
+| `timestamp` | number | Event occurrence time (Unix ms) |
+| `audio_base64` | string | Base64-encoded WAV audio (required) |
+| `ml_processed` | string | ML processing status: `"pending"` / `"completed"` / `"failed"` (required) |
 
-#### 예시 경로
+**Note**: The following fields are no longer used by ML but may exist in older data:
+- `event_dbfs` (removed)
+- `event_duration_ms` (removed)
+- `event_type_guess` (removed)
+
+#### Example Path
 ```
 users/testUser/raw_events/autoDocId12345
 ```
 
 ---
 
-## 🎵 오디오 포맷
+## Audio Format
 
-### WAV (Base64) 포맷
+### WAV (Base64) Format
 
-WearOS는 다음 설정으로 오디오를 녹음합니다:
+WearOS records audio with the following settings:
 
-- **포맷**: PCM 16bit
-- **채널**: Mono (단일 채널)
-- **샘플 레이트**: 8000 Hz
-- **인코딩**: WAV 헤더 + PCM body를 Base64로 인코딩
+- **Format**: PCM 16bit
+- **Channels**: Mono (single channel)
+- **Sample Rate**: 8000 Hz
+- **Encoding**: WAV header + PCM body encoded as Base64
 
-### Python 디코딩 예시
+### Python Decoding Example
 
 ```python
 import base64
@@ -183,159 +185,152 @@ import io
 import soundfile as sf
 
 def decode_base64_wav(base64_str):
-    """Base64 WAV 문자열을 numpy 배열로 디코딩"""
+    """Decode Base64 WAV string to numpy array"""
     wav_bytes = base64.b64decode(base64_str)
     audio, samplerate = sf.read(io.BytesIO(wav_bytes))
     return audio, samplerate
 
-# 사용 예시
-doc = firestore_doc  # Firestore 문서
+# Usage example
+doc = firestore_doc  # Firestore document
 if doc.get("audio_base64"):
     audio, sr = decode_base64_wav(doc["audio_base64"])
-    # ML 모델에 바로 사용 가능
+    # Can be used directly with ML model
     prediction = model(audio, sr)
 ```
 
 ---
 
-## 🔄 데이터 수집 프로세스
+## Data Collection Process
 
-### 1. 주기적 생체 데이터 (PeriodicDataService)
-
-```
-1분 주기 루프
-  ↓
-Health Services API에서 데이터 수집
-  ↓
-Firestore에 raw_periodic 컬렉션에 추가 (add)
-  ↓
-다음 주기 대기
-```
-
-### 2. 오디오 이벤트 (AudioEventService)
+### 1. Periodic Biometric Data (PeriodicDataService)
 
 ```
-1분 주기 루프
+1-minute loop
   ↓
-AudioRecord로 2초 녹음
+Collect data from Health Services API
   ↓
-RMS/dBFS 계산하여 무음 필터링
+Add to Firestore raw_periodic collection (add)
   ↓
-유효한 이벤트만 Firestore에 저장
-  ↓
-1시간 이벤트 없으면 더미 데이터 1개 생성
-  ↓
-다음 주기 대기
+Wait for next cycle
 ```
+
+### 2. Audio Events (AudioEventService)
+
+```
+1-minute loop
+  ↓
+Record 2 seconds with AudioRecord
+  ↓
+Calculate RMS/dBFS to filter silent segments
+  ↓
+Store only valid events in Firestore
+  ↓
+Generate 1 dummy data if no events for 1 hour
+  ↓
+Wait for next cycle
+```
+
+**Note**: Audio events are generated every minute as dummy data for testing. Actual audio recording and event type guessing are not implemented in the current version.
 
 ---
 
-## 📝 주요 컴포넌트
+## Key Components
 
 ### MainActivity.kt
-- 앱의 메인 액티비티
-- 앱 시작 시 포그라운드 서비스 시작
+- Main activity of the app
+- Starts foreground service when app launches
 
 ### PeriodicDataService.kt
-- **역할**: 주기적 생체 데이터 수집
-- **주기**: 1분
-- **데이터**: 심박수, HRV, 호흡수, 움직임
-- **전송**: `users/{userId}/raw_periodic` 컬렉션
+- **Role**: Periodic biometric data collection
+- **Interval**: 1 minute
+- **Data**: Heart rate, HRV, respiratory rate, movement
+- **Transmission**: `users/{userId}/raw_periodic` collection
 
 ### AudioEventService.kt
-- **역할**: 오디오 이벤트 수집 (웃음/한숨)
-- **주기**: 1분마다 2초 녹음
-- **필터링**: 무음/unknown 제외
-- **전송**: `users/{userId}/raw_events` 컬렉션
+- **Role**: Audio event collection (laughter/sighs)
+- **Interval**: 2-second recording every 1 minute
+- **Current Implementation**: Generates dummy audio events every minute
+- **Transmission**: `users/{userId}/raw_events` collection
+- **Fields**: `timestamp`, `audio_base64`, `ml_processed: "pending"`
 
 ### FirebaseViewModel.kt
-- **역할**: Firestore 데이터 전송 로직
-- **기능**: 
-  - `sendDummyPeriodicData()`: 더미 생체 데이터 전송
-  - `sendDummyAudioEvent()`: 더미 오디오 이벤트 전송
-  - 실제 서비스에서는 Health Services API와 AudioRecord에서 수집한 데이터를 전송
+- **Role**: Firestore data transmission logic
+- **Functions**: 
+  - `sendDummyPeriodicData()`: Send dummy biometric data
+  - `sendDummyAudioEvent()`: Send dummy audio event
+  - In actual service, transmits data collected from Health Services API and AudioRecord
 
 ---
 
-## 🔗 연동 정보
+## Integration Information
 
-### Next.js 웹앱 연동
+### Next.js Web App Integration
 
-WearOS 앱이 전송한 데이터는 Next.js 웹앱에서 다음과 같이 처리됩니다:
+Data sent by the WearOS app is processed in the Next.js web app as follows:
 
-1. **raw_periodic 데이터**:
-   - 스트레스 지수 계산
-   - 수면 패턴 분석
-   - 심박수 변화 추적
+1. **raw_periodic data**:
+   - Calculate stress index
+   - Analyze sleep patterns
+   - Track heart rate changes
 
-2. **raw_events 데이터**:
-   - ML 서버로 전송하여 웃음/한숨 분류
-   - 감정 타임라인 구성
-   - 무드 추론에 활용
+2. **raw_events data**:
+   - Send to ML server for laughter/sigh classification
+   - Construct emotion timeline
+   - Use for mood inference
 
-### ML 서버 연동
+### ML Server Integration
 
-- ML 서버는 `raw_events` 컬렉션의 `audio_base64` 데이터를 가져와 분류
-- 분류 결과를 Next.js 웹앱으로 전송
+- ML server retrieves `audio_base64` data from `raw_events` collection and classifies
+- Sends classification results to Next.js web app
 
 ---
 
-## ⚠️ 주의사항
+## Important Notes
 
-### 데이터 저장 규칙
+### Data Storage Rules
 
-| 항목 | 규칙 |
+| Item | Rule |
 |------|------|
-| 오디오 unknown | 저장하지 않음 |
-| 무음 | 저장하지 않음 |
-| 실제 이벤트 발생 | 저장 |
-| 1시간 이벤트 없음 | 랜덤 더미 1개 생성 |
-| Base64 WAV | ML에서 다시 WAV로 디코딩 가능 |
-| Firestore 경로 | 반드시 `users/{userId}/raw_events` |
+| Audio unknown | Not stored |
+| Silence | Not stored |
+| Actual event occurrence | Stored |
+| No events for 1 hour | Generate 1 random dummy |
+| Base64 WAV | Can be decoded back to WAV in ML |
+| Firestore path | Must be `users/{userId}/raw_events` |
 
-### 보안
+### Security
 
-- `google-services.json` 파일은 Git에 커밋하지 마세요
-- `local.properties` 파일은 Git에 커밋하지 마세요
-- Firebase API 키가 노출되지 않도록 주의하세요
-
----
-
-## 📚 참고 자료
-
-- [메인 프로젝트 README](../README.md)
-- [프로젝트 구조 문서](../../docs/PROJECT_STRUCTURE.md)
-- [API 명세서](../../docs/API_SPEC.md)
-- [Firebase 문서](https://firebase.google.com/docs)
-- [Health Services API](https://developer.android.com/guide/health-and-fitness/health-services)
+- Do not commit `google-services.json` file to Git
+- Do not commit `local.properties` file to Git
+- Be careful not to expose Firebase API keys
 
 ---
 
-## 🐛 문제 해결
+## Troubleshooting
 
-### 빌드 오류
+### Build Errors
 
-1. **Gradle 동기화 실패**
-   - `File > Invalidate Caches / Restart` 실행
-   - `./gradlew clean` 실행 후 다시 빌드
+1. **Gradle Sync Failure**
+   - Run `File > Invalidate Caches / Restart`
+   - Run `./gradlew clean` and rebuild
 
-2. **google-services.json 누락**
-   - Firebase Console에서 파일 다운로드
-   - `app/` 폴더에 배치
+2. **Missing google-services.json**
+   - Download file from Firebase Console
+   - Place in `app/` folder
 
-### 런타임 오류
+### Runtime Errors
 
-1. **권한 거부**
-   - 앱 설정에서 권한 수동 허용
-   - 또는 앱 재설치 후 권한 재요청
+1. **Permission Denied**
+   - Manually allow permissions in app settings
+   - Or reinstall app and request permissions again
 
-2. **Firestore 연결 실패**
-   - 인터넷 연결 확인
-   - Firebase 프로젝트 설정 확인
-   - `google-services.json` 파일 확인
+2. **Firestore Connection Failure**
+   - Check internet connection
+   - Verify Firebase project settings
+   - Check `google-services.json` file
 
 ---
 
-## 📄 라이선스
+## License
 
-본 프로젝트는 메인 프로젝트의 라이선스를 따릅니다.
+This project follows the license of the main project.
