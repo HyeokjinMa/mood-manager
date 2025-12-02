@@ -96,9 +96,16 @@ export function useRegisterForm() {
           body: JSON.stringify({ email }),
         });
 
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
 
-        if (data.available) {
+        if (data.error) {
+          setEmailAvailable(null);
+          setEmailError(data.error);
+        } else if (data.available) {
           setEmailAvailable(true);
           setEmailError("");
         } else {
@@ -108,6 +115,7 @@ export function useRegisterForm() {
       } catch (err) {
         console.error("[Email Check] Error:", err);
         setEmailAvailable(null);
+        setEmailError("Failed to check email availability. Please try again.");
       } finally {
         setIsCheckingEmail(false);
       }
