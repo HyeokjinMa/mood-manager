@@ -110,10 +110,10 @@ export default function DeviceCardExpanded({
           lightColor={lightColor}
           lightBrightness={lightBrightness}
           scentLevel={scentLevel}
-          onUpdateLightColor={device.type === "light" ? undefined : (color) => {
+          onUpdateLightColor={device.type === "light" ? (color) => {
             setLightColor(color);
             onUpdateLightColor?.(color);
-          }}
+          } : undefined}
           onUpdateLightBrightness={(brightness) => {
             setLightBrightness(brightness);
             onUpdateLightBrightness?.(brightness);
