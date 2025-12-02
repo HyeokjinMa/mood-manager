@@ -287,7 +287,7 @@ class AudioEventService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val c = NotificationChannel(
                 NOTIFICATION_CHANNEL_ID,
-                "Mood Manager Audio Events",
+                "Audio Event Monitoring",
                 NotificationManager.IMPORTANCE_LOW
             )
             (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
@@ -298,7 +298,7 @@ class AudioEventService : Service() {
     private fun createNotification(): Notification {
         return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setContentTitle("Mood Manager")
-            .setContentText("오디오 이벤트 모니터링 중...")
+            .setContentText("Monitoring audio events...")
             .setSmallIcon(R.mipmap.ic_launcher)
             .setOngoing(true)
             .build()
