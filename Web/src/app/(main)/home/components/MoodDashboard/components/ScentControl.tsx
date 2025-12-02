@@ -13,7 +13,7 @@ interface ScentControlProps {
 }
 
 export default function ScentControl({ mood, onScentClick, moodColor }: ScentControlProps) {
-  // 무드 색상을 사용한다 (투명도 낮게 설정하여 더 진하게 표시)
+  // 무드 색상 사용 (투명도 낮게 설정하여 더 진하게 표시)
   const buttonColor = moodColor || mood.color;
   
   // debug log

@@ -1,6 +1,6 @@
 /**
  * 자동 스트림 생성 로직
- * 8, 9, 10번째 세그먼트일 때 자동으로 다음 스트림을 생성한다
+ * 8, 9, 10번째 세그먼트일 때 자동으로 다음 스트림 생성
  */
 
 import { useCallback } from "react";
@@ -18,7 +18,7 @@ interface UseAutoGenerationParams {
 }
 
 /**
- * 다음 스트림을 생성한다 (8, 9, 10번째 세그먼트일 때 자동 호출)
+ * 다음 스트림 생성 (8, 9, 10번째 세그먼트일 때 자동 호출)
  */
 export function useAutoGeneration({
   moodStream,

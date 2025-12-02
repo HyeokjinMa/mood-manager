@@ -36,13 +36,13 @@ export default function MoodHeader({
   const [heartPosition, setHeartPosition] = useState<{ x: number; y: number } | null>(null);
   const [lastClickTime, setLastClickTime] = useState(0);
 
-  // 더블클릭을 감지한다
+  // 더블클릭 감지
   const handleDoubleClick = (e: React.MouseEvent) => {
     const now = Date.now();
     const timeSinceLastClick = now - lastClickTime;
 
     if (timeSinceLastClick < 300) {
-      // 300ms 이내 더블클릭이 감지되면 선호도 추가
+      // 300ms 이내 더블클릭 감지 시 선호도 추가
       if (!maxReached && onPreferenceClick) {
         setHeartPosition({ x: e.clientX, y: e.clientY });
         setShowHeartAnimation(true);
@@ -79,7 +79,7 @@ export default function MoodHeader({
           >
             {mood.name}
           </div>
-          {/* LLM 사용 여부를 항상 명확하게 표시한다 */}
+          {/* LLM 사용 여부 항상 명확하게 표시 */}
           <span
             className="inline-flex mt-0.5 max-w-[160px] items-center rounded-full bg-white/70 px-2 py-[1px] text-[9px] font-medium text-gray-600"
             title={
