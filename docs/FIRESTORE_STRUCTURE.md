@@ -32,11 +32,13 @@ Firestore는 WearOS 디바이스와 ML 서버, Web 앱 간의 실시간 데이�
   - `"completed"`: ML 처리 완료
   - `"failed"`: ML 처리 실패
 
-#### 선택 필드 (WearOS에서 수집하지만 ML에서는 사용하지 않음)
-- `event_dbfs`: 이벤트 dBFS 값 (필터링용, ML 미사용)
-- `event_duration_ms`: 이벤트 지속 시간 (밀리초, ML 미사용)
-- `event_type_guess`: 초기 추측 이벤트 타입 (ML 미사용)
-- `is_fallback`: 폴백 여부 (불리언, ML 미사용)
+#### 삭제된 필드 (ML에서 사용하지 않으므로 WearOS에서 전송하지 않음)
+다음 필드들은 **ML 서버에서 사용하지 않으므로 WearOS에서 전송하지 않습니다**:
+- ~~`event_dbfs`~~ (삭제됨)
+- ~~`event_duration_ms`~~ (삭제됨)
+- ~~`event_type_guess`~~ (삭제됨)
+
+**참고:** `is_fallback` 필드는 필요시 유지 가능하나, ML 처리에는 사용되지 않습니다.
 
 ## ML 서버 데이터 처리 플로우
 
@@ -103,7 +105,13 @@ await batch.commit();
 
 ## 참고사항
 
-- `event_dbfs`, `event_duration_ms`, `event_type_guess` 필드는 WearOS에서 여전히 수집되지만, ML 서버에서는 사용하지 않습니다.
-- 이 필드들은 디바이스 측 필터링이나 디버깅 용도로만 사용됩니다.
+- **미사용 필드 삭제**: `event_dbfs`, `event_duration_ms`, `event_type_guess` 필드는 ML 서버에서 사용하지 않으므로 WearOS에서 전송하지 않습니다.
 - `ml_processed` 필드는 ML 서버의 처리 상태를 추적하는 데 필수적입니다.
+- WearOS 앱 업데이트 시 해당 필드들을 제거해야 합니다.
+
+## Firestore 연결 상태
+
+- **Watch 앱 (WearOS)**: ✅ Firestore 연결됨 (`google-services.json` 설정 완료)
+- **Web 앱 (Next.js)**: ❌ Firestore 연결 안 됨 (현재 TODO 상태, V1 Mock 모드 사용 중)
+- **ML Python 서버**: ✅ Firestore 연결됨 (서비스 계정 키로 접근)
 
