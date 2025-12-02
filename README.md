@@ -200,6 +200,4 @@ For production environments, ensure the following:
 
 ## Additional Resources
 
-- **Watch Repository**: [mood-manager-watch](https://github.com/Ma-Hyekjin/mood-manager-watch.git)
-- **API Documentation**: [Mood Manager – API Specification v1](https://www.notion.so/Mood-Manager-API-Specification-v1-2b1739c2f15880bafcfdc063069488)
-- **Deployed Demo**: [mood-manager-deployed](http://54.180.50.127/)
+- **Deployed Demo**: [mood-manager-deployed](https://moodmanager-v1.vercel.app)
