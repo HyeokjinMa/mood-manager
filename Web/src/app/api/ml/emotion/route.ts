@@ -64,7 +64,8 @@ export async function GET(request: NextRequest) {
     const userId = "testUser";
 
     // 카운트 증가
-    incrementEmotionCount(userId, result as "Laughter" | "Sigh" | "Negative");
+    const confidenceNum = parseFloat(confidence);
+    incrementEmotionCount(userId, result as "Laughter" | "Sigh" | "Negative", confidenceNum);
 
     console.log(
       `[ML Emotion] 수신 완료 - docId: ${docId}, result: ${result}, confidence: ${confidence}, timestamp: ${timestamp}`
