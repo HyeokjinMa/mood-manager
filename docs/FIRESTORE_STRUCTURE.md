@@ -23,7 +23,7 @@ Firestore는 WearOS 디바이스와 ML 서버, Web 앱 간의 실시간 데이�
 
 **필드:**
 
-#### 필수 필드
+**필드:**
 - `audio_base64`: Base64로 인코딩된 WAV 오디오 데이터 (문자열)
 - `timestamp`: UNIX timestamp 또는 ISO 8601 (문자열 또는 숫자)
 - `ml_processed`: ML 처리 상태 (문자열)
@@ -31,14 +31,6 @@ Firestore는 WearOS 디바이스와 ML 서버, Web 앱 간의 실시간 데이�
   - `"processing"`: 현재 ML 처리 중
   - `"completed"`: ML 처리 완료
   - `"failed"`: ML 처리 실패
-
-#### 삭제된 필드 (ML에서 사용하지 않으므로 WearOS에서 전송하지 않음)
-다음 필드들은 **ML 서버에서 사용하지 않으므로 WearOS에서 전송하지 않습니다**:
-- ~~`event_dbfs`~~ (삭제됨)
-- ~~`event_duration_ms`~~ (삭제됨)
-- ~~`event_type_guess`~~ (삭제됨)
-
-**참고:** `is_fallback` 필드는 필요시 유지 가능하나, ML 처리에는 사용되지 않습니다.
 
 ## ML 서버 데이터 처리 플로우
 
@@ -85,29 +77,9 @@ Web 앱은 ML 처리 완료된 결과를 다른 경로로 수신합니다:
 - `/api/ml/emotion-counts`: ML 서버에서 Web 앱으로 감정 카운트 전송
 - 또는 Firestore에서 직접 읽기 (선택적)
 
-## 마이그레이션 가이드
-
-기존 `raw_events` 문서에 `ml_processed` 필드가 없는 경우:
-
-```javascript
-// Firestore 콘솔 또는 Cloud Functions에서 실행
-const batch = firestore().batch();
-const snapshot = await db.collection('users').doc('testUser').collection('raw_events').get();
-
-snapshot.docs.forEach(doc => {
-  if (!doc.data().ml_processed) {
-    batch.update(doc.ref, { ml_processed: 'pending' });
-  }
-});
-
-await batch.commit();
-```
-
 ## 참고사항
 
-- **미사용 필드 삭제**: `event_dbfs`, `event_duration_ms`, `event_type_guess` 필드는 ML 서버에서 사용하지 않으므로 WearOS에서 전송하지 않습니다.
 - `ml_processed` 필드는 ML 서버의 처리 상태를 추적하는 데 필수적입니다.
-- WearOS 앱 업데이트 시 해당 필드들을 제거해야 합니다.
 
 ## Firestore 연결 상태
 
