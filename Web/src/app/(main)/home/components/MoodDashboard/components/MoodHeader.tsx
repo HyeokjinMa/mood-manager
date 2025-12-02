@@ -116,7 +116,8 @@ export default function MoodHeader({
           </button>
           {/* 새로고침 버튼 (무드 클러스터 내에서 변경) */}
           <button
-            onClick={isRefreshing ? undefined : onRefresh}
+            onClick={isRefreshing ? () => {} : onRefresh}
+            disabled={isRefreshing}
             className={`p-1.5 rounded-full bg-white/40 backdrop-blur transition text-gray-800 ${
               isRefreshing ? "opacity-70 cursor-wait" : "hover:bg-white/60"
             }`}
