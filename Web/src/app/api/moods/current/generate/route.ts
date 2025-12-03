@@ -13,7 +13,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, checkMockMode } from "@/lib/auth/session";
 import { getMockMoodStream } from "@/lib/mock/mockData";
 import { chainSegments } from "@/lib/utils/segmentUtils";
-import type { MoodStream, MoodStreamSegment } from "@/hooks/useMoodStream/types";
+import type { MoodStream } from "@/hooks/useMoodStream/types";
 
 /**
  * POST /api/moods/current/generate
@@ -40,7 +40,12 @@ export async function POST(request: NextRequest) {
     }
 
     // 일부 클라이언트에서 빈 Body로 호출될 수 있으므로 방어적으로 처리
-    let body: any = {};
+    type GenerateRequestBody = {
+      nextStartTime?: number;
+      segmentCount?: number;
+    };
+
+    let body: GenerateRequestBody = {};
     try {
       body = await request.json();
     } catch {
