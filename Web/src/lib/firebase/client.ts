@@ -13,17 +13,17 @@
  *   반드시 서버에서 쓰지 않아야 하는 경우 주의 필요
  */
 
-import { initializeApp, getApps } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
+import { getFirestore, type Firestore } from "firebase/firestore";
 
 // Firebase 앱 인스턴스 (지연 초기화)
-let appInstance: ReturnType<typeof initializeApp> | null = null;
-let dbInstance: ReturnType<typeof getFirestore> | null = null;
+let appInstance: FirebaseApp | null = null;
+let dbInstance: Firestore | null = null;
 
 // Firebase 초기화 함수 (지연 초기화)
 function initializeFirebase() {
   if (appInstance) {
-    return { app: appInstance, db: dbInstance! };
+    return { app: appInstance, db: dbInstance };
   }
 
   // 환경 변수 확인 (없으면 기본값 사용)
@@ -31,6 +31,16 @@ function initializeFirebase() {
   const authDomain = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "placeholder-auth-domain";
   const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "placeholder-project-id";
   const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "placeholder-app-id";
+
+  // Firebase 비활성화 모드 (프로젝트 ID가 placeholder인 경우)
+  if (!projectId || projectId === "placeholder-project-id") {
+    console.warn(
+      "[firebase/client] NEXT_PUBLIC_FIREBASE_PROJECT_ID 가 설정되지 않아 Firestore를 비활성화합니다."
+    );
+    appInstance = null;
+    dbInstance = null;
+    return { app: appInstance, db: dbInstance };
+  }
 
   // 환경 변수 기반 Firebase 설정
   const firebaseConfig = {

@@ -97,6 +97,13 @@ export function startPeriodicListener() {
     return;
   }
 
+  if (!db) {
+    console.warn(
+      "[periodicListener] Firestore db 가 초기화되지 않았습니다. (Firebase 비활성화 모드) 리스너를 시작하지 않습니다."
+    );
+    return;
+  }
+
   // 기존 리스너가 있으면 정리
   cleanupListener();
 

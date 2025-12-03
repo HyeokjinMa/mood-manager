@@ -18,6 +18,12 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import type { PeriodicRaw } from "@/lib/types/periodic";
 
 export async function fetchTodaySleepRaw(userId: string): Promise<PeriodicRaw[]> {
+  // Firebase가 비활성화된 환경에서는 빈 배열 반환 (수면 점수는 기본값으로 대체)
+  if (!db) {
+    console.warn("[fetchTodaySleepRaw] Firestore db 가 없어, 빈 데이터로 반환합니다.");
+    return [];
+  }
+
   const now = new Date();
 
   // 오늘 10시
