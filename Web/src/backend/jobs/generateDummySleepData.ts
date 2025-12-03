@@ -22,6 +22,12 @@ export async function generateDummySleepData({
   userId,
   intervalMinutes = 10,
 }: DummyOptions) {
+  // Firebase가 비활성화된 환경에서는 아무 작업도 하지 않음
+  if (!db) {
+    console.warn("[generateDummySleepData] Firestore db 가 없어, 더미 데이터를 생성하지 않습니다.");
+    return 0;
+  }
+
   const now = new Date();
 
   // 수면 구간 시간대: 어제 22:00 ~ 오늘 08:00
