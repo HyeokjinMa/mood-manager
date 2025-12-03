@@ -25,6 +25,9 @@ export function useMusicTrackPlayer({
   playing,
   onSegmentEnd,
 }: UseMusicTrackPlayerProps) {
+  // 세그먼트 내 음악 트랙 배열을 안전하게 래핑
+  const segmentTracks: MusicTrack[] = segment?.musicTracks ?? [];
+
   const [trackProgress, setTrackProgress] = useState<TrackProgress>({
     currentTrackIndex: 0,
     progress: 0,
@@ -38,20 +41,22 @@ export function useMusicTrackPlayer({
   /**
    * 현재 재생 중인 트랙 가져오기
    */
-  const currentTrack = segment?.musicTracks[trackProgress.currentTrackIndex] || null;
+  const currentTrack =
+    segmentTracks[trackProgress.currentTrackIndex] || null;
 
   /**
    * 세그먼트 전체 길이 계산
    */
-  const segmentDuration = segment
-    ? segment.musicTracks.reduce((sum, track) => sum + track.duration, 0)
+  const segmentDuration = segmentTracks.length
+    ? segmentTracks.reduce((sum, track) => sum + track.duration, 0)
     : 0;
 
   /**
    * 재생 시작
    */
   const startPlayback = useCallback(() => {
-    if (!segment || !playing) return;
+    // 세그먼트가 없거나 트랙이 없으면 재생하지 않음
+    if (!segment || !playing || segmentTracks.length === 0) return;
 
     const now = Date.now();
     startTimeRef.current = now - pausedProgressRef.current;
@@ -64,8 +69,8 @@ export function useMusicTrackPlayer({
       let currentTrackIndex = 0;
       let accumulatedTime = 0;
 
-      for (let i = 0; i < segment.musicTracks.length; i++) {
-        const track = segment.musicTracks[i];
+      for (let i = 0; i < segmentTracks.length; i++) {
+        const track = segmentTracks[i];
         const trackEndTime = accumulatedTime + track.duration;
 
         if (elapsed < trackEndTime) {
@@ -80,8 +85,11 @@ export function useMusicTrackPlayer({
       // 세그먼트 종료 확인
       if (elapsed >= segmentDuration) {
         setTrackProgress({
-          currentTrackIndex: segment.musicTracks.length - 1,
-          progress: segment.musicTracks[segment.musicTracks.length - 1].duration,
+          currentTrackIndex: Math.max(segmentTracks.length - 1, 0),
+          progress:
+            segmentTracks.length > 0
+              ? segmentTracks[segmentTracks.length - 1].duration
+              : 0,
           totalProgress: segmentDuration,
         });
         
@@ -148,12 +156,12 @@ export function useMusicTrackPlayer({
    * 다음 트랙으로 이동
    */
   const goToNextTrack = useCallback(() => {
-    if (!segment) return;
+    if (!segment || segmentTracks.length === 0) return;
 
     const nextIndex = trackProgress.currentTrackIndex + 1;
-    if (nextIndex < segment.musicTracks.length) {
+    if (nextIndex < segmentTracks.length) {
       // 다음 트랙의 시작 시점으로 이동
-      const newProgress = segment.musicTracks
+      const newProgress = segmentTracks
         .slice(0, nextIndex)
         .reduce((sum, track) => sum + track.duration, 0);
       
@@ -175,12 +183,12 @@ export function useMusicTrackPlayer({
    * 이전 트랙으로 이동
    */
   const goToPreviousTrack = useCallback(() => {
-    if (!segment) return;
+    if (!segment || segmentTracks.length === 0) return;
 
     const prevIndex = trackProgress.currentTrackIndex - 1;
     if (prevIndex >= 0) {
       // 이전 트랙의 시작 시점으로 이동
-      const newProgress = segment.musicTracks
+      const newProgress = segmentTracks
         .slice(0, prevIndex)
         .reduce((sum, track) => sum + track.duration, 0);
       
@@ -223,7 +231,7 @@ export function useMusicTrackPlayer({
   /**
    * 다음 트랙 페이드인 시작 시점 확인
    */
-  const isNextTrackFadingIn = currentTrack && trackProgress.currentTrackIndex < (segment?.musicTracks.length || 0) - 1
+  const isNextTrackFadingIn = currentTrack && trackProgress.currentTrackIndex < segmentTracks.length - 1
     ? trackProgress.progress >= currentTrack.duration - (currentTrack.fadeOut || 2000)
     : false;
 
@@ -238,7 +246,7 @@ export function useMusicTrackPlayer({
     isNextTrackFadingIn,
     goToNextTrack,
     goToPreviousTrack,
-    totalTracks: segment?.musicTracks.length || 0,
+    totalTracks: segmentTracks.length,
   };
 }
 
