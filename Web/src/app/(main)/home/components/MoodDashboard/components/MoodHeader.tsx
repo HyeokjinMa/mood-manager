@@ -5,7 +5,7 @@
 "use client";
 
 import { useState } from "react";
-import { RefreshCcw, Star } from "lucide-react";
+import { RefreshCw, Star } from "lucide-react";
 import type { Mood } from "@/types/mood";
 import HeartAnimation from "./HeartAnimation";
 
@@ -127,7 +127,7 @@ export default function MoodHeader({
                 : "Refresh mood (same mood cluster)"
             }
           >
-            <RefreshCcw
+            <RefreshCw
               size={16}
               className={isRefreshing ? "animate-spin" : ""}
               style={isRefreshing ? { animationDuration: "1.8s" } : undefined}

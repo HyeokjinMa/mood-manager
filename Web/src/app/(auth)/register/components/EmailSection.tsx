@@ -55,7 +55,9 @@ export default function EmailSection({
           <span className="text-xs text-gray-500 ml-2">Checking...</span>
         )}
         {!isCheckingEmail && emailAvailable === true && (
-          <span className="text-xs text-green-500 ml-2">✓ Available</span>
+          <span className="text-xs text-green-500 ml-2" aria-label="Email available">
+            ✓
+          </span>
         )}
       </div>
       {emailError && <p className="text-red-500 text-xs">{emailError}</p>}
