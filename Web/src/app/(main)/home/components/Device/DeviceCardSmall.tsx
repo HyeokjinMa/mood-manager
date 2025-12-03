@@ -16,7 +16,22 @@
 
 import { Device } from "@/types/device";
 import { type Mood } from "@/types/mood";
-import { FaBatteryFull, FaBatteryHalf, FaBatteryEmpty, FaPalette, FaLightbulb, FaSprayCan, FaVolumeUp, FaCog } from "react-icons/fa";
+import { 
+  FaBatteryFull, 
+  FaBatteryHalf, 
+  FaBatteryEmpty, 
+  FaPalette, 
+  FaCog,
+} from "react-icons/fa";
+import {
+  HiOutlineLightBulb,
+  HiOutlineSparkles,
+  HiOutlineSpeakerWave,
+  HiOutlineMusicalNote,
+  HiOutlineAdjustmentsHorizontal,
+  HiOutlineSun,
+  HiOutlineBeaker,
+} from "react-icons/hi2";
 import { ReactNode } from "react";
 import { blendWithWhite } from "@/lib/utils";
 
@@ -64,17 +79,17 @@ export default function DeviceCardSmall({
         <div className="text-sm">{getBatteryIcon(device.battery, device.power)}</div>
       </div>
 
-      {/* 하단: 상태 설명문 */}
-      <div className="text-xs text-gray-600">{getStatusDescription(device)}</div>
+      {/* 하단: 상태 설명문 - 디바이스 타입별로 다른 레이아웃 */}
+      <div className="text-[10px] text-gray-600">{getStatusDescription(device)}</div>
     </div>
   );
 }
 
 function getIcon(type: Device["type"]) {
   if (type === "manager") return <FaPalette className="text-purple-500" />;
-  if (type === "light") return <FaLightbulb className="text-yellow-500" />;
-  if (type === "scent") return <FaSprayCan className="text-green-500" />;
-  if (type === "speaker") return <FaVolumeUp className="text-blue-500" />;
+  if (type === "light") return <HiOutlineLightBulb className="text-yellow-500" />;
+  if (type === "scent") return <HiOutlineSparkles className="text-green-500" />;
+  if (type === "speaker") return <HiOutlineSpeakerWave className="text-blue-500" />;
   return <FaCog className="text-gray-500" />;
 }
 
@@ -89,39 +104,70 @@ function getBatteryIcon(battery: number, power: boolean) {
 
 function getStatusDescription(device: Device): ReactNode {
   if (!device.power) {
-    return "Power Off";
+    return (
+      <div className="flex items-center gap-1 text-gray-500">
+        <HiOutlineAdjustmentsHorizontal className="text-[11px]" />
+        <span>Off</span>
+      </div>
+    );
   }
 
   switch (device.type) {
     case "manager":
-      const lightStatus = device.output.brightness
-        ? `Light: ${device.output.brightness}%`
-        : "Light: -";
-      const scentStatus = device.output.scentType
-        ? `Scent: ${device.output.scentType}`
-        : "Scent: -";
-      const musicStatus = device.output.nowPlaying
-        ? `Music: ${device.output.nowPlaying}`
-        : "Music: -";
       return (
         <div className="flex flex-col gap-0.5">
-          <div>{lightStatus}</div>
-          <div>{scentStatus}</div>
-          <div>{musicStatus}</div>
+          {/* Light Status */}
+          <div className="flex items-center gap-1">
+            <HiOutlineSun className="text-[11px]" />
+            <span className="truncate">
+              {device.output.brightness ? `${device.output.brightness}%` : "-"}
+            </span>
+          </div>
+          {/* Scent Status */}
+          <div className="flex items-center gap-1">
+            <HiOutlineBeaker className="text-[11px]" />
+            <span className="truncate">
+              {device.output.scentType || "-"}
+            </span>
+          </div>
+          {/* Music Status */}
+          <div className="flex items-center gap-1">
+            <HiOutlineMusicalNote className="text-[11px]" />
+            <span className="truncate">
+              {device.output.nowPlaying || "-"}
+            </span>
+          </div>
         </div>
       );
     case "light":
-      return device.output.brightness
-        ? `Light Status: ${device.output.brightness}%`
-        : "Light Status: -";
+      return (
+        <div className="flex items-center gap-1">
+          <HiOutlineSun className="text-[11px]" />
+          <span>
+            {device.output.brightness ? `${device.output.brightness}%` : "-"}
+          </span>
+        </div>
+      );
     case "scent":
-      return device.output.scentType
-        ? `Scent Status: ${device.output.scentType} (Level ${device.output.scentLevel || 0})`
-        : "Scent Status: -";
+      return (
+        <div className="flex items-center gap-1">
+          <HiOutlineBeaker className="text-[11px]" />
+          <span className="truncate">
+            {device.output.scentType 
+              ? `${device.output.scentType} ${device.output.scentLevel ? `Lv${device.output.scentLevel}` : ""}`.trim()
+              : "-"}
+          </span>
+        </div>
+      );
     case "speaker":
-      return device.output.nowPlaying
-        ? `Music Status: ${device.output.nowPlaying}`
-        : "Music Status: -";
+      return (
+        <div className="flex items-center gap-1">
+          <HiOutlineMusicalNote className="text-[11px]" />
+          <span className="truncate">
+            {device.output.nowPlaying || "-"}
+          </span>
+        </div>
+      );
     default:
       return "";
   }

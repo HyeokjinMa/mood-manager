@@ -22,6 +22,7 @@ import { useMusicTrackPlayer } from "@/hooks/useMusicTrackPlayer";
 import { useMoodColors } from "./hooks/useMoodColors";
 import { useHeartAnimation } from "./hooks/useHeartAnimation";
 import { useSegmentSelector } from "./hooks/useSegmentSelector";
+import { useSegmentTransition } from "./hooks/useSegmentTransition";
 import type { BackgroundParams } from "@/hooks/useBackgroundParams";
 import { hexToRgba } from "@/lib/utils";
 import MoodHeader from "./components/MoodHeader";
@@ -30,6 +31,7 @@ import AlbumSection from "./components/AlbumSection";
 import MusicControls from "./components/MusicControls";
 import MoodDuration from "./components/MoodDuration";
 import HeartAnimation from "./components/HeartAnimation";
+import SegmentTransition from "./components/SegmentTransition";
 
 interface MoodDashboardProps {
   mood: Mood;
@@ -95,6 +97,15 @@ export default function MoodDashboard({
   // 하트 애니메이션 관리 (현재 세그먼트 전달)
   const { heartAnimation, handleDashboardDoubleClick, clearHeartAnimation } = useHeartAnimation();
 
+  // 세그먼트 전환 애니메이션 관리
+  const {
+    isTransitioning,
+    fromColor,
+    toColor,
+    triggerTransition,
+    onTransitionComplete,
+  } = useSegmentTransition();
+
   // 세그먼트 선택
   const { handleSegmentSelect } = useSegmentSelector({
     moodStream,
@@ -103,6 +114,7 @@ export default function MoodDashboard({
     onMoodChange,
     allSegmentsParams,
     setBackgroundParams,
+    onTransitionTrigger: triggerTransition,
   });
 
   // 음악 트랙 재생 관리 (3세그 구조)
@@ -155,6 +167,14 @@ export default function MoodDashboard({
           x={heartAnimation.x}
           y={heartAnimation.y}
           onComplete={clearHeartAnimation}
+        />
+      )}
+      {isTransitioning && fromColor && toColor && (
+        <SegmentTransition
+          fromColor={fromColor}
+          toColor={toColor}
+          isVisible={isTransitioning}
+          onComplete={onTransitionComplete}
         />
       )}
       <div
@@ -233,9 +253,10 @@ export default function MoodDashboard({
         onNextStreamSelect={switchToNextStream}
         totalSegmentsIncludingNext={
           nextStreamAvailable && moodStream
-            ? moodStream.segments.length + 3 // 현재 세그먼트 + 다음 스트림의 3개 세그먼트
+            ? moodStream.segments.length + 10 // 현재 세그먼트 + 다음 스트림의 10개 세그먼트
             : undefined
         }
+        availableSegmentsCount={moodStream?.segments?.length} // 실제 사용 가능한 세그먼트 개수 전달
       />
     </div>
     </>

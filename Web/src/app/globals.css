@@ -157,4 +157,36 @@
   .animate-heart-float {
     animation: heartFloat 1.2s ease-out forwards;
   }
+
+  @keyframes diagonalSweep {
+    0% {
+      opacity: 0;
+      /* 우측상단에서 시작 (화면 밖) */
+      transform: translateX(100%) translateY(-100%) scale(1.2);
+      clip-path: polygon(100% 0%, 100% 0%, 100% 0%);
+    }
+    20% {
+      opacity: 0.8;
+    }
+    50% {
+      opacity: 1;
+      /* 화면 전체를 덮음 */
+      clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+    }
+    80% {
+      opacity: 0.8;
+    }
+    100% {
+      opacity: 0;
+      /* 좌측하단으로 이동 (화면 밖) */
+      transform: translateX(-100%) translateY(100%) scale(1.2);
+      clip-path: polygon(0% 100%, 0% 100%, 0% 100%);
+    }
+  }
+
+  .animate-diagonal-sweep {
+    animation: diagonalSweep 0.8s ease-out forwards;
+    /* 자연스러운 배경 전환 */
+    mix-blend-mode: multiply;
+  }
   }

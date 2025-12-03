@@ -129,9 +129,6 @@ export default function RegisterForm({ form }: RegisterFormProps) {
           setEmail(value);
           setErrorMsg("");
           setEmailError("");
-          if (value && !validateEmail(value)) {
-            setEmailError("Please enter a valid email address.");
-          }
         }}
         onErrorClear={() => setErrorMsg("")}
         onEnterKey={handleRegister}

@@ -52,7 +52,7 @@ export interface EmotionPredictionInput {
   preprocessed: PreprocessedData;
   currentTime: number; // 현재 시간 (밀리초)
   previousSegments?: EmotionSegment[]; // 이전 세그먼트들 (선택적, 컨텍스트용)
-  segmentCount?: number; // 생성할 세그먼트 개수 (기본값: 3)
+  segmentCount?: number; // 생성할 세그먼트 개수 (기본값: 10)
 }
 
 /**

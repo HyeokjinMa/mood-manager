@@ -87,8 +87,8 @@ export class PythonEmotionPredictionProvider implements EmotionPredictionProvide
         confidence: 0.85,
       });
       
-      // segmentCount가 3이면 기본 세그먼트 하나 더 추가
-      if ((input.segmentCount || 3) > 2) {
+      // segmentCount가 10이면 기본 세그먼트 하나 더 추가
+      if ((input.segmentCount || 10) > 2) {
         segments.push({
           timestamp: input.currentTime + (20 * 60 * 1000),
           duration: 10 * 60 * 1000,

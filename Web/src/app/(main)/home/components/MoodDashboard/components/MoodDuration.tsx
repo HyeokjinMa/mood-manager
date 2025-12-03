@@ -15,6 +15,7 @@ interface MoodDurationProps {
   nextStreamAvailable?: boolean; // 다음 스트림 존재 여부
   onNextStreamSelect?: () => void; // 다음 스트림 선택 핸들러
   totalSegmentsIncludingNext?: number; // 다음 스트림 포함 전체 세그먼트 개수 (동적 계산용)
+  availableSegmentsCount?: number; // 실제 사용 가능한 세그먼트 개수 (클릭 가능한 범위)
 }
 
 export default function MoodDuration({
@@ -27,6 +28,7 @@ export default function MoodDuration({
   nextStreamAvailable = false,
   onNextStreamSelect,
   totalSegmentsIncludingNext,
+  availableSegmentsCount,
 }: MoodDurationProps) {
   const rawColor = moodColorCurrent || mood.color;
   const pastColor = moodColorPast || blendWithWhite(rawColor, 0.9);
@@ -38,6 +40,10 @@ export default function MoodDuration({
   const clampedTotal = 10;
   const clampedIndex =
     currentIndex >= 0 ? (currentIndex < clampedTotal ? currentIndex : clampedTotal - 1) : 0;
+
+  // 실제 사용 가능한 세그먼트 개수 (클릭 가능한 범위)
+  // availableSegmentsCount가 제공되면 사용, 없으면 totalSegments 사용
+  const actualAvailableCount = availableSegmentsCount ?? totalSegments;
 
   // 세그먼트 기준 진행 정보
   const currentSegmentNumber = clampedIndex + 1; // 1-based
@@ -71,6 +77,7 @@ export default function MoodDuration({
         {ticks.map((idx) => {
           const isCurrent = idx === clampedIndex;
           const isPast = idx < clampedIndex;
+          const isClickable = idx < actualAvailableCount; // 실제 사용 가능한 세그먼트만 클릭 가능
 
           const backgroundColor = isCurrent
             ? rawColor
@@ -82,16 +89,25 @@ export default function MoodDuration({
           return (
             <div
               key={idx}
-              className="flex-1 h-2 rounded-full transition-all cursor-pointer"
+              className={`flex-1 h-2 rounded-full transition-all ${
+                isClickable ? "cursor-pointer" : "cursor-not-allowed"
+              }`}
               onClick={(e) => {
                 e.stopPropagation();
-                onSegmentSelect?.(idx);
+                // 클릭 가능한 세그먼트만 선택 가능
+                if (isClickable) {
+                  onSegmentSelect?.(idx);
+                }
               }}
               style={{
                 backgroundColor,
-                opacity,
+                opacity: isClickable ? opacity : 0.2, // 클릭 불가능한 세그먼트는 더 어둡게
               }}
-              title={`Go to segment ${idx + 1}`}
+              title={
+                isClickable
+                  ? `Go to segment ${idx + 1}`
+                  : `Segment ${idx + 1} (not available yet)`
+              }
             />
           );
         })}

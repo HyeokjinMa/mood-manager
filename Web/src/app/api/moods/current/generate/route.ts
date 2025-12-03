@@ -2,9 +2,9 @@
 /**
  * POST /api/moods/current/generate
  * 
- * 다음 무드스트림 생성 API (3세그 구조)
+ * 다음 무드스트림 생성 API (10세그 구조)
  * 
- * 3개 세그먼트 생성 (각 세그먼트는 3곡 포함)
+ * 10개 세그먼트 생성 (각 세그먼트는 3곡 포함)
  * - 각 세그먼트는 자연스러운 흐름의 3곡으로 구성
  * - timestamp는 nextStartTime부터 시작
  */
@@ -22,7 +22,7 @@ import type { MoodStream, MoodStreamSegment } from "@/hooks/useMoodStream/types"
  * 
  * Request Body:
  * - nextStartTime?: number - 다음 세그먼트 시작 시간 (밀리초)
- * - segmentCount?: number - 생성할 세그먼트 수 (기본값: 3)
+ * - segmentCount?: number - 생성할 세그먼트 수 (기본값: 10)
  */
 export async function POST(request: NextRequest) {
   try {
@@ -39,9 +39,16 @@ export async function POST(request: NextRequest) {
       console.log("[POST /api/moods/current/generate] 목업 모드: 관리자 계정");
     }
 
-    const body = await request.json();
+    // 일부 클라이언트에서 빈 Body로 호출될 수 있으므로 방어적으로 처리
+    let body: any = {};
+    try {
+      body = await request.json();
+    } catch {
+      body = {};
+    }
+
     const nextStartTime = body.nextStartTime || Date.now();
-    const segmentCount = body.segmentCount || 3;
+    const segmentCount = body.segmentCount || 10;
 
     // TODO: 실제 시계열 + 마르코프 체인으로 예측 구현
     // 현재는 목업 데이터 사용

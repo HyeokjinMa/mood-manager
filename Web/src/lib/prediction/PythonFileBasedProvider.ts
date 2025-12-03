@@ -106,7 +106,7 @@ export class PythonFileBasedProvider implements EmotionPredictionProvider {
         },
       },
       currentTime: input.currentTime,
-      segmentCount: input.segmentCount || 3,
+      segmentCount: input.segmentCount || 10,
     };
     
     // 요청 파일 쓰기

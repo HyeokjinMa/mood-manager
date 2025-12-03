@@ -114,8 +114,10 @@ export function useRegisterForm() {
         }
       } catch (err) {
         console.error("[Email Check] Error:", err);
+        // 네트워크/서버 에러 시에는 이메일 입력 UX를 방해하지 않기 위해
+        // 화면에는 에러를 표시하지 않고, 중복 여부만 알 수 없는 상태로 둔다.
         setEmailAvailable(null);
-        setEmailError("Failed to check email availability. Please try again.");
+        // emailError 는 건드리지 않음 (입력 단계에서 빨간 줄이 계속 뜨는 것을 방지)
       } finally {
         setIsCheckingEmail(false);
       }

@@ -18,6 +18,7 @@ interface UseSegmentSelectorProps {
   onMoodChange: (mood: Mood) => void;
   allSegmentsParams?: BackgroundParams[] | null;
   setBackgroundParams?: (params: BackgroundParams | null) => void;
+  onTransitionTrigger?: (fromColor: string, toColor: string) => void;
 }
 
 /**
@@ -30,6 +31,7 @@ export function useSegmentSelector({
   onMoodChange,
   allSegmentsParams,
   setBackgroundParams,
+  onTransitionTrigger,
 }: UseSegmentSelectorProps) {
   const handleSegmentSelect = useCallback((index: number) => {
     console.log("\n" + "=".repeat(60));
@@ -46,42 +48,54 @@ export function useSegmentSelector({
     console.log(`Clamped index: ${clampedIndex}`);
     console.log(`Total segments: ${moodStream.segments.length}`);
     
-    setCurrentSegmentIndex(clampedIndex);
-    console.log(`✅ Current segment index updated to: ${clampedIndex}`);
-    
     const target = moodStream.segments[clampedIndex];
     console.log(`Target segment:`, target);
     
-    // 해당 세그먼트의 backgroundParams 즉시 적용
-    if (allSegmentsParams && allSegmentsParams.length > clampedIndex && setBackgroundParams) {
-      const segmentParams = allSegmentsParams[clampedIndex];
-      console.log(`🎨 Applying backgroundParams for segment ${clampedIndex}:`, segmentParams);
-      setBackgroundParams(segmentParams);
-    } else {
-      console.warn(`⚠️  BackgroundParams not available for segment ${clampedIndex}`);
+    // 전환 애니메이션 트리거 (색상이 다른 경우만)
+    if (target?.mood && onTransitionTrigger) {
+      const currentColor = currentMood.color;
+      const targetColor = target.mood.color || currentColor;
+      if (currentColor !== targetColor) {
+        onTransitionTrigger(currentColor, targetColor);
+      }
     }
     
-    if (target?.mood) {
-      // 타입 안전한 변환 함수 사용
-      const convertedMood = convertSegmentMoodToMood(target.mood, currentMood);
+    // 약간의 지연 후 세그먼트 전환 (애니메이션과 동기화)
+    setTimeout(() => {
+      setCurrentSegmentIndex(clampedIndex);
+      console.log(`✅ Current segment index updated to: ${clampedIndex}`);
       
-      // backgroundParams의 musicSelection이 있으면 무드의 song.title에 반영
-      if (allSegmentsParams && allSegmentsParams.length > clampedIndex) {
+      // 해당 세그먼트의 backgroundParams 즉시 적용
+      if (allSegmentsParams && allSegmentsParams.length > clampedIndex && setBackgroundParams) {
         const segmentParams = allSegmentsParams[clampedIndex];
-        if (segmentParams?.musicSelection) {
-          convertedMood.song.title = segmentParams.musicSelection;
-          console.log(`🎵 Updated music title from backgroundParams: "${segmentParams.musicSelection}"`);
-        }
+        console.log(`🎨 Applying backgroundParams for segment ${clampedIndex}:`, segmentParams);
+        setBackgroundParams(segmentParams);
+      } else {
+        console.warn(`⚠️  BackgroundParams not available for segment ${clampedIndex}`);
       }
       
-      console.log(`Converted mood:`, convertedMood);
-      onMoodChange(convertedMood);
-      console.log(`✅ Mood changed successfully`);
-    } else {
-      console.warn("❌ Target segment mood not found", { clampedIndex, target });
-    }
-    console.log("=".repeat(60) + "\n");
-  }, [moodStream, currentMood, setCurrentSegmentIndex, onMoodChange, allSegmentsParams, setBackgroundParams]);
+      if (target?.mood) {
+        // 타입 안전한 변환 함수 사용
+        const convertedMood = convertSegmentMoodToMood(target.mood, currentMood);
+        
+        // backgroundParams의 musicSelection이 있으면 무드의 song.title에 반영
+        if (allSegmentsParams && allSegmentsParams.length > clampedIndex) {
+          const segmentParams = allSegmentsParams[clampedIndex];
+          if (segmentParams?.musicSelection) {
+            convertedMood.song.title = segmentParams.musicSelection;
+            console.log(`🎵 Updated music title from backgroundParams: "${segmentParams.musicSelection}"`);
+          }
+        }
+        
+        console.log(`Converted mood:`, convertedMood);
+        onMoodChange(convertedMood);
+        console.log(`✅ Mood changed successfully`);
+      } else {
+        console.warn("❌ Target segment mood not found", { clampedIndex, target });
+      }
+      console.log("=".repeat(60) + "\n");
+    }, 50); // 50ms 지연으로 애니메이션 시작
+  }, [moodStream, currentMood, setCurrentSegmentIndex, onMoodChange, allSegmentsParams, setBackgroundParams, onTransitionTrigger]);
 
   return {
     handleSegmentSelect,

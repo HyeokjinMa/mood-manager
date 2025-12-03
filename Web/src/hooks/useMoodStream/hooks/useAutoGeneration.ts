@@ -64,7 +64,7 @@ export function useAutoGeneration({
           credentials: "include",
           body: JSON.stringify({
             nextStartTime,
-            segmentCount: 3,
+            segmentCount: 10,
           }),
         });
         
@@ -91,10 +91,10 @@ export function useAutoGeneration({
         fullStream.streamId = moodStream.streamId;
       }
       
-      // 3개 세그먼트 중 2개만 사용, 마지막 1개는 보관
-      if (fullStream.segments.length >= 3) {
-        const segmentsToUse = fullStream.segments.slice(0, 2);
-        const lastSegment = fullStream.segments[2];
+      // 10개 세그먼트 중 9개만 사용, 마지막 1개는 보관 (최소 10개 필요)
+      if (fullStream.segments.length >= 10) {
+        const segmentsToUse = fullStream.segments.slice(0, 9);
+        const lastSegment = fullStream.segments[9];
         
         setNextColdStartSegment(lastSegment);
         console.log("[useAutoGeneration] Next stream generated. Stored 1 segment for next cold start.");

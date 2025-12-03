@@ -116,7 +116,7 @@ export async function handleStreamMode({
       const predictionInput: EmotionPredictionInput = {
         preprocessed: preprocessedWithCounts,
         currentTime: Date.now(),
-        segmentCount: 3,
+        segmentCount: 10,
       };
 
       // Python 서버 호출

@@ -12,7 +12,7 @@ export class MarkovEmotionPredictionProvider implements EmotionPredictionProvide
   readonly version = "0.1.0-alpha";
   
   async predictEmotions(input: EmotionPredictionInput): Promise<EmotionSegment[]> {
-    const segmentCount = input.segmentCount || 3;
+    const segmentCount = input.segmentCount || 10;
     
     // TODO: Phase 4에서 구현
     // 1. 시계열 분석 (생체 신호, 감정 이벤트 등)

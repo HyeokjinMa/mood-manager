@@ -32,7 +32,7 @@ export class LLMEmotionPredictionProvider implements EmotionPredictionProvider {
       throw new Error("OpenAI client not initialized");
     }
     
-    const segmentCount = input.segmentCount || 3;
+    const segmentCount = input.segmentCount || 10;
     
     // LLM 입력 준비
     // TODO: prepareLLMInput의 실제 시그니처에 맞게 수정 필요

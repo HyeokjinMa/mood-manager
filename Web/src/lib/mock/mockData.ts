@@ -104,9 +104,9 @@ export function getMockDevices(): Device[] {
 }
 
 /**
- * 목업 무드스트림 반환 (3세그 구조)
+ * 목업 무드스트림 반환 (10세그 구조)
  * 
- * 3개 세그먼트, 각 세그먼트는 3곡의 자연스러운 흐름
+ * 10개 세그먼트, 각 세그먼트는 3곡의 자연스러운 흐름
  * 다양성을 위해 무드를 랜덤하게 선택하되, 전체 스트림에서 다양한 무드가 나타나도록 함
  */
 export function getMockMoodStream() {
@@ -120,8 +120,8 @@ export function getMockMoodStream() {
   // 현재 무드는 baseIndex를 사용하되, 스트림은 다양한 무드를 포함
   const currentMood = MOODS[baseIndex];
   
-  // 3개 세그먼트 생성 (각 세그먼트는 3곡)
-  const moodStream = Array.from({ length: 3 }, (_, segmentIndex) => {
+  // 10개 세그먼트 생성 (각 세그먼트는 3곡)
+  const moodStream = Array.from({ length: 10 }, (_, segmentIndex) => {
     // 순환하면서 약간의 랜덤 오프셋 추가 (다양성 확보)
     const moodIndex = (baseIndex + segmentIndex + Math.floor(Math.random() * 3)) % MOODS.length;
     const mood = MOODS[moodIndex];
