@@ -1,4 +1,4 @@
-import type { EventType } from "./detectEvents";
+import type { EventInfo } from "./detectEvents";
 
 /**
  * 이벤트 아이콘 매핑
@@ -59,9 +59,9 @@ export const SCENT_DEFAULT_ICONS: Record<string, IconKey> = {
 /**
  * 이벤트가 있을 때 사용할 아이콘 세트 가져오기
  */
-export function getIconSetForEvent(eventType: EventType | null, scentType?: string): IconKey[] {
-  if (eventType && EVENT_ICON_SETS[eventType]) {
-    return EVENT_ICON_SETS[eventType];
+export function getIconSetForEvent(event: EventInfo | null, scentType?: string): IconKey[] {
+  if (event && event.type && EVENT_ICON_SETS[event.type]) {
+    return EVENT_ICON_SETS[event.type];
   }
   
   // 이벤트가 없으면 향 타입별 기본 아이콘 사용

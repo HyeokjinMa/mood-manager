@@ -83,13 +83,6 @@ export default function HomePage() {
         <div className="flex-1 flex items-center justify-center">
           <p className="text-gray-500">Loading devices...</p>
         </div>
-      ) : devices.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-gray-500 mb-2">No devices found</p>
-            <p className="text-sm text-gray-400">Add a device to get started</p>
-          </div>
-        </div>
       ) : (
         <HomeContent
           moodState={{

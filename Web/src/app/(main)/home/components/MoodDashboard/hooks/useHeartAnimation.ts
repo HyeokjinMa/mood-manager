@@ -74,17 +74,19 @@ export function useHeartAnimation(): UseHeartAnimationReturn {
                 {
                   currentCount: data.currentCount,
                   maxReached: data.maxReached,
+                  preferenceCounts: data.preferenceCounts,
                 }
               );
             } else {
-              console.error(
-                "[useHeartAnimation] ❌ 대시보드 더블클릭 선호도 업데이트 실패:",
+              // 저장 실패 시 UI는 그대로 두고, 서버 로그만 간단히 남긴다.
+              console.info(
+                "[useHeartAnimation] ℹ️ 대시보드 더블클릭 선호도 업데이트 실패(무시):",
                 await response.text()
               );
             }
           } catch (error) {
-            console.error(
-              "[useHeartAnimation] ❌ 대시보드 더블클릭 선호도 API 호출 실패:",
+            console.info(
+              "[useHeartAnimation] ℹ️ 대시보드 더블클릭 선호도 API 호출 예외(무시):",
               error
             );
           }

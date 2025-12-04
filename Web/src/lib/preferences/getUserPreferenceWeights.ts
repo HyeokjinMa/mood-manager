@@ -33,16 +33,22 @@ const MOCK_SCENT_WEIGHTS: Record<string, number> = {
 };
 
 const MOCK_GENRE_WEIGHTS: Record<string, number> = {
-  "newage": 11,
-  "classical": 11,
-  "jazz": 11,
-  "ambient": 11,
-  "nature": 11,
-  "meditation": 11,
-  "piano": 11,
-  "guitar": 2,
-  "orchestral": 2,
-  "electronic": 11,
+  // 장르 축은 보다 정제된 이름으로 사용 (예: lofi, pop, k-pop, jazz, classical 등)
+  lofi: 11,
+  pop: 11,
+  "k-pop": 11,
+  jazz: 11,
+  classical: 11,
+};
+
+// 태그(무드/상황) 기본 목업 가중치 (예: focus, sleep 등)
+const MOCK_TAG_WEIGHTS: Record<string, number> = {
+  focus: 11,
+  sleep: 11,
+  relax: 11,
+  calm: 11,
+  energy: 11,
+  christmas: 11,
 };
 
 /**
@@ -134,18 +140,59 @@ export async function getUserGenreWeights(userId: string, session?: { user?: { e
 }
 
 /**
+ * 사용자의 태그 선호도 가중치 조회 및 정규화
+ */
+export async function getUserTagWeights(
+  userId: string,
+  session?: { user?: { email?: string; id?: string } } | null
+): Promise<Record<string, number>> {
+  // 목업 모드 확인
+  if (session) {
+    const isMock = await isMockMode(session);
+    if (isMock) {
+      // 현재는 태그에 대한 별도 mock 저장소가 없으므로 기본 목업 가중치 사용
+      console.log("[getUserTagWeights] 목업 모드: 기본 목업 태그 가중치 반환");
+      return normalizeWeightMap(MOCK_TAG_WEIGHTS);
+    }
+  }
+
+  try {
+    const preferences = await prisma.tagPreference.findMany({
+      where: { userId },
+      include: {
+        tag: {
+          select: { name: true },
+        },
+      },
+    });
+
+    const weightMap: Record<string, number> = {};
+    preferences.forEach((pref) => {
+      weightMap[pref.tag.name] = pref.weight;
+    });
+
+    return normalizeWeightMap(weightMap);
+  } catch (error) {
+    console.error("[getUserTagWeights] 가중치 조회 실패:", error);
+    return {};
+  }
+}
+
+/**
  * 사용자의 모든 선호도 가중치 조회 (향 + 장르)
  */
 export async function getAllUserPreferenceWeights(userId: string, session?: { user?: { email?: string; id?: string } } | null): Promise<{
   scents: Record<string, number>;
   genres: Record<string, number>;
+  tags: Record<string, number>;
 }> {
-  const [scents, genres] = await Promise.all([
+  const [scents, genres, tags] = await Promise.all([
     getUserScentWeights(userId, session),
     getUserGenreWeights(userId, session),
+    getUserTagWeights(userId, session),
   ]);
 
-  return { scents, genres };
+  return { scents, genres, tags };
 }
 
 /**
@@ -153,10 +200,11 @@ export async function getAllUserPreferenceWeights(userId: string, session?: { us
  */
 export async function formatPreferenceWeightsForLLM(userId: string, session?: { user?: { email?: string; id?: string } } | null): Promise<string> {
   try {
-    const { scents, genres } = await getAllUserPreferenceWeights(userId, session);
+    const { scents, genres, tags } = await getAllUserPreferenceWeights(userId, session);
 
     const scentSection = formatWeightsForLLM(scents);
     const genreSection = formatWeightsForLLM(genres);
+    const tagSection = formatWeightsForLLM(tags);
 
     return `[USER PREFERENCE WEIGHTS]
 
@@ -165,6 +213,9 @@ ${scentSection}
 
 Genre Preferences (higher = more preferred):
 ${genreSection}
+
+Tag Preferences (higher = more preferred):
+${tagSection}
 
 Please prioritize items with higher weights when selecting fragrances and genres for mood generation.`;
   } catch (error) {

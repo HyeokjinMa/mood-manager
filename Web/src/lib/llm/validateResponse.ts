@@ -17,6 +17,8 @@ export interface BackgroundParamsResponse {
     name: string;
     category: string;
   };
+  // LLM이 선택한 원시 아이콘 키 배열 (최대 4개, 첫 번째는 backgroundIcon 에 매핑됨)
+  iconKeys?: string[];
   backgroundWind: {
     direction: number;
     speed: number;
@@ -120,7 +122,9 @@ interface RawLLMResponse {
     };
     backgroundIcon?: {
       category?: unknown;
+      categories?: unknown;
     };
+    backgroundIcons?: unknown;
     backgroundWind?: {
       direction?: unknown;
       speed?: unknown;
@@ -190,12 +194,33 @@ function validateSingleSegment(
     : 4000;
 
   // 배경 아이콘 검증
-  const rawIconCategory = rawSegment.backgroundIcon?.category;
-  const mappedIcon = mapIconCategory(rawIconCategory);
-  
+  // 1) backgroundIcons (배열) 또는 2) backgroundIcon.categories (배열) 또는 3) backgroundIcon.category (단일)
+  let rawIconKeys: string[] = [];
+
+  if (Array.isArray((rawSegment as any).backgroundIcons)) {
+    rawIconKeys = (rawSegment as any).backgroundIcons
+      .map((v: unknown) => String(v || "").trim())
+      .filter((v: string) => v.length > 0);
+  } else if (Array.isArray(rawSegment.backgroundIcon?.categories)) {
+    rawIconKeys = (rawSegment.backgroundIcon?.categories as unknown[])
+      .map((v: unknown) => String(v || "").trim())
+      .filter((v: string) => v.length > 0);
+  } else if (rawSegment.backgroundIcon?.category) {
+    rawIconKeys = [String(rawSegment.backgroundIcon.category).trim()];
+  }
+
+  // 1~4개로 제한, 없으면 기본값
+  if (rawIconKeys.length === 0) {
+    rawIconKeys = ["leaf_gentle"];
+  }
+  rawIconKeys = rawIconKeys.slice(0, 4);
+
+  const primaryIconKey = rawIconKeys[0];
+  const mappedIcon = mapIconCategory(primaryIconKey);
+
   // 아이콘 매핑 로깅 (매핑 실패 시)
-  if (rawIconCategory && mappedIcon.name === "FaCircle" && mappedIcon.category === "abstract") {
-    console.warn(`⚠️  [validateResponse] Icon category mapping issue: "${rawIconCategory}" → default icon`);
+  if (primaryIconKey && mappedIcon.name === "FaCircle" && mappedIcon.category === "abstract") {
+    console.warn(`⚠️  [validateResponse] Icon category mapping issue: "${primaryIconKey}" → default icon`);
   }
 
   // 풍향 정규화 (0-360)
@@ -274,6 +299,7 @@ function validateSingleSegment(
     particleEffect,
     gradientColors: gradientColors.length > 0 ? gradientColors : undefined,
     transitionDuration,
+    iconKeys: rawIconKeys,
   };
 }
 

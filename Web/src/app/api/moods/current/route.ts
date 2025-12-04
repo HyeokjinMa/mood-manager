@@ -58,57 +58,136 @@ export async function GET() {
   }
   const session = sessionOrError;
 
-  // 2. 목업 모드 확인 (관리자 계정)
+  // 2. 목업 모드 확인 (관리자 계정) → 계속 목업 스트림 유지
   if (await checkMockMode(session)) {
-    console.log("[GET /api/moods/current] 목업 모드: 관리자 계정");
+    console.log("[GET /api/moods/current] 목업 모드: 관리자 계정 → mock 스트림 사용");
     const mockData = getMockMoodStream();
     return NextResponse.json({
       currentMood: mockData.currentMood,
       moodStream: mockData.segments,
       userDataCount: mockData.userDataCount,
+      source: "mock-admin",
     });
   }
 
   try {
-    // 2. 기존 Manager 디바이스/프리셋 기반 로직 제거
-    //    - 신규 사용자는 디바이스/프리셋 없이도 목업/LLM 기반 스트림으로만 동작
-    //    - Manager 디바이스를 강제로 생성하지 않음
+    // 3. 일반 유저: 실데이터 기반 스트림을 우선 시도
     try {
-      // DB 접근만 테스트하고, 실패 시에는 목업으로 대체
-      await prisma.device.count({
+      const userId = session.user.id;
+
+      // 사용자의 즐겨찾기(별표) Preset 조회
+      const presets = await prisma.preset.findMany({
         where: {
-          userId: session.user.id,
+          userId,
+          isStarred: true,
+        },
+        include: {
+          fragrance: true,
+          light: true,
+          sound: true,
         },
       });
+
+      if (presets.length > 0) {
+        console.log(
+          "[GET /api/moods/current] 실데이터 스트림 사용 (starred presets 기반):",
+          { userId, presetCount: presets.length }
+        );
+
+        // 가장 첫 Preset을 현재 무드로 사용
+        const basePreset = presets[0];
+
+        // Preset → currentMood 포맷 변환
+        const currentMood = {
+          id: basePreset.id,
+          name: basePreset.name,
+          color: basePreset.light.color,
+          music: {
+            genre: basePreset.sound.genre?.name || "newage",
+            title: basePreset.sound.name,
+          },
+          scent: {
+            type: basePreset.fragrance.name, // 타입 대신 이름을 우선 사용
+            name: basePreset.fragrance.name,
+          },
+          lighting: {
+            color: basePreset.light.color,
+            rgb: hexToRgb(basePreset.light.color),
+          },
+        };
+
+        const now = Date.now();
+
+        // 10개 세그먼트를 Preset 순환 구조로 간단 생성
+        const moodStream = Array.from({ length: 10 }, (_, idx) => {
+          const preset = presets[idx % presets.length];
+          const segmentStartTime = now + idx * 10 * 60 * 1000; // 10분 간격 가정
+          const duration = (preset.sound.duration || 180) * 1000;
+
+          return {
+            timestamp: segmentStartTime,
+            duration,
+            mood: {
+              id: preset.id,
+              name: preset.name,
+              color: preset.light.color,
+              music: {
+                genre: preset.sound.genre?.name || "newage",
+                title: preset.sound.name,
+              },
+              scent: {
+                type: preset.fragrance.name,
+                name: preset.fragrance.name,
+              },
+              lighting: {
+                color: preset.light.color,
+                rgb: hexToRgb(preset.light.color),
+              },
+            },
+            musicTracks: [
+              {
+                title: preset.sound.name,
+                artist: "Mood Manager",
+                duration,
+                startOffset: 0,
+                fadeIn: 2000,
+                fadeOut: 2000,
+              },
+            ],
+          };
+        });
+
+        return NextResponse.json({
+          currentMood,
+          moodStream,
+          userDataCount: presets.length,
+          source: "db-presets",
+        });
+      }
     } catch (dbError) {
-      console.error("[GET /api/moods/current] DB 조회 실패, 목업 데이터 반환:", dbError);
-      const { getMockMoodStream } = await import("@/lib/mock/mockData");
-      const mockData = getMockMoodStream();
-      return NextResponse.json({
-        currentMood: mockData.currentMood,
-        moodStream: mockData.segments,
-        userDataCount: mockData.userDataCount,
-      });
+      console.error(
+        "[GET /api/moods/current] 실데이터 스트림 생성 중 DB 에러, mock fallback 으로 전환:",
+        dbError
+      );
     }
 
-    // 3. 현재는 Manager/프리셋 의존성을 제거하고, 목업 스트림을 기본값으로 사용
-    //    (실제 DB 기반 무드스트림은 V2 이후 별도 설계에서 재도입)
-    const { getMockMoodStream } = await import("@/lib/mock/mockData");
+    // 4. 실데이터 스트림을 만들 수 없으면 목업 스트림으로 fallback
+    console.log("[GET /api/moods/current] 실데이터 스트림 없음 → mock 스트림 fallback");
     const mockData = getMockMoodStream();
     return NextResponse.json({
       currentMood: mockData.currentMood,
       moodStream: mockData.segments,
       userDataCount: mockData.userDataCount,
+      source: "mock-fallback",
     });
   } catch (error) {
-    console.error("[GET /api/moods/current] Error:", error);
-    // 에러 발생 시 목업 데이터로 대체
-    const { getMockMoodStream } = await import("@/lib/mock/mockData");
+    console.error("[GET /api/moods/current] Error (global), mock fallback:", error);
     const mockData = getMockMoodStream();
     return NextResponse.json({
       currentMood: mockData.currentMood,
       moodStream: mockData.segments,
       userDataCount: mockData.userDataCount,
+      source: "mock-error",
     });
   }
 }

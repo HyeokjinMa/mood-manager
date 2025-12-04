@@ -7,9 +7,7 @@
  * 출력: current/future 감정 상태
  */
 
-import type { EmotionPredictionProvider, EmotionPredictionInput } from "./EmotionPredictionProvider";
-import type { EmotionSegment } from "./EmotionPredictionProvider";
-
+import type { EmotionPredictionProvider, EmotionPredictionInput, EmotionSegment } from "./EmotionPredictionProvider";
 import type { PythonPredictionRequest, PythonPredictionResponse } from "./types";
 
 export class PythonEmotionPredictionProvider implements EmotionPredictionProvider {
@@ -29,8 +27,10 @@ export class PythonEmotionPredictionProvider implements EmotionPredictionProvide
   }
   
   async predictEmotions(input: EmotionPredictionInput): Promise<EmotionSegment[]> {
-    // 전처리 데이터를 Python 입력 형식으로 변환
+    // 전처리 데이터를 Python(마르코프) 입력 형식으로 변환
+    // 여기서는 데모/호환 목적이므로 user_id 는 고정 값 사용
     const requestBody: PythonPredictionRequest = {
+      user_id: "demo_user",
       average_stress_index: input.preprocessed.average_stress_index,
       recent_stress_index: input.preprocessed.recent_stress_index,
       latest_sleep_score: input.preprocessed.latest_sleep_score,
@@ -39,16 +39,17 @@ export class PythonEmotionPredictionProvider implements EmotionPredictionProvide
       humidity: input.preprocessed.weather.humidity,
       rainType: input.preprocessed.weather.rainType,
       sky: input.preprocessed.weather.sky,
-      laughter: (input.preprocessed.emotionCounts?.laughter || 0),
-      sigh: (input.preprocessed.emotionCounts?.sigh || 0),
-      crying: (input.preprocessed.emotionCounts?.crying || 0),
+      sigh: input.preprocessed.emotionCounts?.sigh || 0,
+      laughter: input.preprocessed.emotionCounts?.laughter || 0,
+      // crying 은 서버에서 아직 사용하지 않지만 count 값만 전달
+      crying: input.preprocessed.emotionCounts?.crying || 0,
     };
     
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), this.timeout);
       
-      const response = await fetch(`${this.pythonServerUrl}/api/predict`, {
+      const response = await fetch(`${this.pythonServerUrl}/inference`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -170,8 +171,12 @@ export class PythonEmotionPredictionProvider implements EmotionPredictionProvide
   /**
    * Python 응답을 그대로 반환 (LLM 프롬프팅용)
    */
-  async getPythonResponse(input: EmotionPredictionInput): Promise<PythonPredictionResponse> {
+  async getPythonResponse(
+    input: EmotionPredictionInput,
+    userId: string,
+  ): Promise<PythonPredictionResponse> {
     const requestBody: PythonPredictionRequest = {
+      user_id: userId,
       average_stress_index: input.preprocessed.average_stress_index,
       recent_stress_index: input.preprocessed.recent_stress_index,
       latest_sleep_score: input.preprocessed.latest_sleep_score,
@@ -180,16 +185,17 @@ export class PythonEmotionPredictionProvider implements EmotionPredictionProvide
       humidity: input.preprocessed.weather.humidity,
       rainType: input.preprocessed.weather.rainType,
       sky: input.preprocessed.weather.sky,
-      laughter: (input.preprocessed.emotionCounts?.laughter || 0),
-      sigh: (input.preprocessed.emotionCounts?.sigh || 0),
-      crying: (input.preprocessed.emotionCounts?.crying || 0),
+      sigh: input.preprocessed.emotionCounts?.sigh || 0,
+      laughter: input.preprocessed.emotionCounts?.laughter || 0,
+      // crying 은 서버에서 아직 사용하지 않지만 count 값만 전달
+      crying: input.preprocessed.emotionCounts?.crying || 0,
     };
     
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
     
     try {
-      const response = await fetch(`${this.pythonServerUrl}/api/predict`, {
+      const response = await fetch(`${this.pythonServerUrl}/inference`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

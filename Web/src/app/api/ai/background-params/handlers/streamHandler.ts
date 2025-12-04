@@ -23,6 +23,7 @@ import { getAndResetEmotionCounts } from "@/lib/emotionCounts/EmotionCountStore"
 import type { EmotionPredictionInput } from "@/lib/prediction/EmotionPredictionProvider";
 import type { StreamHandlerParams } from "../types";
 import OpenAI from "openai";
+import { getAllUserPreferenceWeights } from "@/lib/preferences/getUserPreferenceWeights";
 
 export async function handleStreamMode({
   segments,
@@ -53,6 +54,13 @@ export async function handleStreamMode({
     },
   };
 
+  // DB 기반 선호도 가중치 조회 (향/장르/태그)
+  const {
+    scents: scentWeights,
+    genres: genreWeights,
+    tags: tagWeights,
+  } = await getAllUserPreferenceWeights(userId, session);
+
   const llmInput = await prepareLLMInput(
     preprocessedWithDefaults,
     {
@@ -77,6 +85,11 @@ export async function handleStreamMode({
     },
     userPreferences
   );
+
+  // LLMInput에 정규화된 가중치 추가 주입
+  llmInput.genrePreferenceWeights = genreWeights;
+  llmInput.scentPreferenceWeights = scentWeights;
+  llmInput.tagPreferenceWeights = tagWeights;
 
   // ===== 1. 로그인 세션 기준으로 감정 카운터 조회 및 클렌징 =====
   const emotionCounts = getAndResetEmotionCounts(userId);
@@ -121,7 +134,7 @@ export async function handleStreamMode({
       };
 
       // Python 서버 호출
-      pythonResponse = await pythonProvider.getPythonResponse(predictionInput);
+      pythonResponse = await pythonProvider.getPythonResponse(predictionInput, userId);
 
       // Python 응답 검증
       if (!validatePythonResponse(pythonResponse)) {

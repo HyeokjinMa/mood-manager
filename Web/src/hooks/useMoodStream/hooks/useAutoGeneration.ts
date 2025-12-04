@@ -1,9 +1,11 @@
 /**
  * 자동 스트림 생성 로직
  * 8, 9, 10번째 세그먼트일 때 자동으로 다음 스트림 생성
+ * 
+ * 중복 호출 방지: 같은 스트림 ID + 같은 세그먼트 인덱스 조합에서는 재호출하지 않음
  */
 
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { getMockMoodStream } from "@/lib/mock/mockData";
 import { chainSegments, getLastSegmentEndTime } from "@/lib/utils/segmentUtils";
 import type { MoodStream, MoodStreamSegment } from "../types";
@@ -28,6 +30,9 @@ export function useAutoGeneration({
   isGeneratingRef,
   setIsGeneratingNextStream,
 }: UseAutoGenerationParams) {
+  // 중복 호출 방지: 이미 생성한 (streamId, segmentIndex) 조합 추적
+  const generatedKeysRef = useRef<Set<string>>(new Set());
+
   const generateNextStream = useCallback(async () => {
     if (!moodStream || isGeneratingRef.current) {
       return;
@@ -45,9 +50,19 @@ export function useAutoGeneration({
       return;
     }
     
+    // 중복 호출 방지: 같은 스트림 ID + 같은 세그먼트 인덱스 조합 체크
+    const generationKey = `${moodStream.streamId}_${clampedIndex}`;
+    if (generatedKeysRef.current.has(generationKey)) {
+      console.log(`[useAutoGeneration] ⏭️ 이미 생성됨: streamId=${moodStream.streamId}, segmentIndex=${clampedIndex}`);
+      return;
+    }
+    
     console.log(`[useAutoGeneration] Segment ${clampedIndex + 1}/10 (${remainingFromClamped} remaining). Generating next stream...`);
     isGeneratingRef.current = true;
     setIsGeneratingNextStream(true);
+    
+    // 생성 시작 전에 키 등록 (중복 방지)
+    generatedKeysRef.current.add(generationKey);
     
     try {
       // 현재 스트림의 마지막 세그먼트의 종료 시점 계산
@@ -130,6 +145,8 @@ export function useAutoGeneration({
       }
     } catch (error) {
       console.error("[useAutoGeneration] Error generating next stream:", error);
+      // 에러 발생 시 생성 키 제거 (재시도 가능하도록)
+      generatedKeysRef.current.delete(generationKey);
     } finally {
       isGeneratingRef.current = false;
       setIsGeneratingNextStream(false);

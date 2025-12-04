@@ -5,6 +5,7 @@ import { Toaster } from "react-hot-toast";
 
 import SessionProviderWrapper from "./SessionProviderWrapper";
 import ErrorBoundaryWrapper from "./ErrorBoundaryWrapper";
+import { MoodStreamProvider } from "@/context/MoodStreamContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,7 +33,9 @@ export default function RootLayout({
         <div className="w-full max-w-[375px] bg-white min-h-screen">
           <SessionProviderWrapper>
             <ErrorBoundaryWrapper>
-              {children}
+              <MoodStreamProvider>
+                {children}
+              </MoodStreamProvider>
             </ErrorBoundaryWrapper>
           </SessionProviderWrapper>
           <Toaster

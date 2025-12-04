@@ -24,10 +24,10 @@ enum DeviceStatus {
 ///////////////////////////////////////////////////////
 
 model User {
-  id              String    @id @default(uuid())
-  email           String    @unique
-  password        String?
-  phone           String?   @unique
+  id       String  @id @default(uuid())
+  email    String  @unique
+  password String?
+  phone    String? @unique
 
   // 프로필
   familyName      String?
@@ -37,25 +37,27 @@ model User {
   profileImageUrl String?
 
   // 소셜 로그인
-  provider        String?
-  providerId      String?   @unique
+  provider   String?
+  providerId String? @unique
 
   // 설문 여부
-  hasSurvey       Boolean   @default(false)
+  hasSurvey Boolean @default(false)
 
   // 관리자 여부
-  isAdmin         Boolean   @default(false)
+  isAdmin Boolean @default(false)
 
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  devices           Device[]
-  presets           Preset[]
-  preferences       UserPreferences?
-  inquiries         Inquiry[]
-  scentPreferences  ScentPreference[]
-  genrePreferences  GenrePreference[]
+  devices          Device[]
+  presets          Preset[]
+  preferences      UserPreferences?
+  inquiries        Inquiry[]
+  scentPreferences ScentPreference[]
+  genrePreferences GenrePreference[]
+  tagPreferences   TagPreference[]
+  dailyPreprocessedSlots DailyPreprocessedSlot[]
 }
 
 ///////////////////////////////////////////////////////
@@ -63,30 +65,30 @@ model User {
 ///////////////////////////////////////////////////////
 
 model Device {
-  id              String       @id @default(uuid())
-  userId          String
-  name            String
-  type            String       // manager | light | scent | speaker
-  status          DeviceStatus @default(active)
-  registeredAt    DateTime     @default(now())
+  id           String       @id @default(uuid())
+  userId       String
+  name         String
+  type         String // manager | light | scent | speaker
+  status       DeviceStatus @default(active)
+  registeredAt DateTime     @default(now())
 
   // 연결 및 전원 상태
-  isConnected     Boolean      @default(false) // 현재 연결 상태
-  power           Boolean?    @default(false) // 전원 상태 (켜짐/꺼짐)
+  isConnected Boolean  @default(false) // 현재 연결 상태
+  power       Boolean? @default(false) // 전원 상태 (켜짐/꺼짐)
 
   // Device 제어용 필드
-  battery         Int?
-  brightness      Int?
-  color           String?
-  temperature     Int?         // 색온도 (2000-6500K)
-  scentType       String?
-  scentLevel      Int?
-  scentInterval   Int?
-  volume          Int?
-  nowPlaying      String?
-  
+  battery       Int?
+  brightness    Int?
+  color         String?
+  temperature   Int? // 색온도 (2000-6500K)
+  scentType     String?
+  scentLevel    Int?
+  scentInterval Int?
+  volume        Int?
+  nowPlaying    String?
+
   // 외부 디바이스 ID (예: Philips Wiz)
-  externalDeviceId String?     // 외부 디바이스 고유 ID
+  externalDeviceId String? // 외부 디바이스 고유 ID
 
   // Preset 적용
   currentPresetId String?
@@ -105,39 +107,42 @@ model Device {
 ///////////////////////////////////////////////////////
 
 model Fragrance {
-  id             Int      @id @default(autoincrement())
+  id             Int     @id @default(autoincrement())
   name           String
   description    String?
-  color          String?  // 향의 대표 색상 (HEX 코드)
+  color          String? // 향의 대표 색상 (HEX 코드)
   intensityLevel Int
   operatingMin   Int
   componentsJson Json
 
-  presets           Preset[]
-  scentPreferences   ScentPreference[]
+  presets          Preset[]
+  scentPreferences ScentPreference[]
 }
 
 model Light {
-  id         Int      @id @default(autoincrement())
-  name       String
-  color      String   // HEX 색상
-  brightness Int
-  temperature Int?    // 색온도 (2000-6500K)
-  rgb        Json?    // RGB 배열 [r, g, b]
+  id          Int    @id @default(autoincrement())
+  name        String
+  color       String // HEX 색상
+  brightness  Int
+  temperature Int? // 색온도 (2000-6500K)
+  rgb         Json? // RGB 배열 [r, g, b]
 
-  presets    Preset[]
+  presets Preset[]
 }
 
 model Sound {
-  id             Int      @id @default(autoincrement())
+  id             Int    @id @default(autoincrement())
   name           String
   fileUrl        String
-  duration       Int?     // 곡 길이 (초 단위)
-  genreId        Int?     // 장르 ID (Genre 테이블 참조)
-  componentsJson Json?    // { "genre": "newage", "mood": "calm", ... }
+  duration       Int? // 곡 길이 (초 단위)
+  genreId        Int? // 장르 ID (Genre 테이블 참조)
+  componentsJson Json? // { "genre": "newage", "mood": "calm", ... }
 
-  presets        Preset[]
-  genre          Genre?   @relation(fields: [genreId], references: [id])
+  presets Preset[]
+  genre   Genre?   @relation(fields: [genreId], references: [id])
+
+  // 다대다 태그 관계 (장르와 별개의 무드/상황 태그)
+  tags Tag[]
 }
 
 ///////////////////////////////////////////////////////
@@ -150,8 +155,41 @@ model Genre {
   description String?
   createdAt   DateTime @default(now())
 
-  sounds            Sound[]
-  genrePreferences   GenrePreference[]
+  sounds           Sound[]
+  genrePreferences GenrePreference[]
+}
+
+///////////////////////////////////////////////////////
+// TAG & TAG PREFERENCE (음악 태그 및 선호도 가중치)
+///////////////////////////////////////////////////////
+
+/// 음악/무드/상황 태그 (장르와는 별개의 보조 분류)
+model Tag {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+
+  // 사운드와의 다대다 관계
+  sounds         Sound[]
+  tagPreferences TagPreference[]
+}
+
+/// 태그 선호도 가중치 (사용자별 태그 선호)
+model TagPreference {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  tagId     Int
+  weight    Int      @default(0) // 가중치 (초기 설문: 호+10, 불호+1, 하트 클릭: +3 등)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tagId])
+  @@index([userId])
+  @@index([userId, weight])
 }
 
 ///////////////////////////////////////////////////////
@@ -159,25 +197,25 @@ model Genre {
 ///////////////////////////////////////////////////////
 
 model Preset {
-  id           String   @id @default(uuid())
-  userId       String
-  fragranceId  Int
-  lightId      Int
-  soundId      Int
-  name         String
-  cluster      String?  // 무드 클러스터: '-' (부정), '0' (중립), '+' (긍정)
-  isDefault    Boolean  @default(false) // 기본 무드 설정 여부
-  isStarred    Boolean  @default(false) // 별표 표시 (mood_set 저장)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  updatedType  String?  // all | scent | song | color
+  id          String   @id @default(uuid())
+  userId      String
+  fragranceId Int
+  lightId     Int
+  soundId     Int
+  name        String
+  cluster     String? // 무드 클러스터: '-' (부정), '0' (중립), '+' (긍정)
+  isDefault   Boolean  @default(false) // 기본 무드 설정 여부
+  isStarred   Boolean  @default(false) // 별표 표시 (mood_set 저장)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  updatedType String? // all | scent | song | color
 
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  fragrance  Fragrance @relation(fields: [fragranceId], references: [id])
-  light      Light     @relation(fields: [lightId], references: [id])
-  sound      Sound     @relation(fields: [soundId], references: [id])
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fragrance Fragrance @relation(fields: [fragranceId], references: [id])
+  light     Light     @relation(fields: [lightId], references: [id])
+  sound     Sound     @relation(fields: [soundId], references: [id])
 
-  devices    Device[]
+  devices Device[]
 
   // 인덱스 추가 (성능 향상)
   @@index([userId])
@@ -190,30 +228,63 @@ model Preset {
 ///////////////////////////////////////////////////////
 
 model UserPreferences {
-  id                  Int      @id @default(autoincrement())
-  userId              String   @unique
+  id     Int    @id @default(autoincrement())
+  userId String @unique
 
   // 향 선호도 (쉼표로 구분된 문자열) - 하위 호환성 유지
   // 예시: "Citrus,Floral,Woody"
   // 참고: 새로운 가중치 시스템은 ScentPreference 테이블 사용
-  scentLiked          String?
-  scentDisliked       String?
+  scentLiked    String?
+  scentDisliked String?
 
   // 색상 선호도 (쉼표로 구분된 문자열)
   // 예시: "warmWhite,skyBlue"
-  colorLiked          String?
-  colorDisliked       String?
+  colorLiked    String?
+  colorDisliked String?
 
   // 음악 장르 선호도 (쉼표로 구분된 문자열) - 하위 호환성 유지
   // 예시: "newage,classical,jazz"
   // 참고: 새로운 가중치 시스템은 GenrePreference 테이블 사용
-  musicLiked          String?
-  musicDisliked       String?
+  musicLiked    String?
+  musicDisliked String?
 
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+///////////////////////////////////////////////////////
+// DAILY PREPROCESSED SLOT (전처리된 10분 단위 지표 144슬롯)
+///////////////////////////////////////////////////////
+
+model DailyPreprocessedSlot {
+  id        String   @id @default(uuid())
+  userId    String
+  date      DateTime // 해당 날짜의 00:00 기준 날짜 (로컬 or UTC, 일관성 필요)
+  slotIndex Int      // 0 ~ 143 (10분 슬롯 인덱스)
+
+  // 전처리된 값 (요약 지표)
+  average_stress_index  Float
+  recent_stress_index   Float
+  latest_sleep_score    Float
+  latest_sleep_duration Float
+  temperature           Float
+  humidity              Float
+  rainType              Int
+  sky                   Int
+
+  laughter              Int
+  sigh                  Int
+  crying                Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date, slotIndex])
+  @@index([userId, date])
 }
 
 ///////////////////////////////////////////////////////
@@ -223,13 +294,13 @@ model UserPreferences {
 model ScentPreference {
   id        Int      @id @default(autoincrement())
   userId    String
-  scentId  Int      // Fragrance ID
-  weight   Int      @default(0) // 가중치 (초기 설문: 호+10, 불호+1, 하트 클릭: +3)
+  scentId   Int // Fragrance ID
+  weight    Int      @default(0) // 가중치 (초기 설문: 호+10, 불호+1, 하트 클릭: +3)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  scent  Fragrance @relation(fields: [scentId], references: [id], onDelete: Cascade)
+  user  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scent Fragrance @relation(fields: [scentId], references: [id], onDelete: Cascade)
 
   // 인덱스 추가 (성능 향상)
   @@unique([userId, scentId])
@@ -244,13 +315,13 @@ model ScentPreference {
 model GenrePreference {
   id        Int      @id @default(autoincrement())
   userId    String
-  genreId  Int
-  weight   Int      @default(0) // 가중치 (초기 설문: 호+10, 불호+1, 하트 클릭: +3)
+  genreId   Int
+  weight    Int      @default(0) // 가중치 (초기 설문: 호+10, 불호+1, 하트 클릭: +3)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user   User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  genre  Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  genre Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
 
   // 인덱스 추가 (성능 향상)
   @@unique([userId, genreId])
@@ -263,15 +334,15 @@ model GenrePreference {
 ///////////////////////////////////////////////////////
 
 model Inquiry {
-  id        Int       @id @default(autoincrement())
-  userId    String
-  subject   String
-  message   String    @db.Text
-  status    String    @default("pending") // pending | answered | closed
-  answer    String?   @db.Text // 관리자 답변
+  id         Int       @id @default(autoincrement())
+  userId     String
+  subject    String
+  message    String    @db.Text
+  status     String    @default("pending") // pending | answered | closed
+  answer     String?   @db.Text // 관리자 답변
   answeredBy String? // 답변한 관리자 ID
   answeredAt DateTime? // 답변 일시
-  createdAt DateTime  @default(now())
+  createdAt  DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -287,7 +358,7 @@ model Inquiry {
 model PasswordResetToken {
   id        Int      @id @default(autoincrement())
   email     String
-  code      String   // 6자리 인증코드
+  code      String // 6자리 인증코드
   token     String?  @unique // 비밀번호 재설정 토큰 (인증 후 발급)
   expiresAt DateTime // 만료 시간
   used      Boolean  @default(false) // 사용 여부 (한 번만 사용 가능)

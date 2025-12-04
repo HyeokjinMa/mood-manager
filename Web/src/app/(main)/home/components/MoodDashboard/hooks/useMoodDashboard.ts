@@ -303,10 +303,13 @@ export function useMoodDashboard({
     onMoodChange(randomMood);
   };
 
-  // 무드 저장/삭제 핸들러
+  // 무드 저장/삭제 핸들러 (Optimistic Update: 즉시 UI 반영)
   const handleSaveToggle = async () => {
     if (isSaved) {
       // 저장 취소 (무드셋에서 제거)
+      // Optimistic: 즉시 UI 업데이트
+      setIsSaved(false);
+      
       try {
         if (isAdminMode) {
           // 관리자 모드: localStorage에서 삭제
@@ -314,7 +317,6 @@ export function useMoodDashboard({
           const savedMood = savedMoods.find((saved) => saved.moodId === mood.id);
           if (savedMood) {
             deleteSavedMood(savedMood.id);
-            setIsSaved(false);
           }
         } else {
           // 일반 모드: API 호출
@@ -327,21 +329,23 @@ export function useMoodDashboard({
               (saved) => saved.moodId === mood.id
             );
             if (savedMood) {
-              const deleteResponse = await fetch(
+              await fetch(
                 `/api/moods/saved/${savedMood.id}`,
                 { method: "DELETE", credentials: "include" }
               );
-              if (deleteResponse.ok) {
-                setIsSaved(false);
-              }
             }
           }
         }
       } catch (error) {
         console.error("Error removing saved mood:", error);
+        // 실패 시 롤백
+        setIsSaved(true);
       }
     } else {
       // 무드 저장
+      // Optimistic: 즉시 UI 업데이트 (별표 색칠)
+      setIsSaved(true);
+      
       try {
         const musicGenre = currentSegment?.mood?.music?.genre || "newage";
         const savedMoodData: SavedMood = {
@@ -364,11 +368,10 @@ export function useMoodDashboard({
         if (isAdminMode) {
           // 관리자 모드: localStorage에 저장하고 API 호출 스킵
           saveMood(savedMoodData);
-          setIsSaved(true);
           return; // API 호출하지 않음 (목업 모드 최적화)
         }
 
-        // 일반 모드: API 호출
+        // 일반 모드: API 호출 (백그라운드)
         const response = await fetch("/api/moods/saved", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -380,13 +383,23 @@ export function useMoodDashboard({
             music: savedMoodData.music,
             scent: savedMoodData.scent,
             preferenceCount: savedMoodData.preferenceCount,
+            // 현재 무드 전체 상태 스냅샷 전달
+            fullMood: {
+              mood,
+              currentSegment,
+            },
           }),
         });
-        if (response.ok) {
-          setIsSaved(true);
+        
+        if (!response.ok) {
+          // 실패 시 롤백
+          setIsSaved(false);
+          console.error("Failed to save mood:", await response.text());
         }
       } catch (error) {
         console.error("Error saving mood:", error);
+        // 실패 시 롤백
+        setIsSaved(false);
       }
     }
   };

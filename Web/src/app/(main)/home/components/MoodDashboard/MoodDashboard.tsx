@@ -17,7 +17,7 @@ import { useCallback } from "react";
 import { MoodDashboardSkeleton } from "@/components/ui/Skeleton";
 import type { Mood } from "@/types/mood";
 import { useMoodDashboard } from "./hooks/useMoodDashboard";
-import { useMoodStream } from "@/hooks/useMoodStream";
+import { useMoodStreamContext } from "@/context/MoodStreamContext";
 import { useMusicTrackPlayer } from "@/hooks/useMusicTrackPlayer";
 import { useMoodColors } from "./hooks/useMoodColors";
 import { useHeartAnimation } from "./hooks/useHeartAnimation";
@@ -54,7 +54,7 @@ export default function MoodDashboard({
   setBackgroundParams,
   isLLMLoading,
 }: MoodDashboardProps) {
-  // 무드스트림 관리
+  // 무드스트림 관리 (전역 Context에서 가져오기)
   const {
     moodStream,
     currentSegment,
@@ -65,7 +65,7 @@ export default function MoodDashboard({
     switchToNextStream,
     nextStreamAvailable,
     isGeneratingNextStream,
-  } = useMoodStream();
+  } = useMoodStreamContext();
   
   // 무드 대시보드 상태 및 핸들러 관리
   const {

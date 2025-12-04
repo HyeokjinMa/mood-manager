@@ -22,6 +22,8 @@ export interface BackgroundParams {
     name: string;
     category: string;
   };
+  // LLM이 선택한 원시 아이콘 키 배열 (최대 4개)
+  iconKeys?: string[];
   backgroundWind: {
     direction: number;
     speed: number;

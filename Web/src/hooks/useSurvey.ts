@@ -42,7 +42,9 @@ export function useSurvey() {
     scentLiked: string[],
     scentDisliked: string[],
     musicLiked: string[],
-    musicDisliked: string[]
+    musicDisliked: string[],
+    tagLiked: string[],
+    tagDisliked: string[]
   ) => {
     try {
       // 선호도 저장 API 호출
@@ -59,6 +61,8 @@ export function useSurvey() {
           colorDisliked: [],
           musicLiked,
           musicDisliked,
+          tagLiked,
+          tagDisliked,
         }),
       });
 
@@ -78,10 +82,26 @@ export function useSurvey() {
   const handleSurveySkip = async () => {
     try {
       // 건너뛰기 시 모든 향과 음악 장르를 긍정으로 처리
-      const allScents = ["Citrus", "Floral", "Woody", "Fresh", "Spicy", "Sweet", "Herbal", "Fruity", 
-        "Musk", "Aromatic", "Honey", "Green", "Dry", "Leathery", "Marine", "Powdery"];
-      const allMusic = ["newage", "classical", "jazz", "ambient", "nature", 
-        "meditation", "piano", "guitar", "orchestral", "electronic"];
+      const allScents = [
+        "Citrus",
+        "Floral",
+        "Woody",
+        "Fresh",
+        "Spicy",
+        "Sweet",
+        "Herbal",
+        "Fruity",
+        "Musk",
+        "Aromatic",
+        "Honey",
+        "Green",
+        "Dry",
+        "Leathery",
+        "Marine",
+        "Powdery",
+      ];
+      const allMusic = ["lofi", "pop", "k-pop", "jazz", "classical", "christmas"];
+      const allTags = ["focus", "sleep", "relax", "calm", "energy", "christmas"];
 
       // 모든 요소를 긍정으로 저장
       const response = await fetch("/api/preferences", {
@@ -97,6 +117,8 @@ export function useSurvey() {
           colorDisliked: [],
           musicLiked: allMusic,
           musicDisliked: [],
+          tagLiked: allTags,
+          tagDisliked: [],
         }),
       });
 

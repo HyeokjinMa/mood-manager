@@ -20,7 +20,14 @@ import { useState } from "react";
 import { X } from "lucide-react";
 
 interface SurveyOverlayProps {
-  onComplete: (scentLiked: string[], scentDisliked: string[], musicLiked: string[], musicDisliked: string[]) => void;
+  onComplete: (
+    scentLiked: string[],
+    scentDisliked: string[],
+    musicLiked: string[],
+    musicDisliked: string[],
+    tagLiked: string[],
+    tagDisliked: string[]
+  ) => void;
   onSkip: () => void;
 }
 
@@ -30,18 +37,33 @@ const SCENT_OPTIONS = [
   "Musk", "Aromatic", "Honey", "Green", "Dry", "Leathery", "Marine", "Powdery"
 ];
 
-// 음악 장르 옵션
+// 음악 장르 옵션 (정제된 장르 축)
 const MUSIC_OPTIONS = [
-  "newage", "classical", "jazz", "ambient", "nature", 
-  "meditation", "piano", "guitar", "orchestral", "electronic"
+  "lofi",
+  "pop",
+  "k-pop",
+  "jazz",
+  "classical",
+  "christmas",
 ];
 
-type SurveyStep = "scent" | "music";
+// 음악 태그 옵션 (무드/상황 태그)
+const TAG_OPTIONS = [
+  "focus",
+  "sleep",
+  "relax",
+  "calm",
+  "energy",
+  "christmas",
+];
+
+type SurveyStep = "scent" | "music" | "tag";
 
 export default function SurveyOverlay({ onComplete, onSkip }: SurveyOverlayProps) {
   const [step, setStep] = useState<SurveyStep>("scent");
   const [scentDisliked, setScentDisliked] = useState<Set<string>>(new Set());
   const [musicDisliked, setMusicDisliked] = useState<Set<string>>(new Set());
+  const [tagDisliked, setTagDisliked] = useState<Set<string>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
 
@@ -71,10 +93,25 @@ export default function SurveyOverlay({ onComplete, onSkip }: SurveyOverlayProps
     });
   };
 
+  // 음악 태그 클릭 처리 (호/불호 전환)
+  const handleTagClick = (tag: string) => {
+    setTagDisliked((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(tag)) {
+        newSet.delete(tag); // 불호 → 호
+      } else {
+        newSet.add(tag); // 호 → 불호
+      }
+      return newSet;
+    });
+  };
+
   // 다음 단계로 이동
   const handleNext = () => {
     if (step === "scent") {
       setStep("music");
+    } else if (step === "music") {
+      setStep("tag");
     } else {
       handleComplete();
     }
@@ -89,8 +126,17 @@ export default function SurveyOverlay({ onComplete, onSkip }: SurveyOverlayProps
     const scentDislikedArray = Array.from(scentDisliked);
     const musicLiked = MUSIC_OPTIONS.filter((music) => !musicDisliked.has(music));
     const musicDislikedArray = Array.from(musicDisliked);
+    const tagLiked = TAG_OPTIONS.filter((tag) => !tagDisliked.has(tag));
+    const tagDislikedArray = Array.from(tagDisliked);
 
-    onComplete(scentLiked, scentDislikedArray, musicLiked, musicDislikedArray);
+    onComplete(
+      scentLiked,
+      scentDislikedArray,
+      musicLiked,
+      musicDislikedArray,
+      tagLiked,
+      tagDislikedArray
+    );
   };
 
   // 건너뛰기 확인
@@ -184,6 +230,52 @@ export default function SurveyOverlay({ onComplete, onSkip }: SurveyOverlayProps
               <div className="flex gap-3">
                 <button
                   onClick={() => setStep("scent")}
+                  className="flex-1 py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium"
+                >
+                  Back
+                </button>
+                <button
+                  onClick={handleNext}
+                  disabled={isSubmitting}
+                  className="flex-1 py-3 px-4 bg-black text-white rounded-lg hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                >
+                  Next
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* 음악 태그 선호도 단계 */}
+          {step === "tag" && (
+            <>
+              <h2 className="text-2xl font-bold mb-2">Music Tag Preferences</h2>
+              <p className="text-gray-600 mb-6 text-sm">
+                Click on tags to toggle your preference. Green = liked, Gray = disliked.
+              </p>
+
+              <div className="flex flex-wrap gap-2 mb-6 max-h-[60vh] overflow-y-auto">
+                {TAG_OPTIONS.map((tag) => {
+                  const isDisliked = tagDisliked.has(tag);
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => handleTagClick(tag)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        isDisliked
+                          ? "bg-gray-400 text-white hover:bg-gray-500 line-through"
+                          : "bg-green-500 text-white hover:bg-green-600"
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setStep("music")}
                   className="flex-1 py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium"
                 >
                   Back

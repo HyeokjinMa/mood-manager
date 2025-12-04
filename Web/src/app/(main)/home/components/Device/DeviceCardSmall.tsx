@@ -16,11 +16,11 @@
 
 import { Device } from "@/types/device";
 import { type Mood } from "@/types/mood";
-import { 
-  FaBatteryFull, 
-  FaBatteryHalf, 
-  FaBatteryEmpty, 
-  FaPalette, 
+import {
+  FaBatteryFull,
+  FaBatteryHalf,
+  FaBatteryEmpty,
+  FaPalette,
   FaCog,
 } from "react-icons/fa";
 import {
@@ -74,7 +74,8 @@ export default function DeviceCardSmall({
     >
       {/* 상단: 아이콘 - 이름 - 배터리 일렬 배치 */}
       <div className="flex items-center gap-2">
-        <div className="text-base">{getIcon(device.type)}</div>
+        {/* 메인 타입 아이콘: 항상 중립 색상 */}
+        <div className="text-base text-gray-600">{getIcon(device.type)}</div>
         <div className="text-xs font-medium flex-1 truncate">{device.name}</div>
         <div className="text-sm">{getBatteryIcon(device.battery, device.power)}</div>
       </div>
@@ -86,19 +87,19 @@ export default function DeviceCardSmall({
 }
 
 function getIcon(type: Device["type"]) {
-  if (type === "manager") return <FaPalette className="text-purple-500" />;
-  if (type === "light") return <HiOutlineLightBulb className="text-yellow-500" />;
-  if (type === "scent") return <HiOutlineSparkles className="text-green-500" />;
-  if (type === "speaker") return <HiOutlineSpeakerWave className="text-blue-500" />;
-  return <FaCog className="text-gray-500" />;
+  if (type === "manager") return <FaPalette />;
+  if (type === "light") return <HiOutlineLightBulb />;
+  if (type === "scent") return <HiOutlineSparkles />;
+  if (type === "speaker") return <HiOutlineSpeakerWave />;
+  return <FaCog />;
 }
 
 function getBatteryIcon(battery: number, power: boolean) {
   if (!power) {
     return <FaBatteryFull className="text-gray-400" />;
   }
-  if (battery >= 70) return <FaBatteryFull className="text-green-500" />;
-  if (battery >= 30) return <FaBatteryHalf className="text-yellow-500" />;
+  if (battery >= 70) return <FaBatteryFull className="text-emerald-500" />;
+  if (battery >= 30) return <FaBatteryHalf className="text-amber-500" />;
   return <FaBatteryEmpty className="text-red-500" />;
 }
 

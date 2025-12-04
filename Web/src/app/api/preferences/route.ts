@@ -36,7 +36,9 @@ async function updatePreferenceWeights(
   scentDisliked: string[],
   musicLiked: string[],
   musicDisliked: string[],
-  isMockMode: boolean = false,
+  tagLiked: string[],
+  tagDisliked: string[],
+  isMockMode: boolean = false
 ) {
   try {
     // 목업 모드: 메모리 저장소 초기화
@@ -238,6 +240,93 @@ async function updatePreferenceWeights(
       }
     }
 
+    // 태그 선호도 업데이트
+    // 호 (초록색 유지): 가중치 +10
+    for (const tagName of tagLiked) {
+      if (isMockMode) {
+        // 현재는 태그에 대한 별도 mock 저장소가 없으므로, 목업 모드에서는 스킵
+        continue;
+      } else {
+        const tag = await prisma.tag.findUnique({
+          where: { name: tagName },
+        });
+
+        if (tag) {
+          const existing = await prisma.tagPreference.findUnique({
+            where: {
+              userId_tagId: {
+                userId,
+                tagId: tag.id,
+              },
+            },
+          });
+
+          const currentWeight = existing?.weight || 1;
+          const newWeight = currentWeight + 10;
+
+          await prisma.tagPreference.upsert({
+            where: {
+              userId_tagId: {
+                userId,
+                tagId: tag.id,
+              },
+            },
+            update: {
+              weight: newWeight,
+            },
+            create: {
+              userId,
+              tagId: tag.id,
+              weight: newWeight,
+            },
+          });
+        }
+      }
+    }
+
+    // 불호 (초록색 끔): 가중치 +1 (최소값 1 유지)
+    for (const tagName of tagDisliked) {
+      if (isMockMode) {
+        // 현재는 태그에 대한 별도 mock 저장소가 없으므로, 목업 모드에서는 스킵
+        continue;
+      } else {
+        const tag = await prisma.tag.findUnique({
+          where: { name: tagName },
+        });
+
+        if (tag) {
+          const existing = await prisma.tagPreference.findUnique({
+            where: {
+              userId_tagId: {
+                userId,
+                tagId: tag.id,
+              },
+            },
+          });
+
+          const currentWeight = existing?.weight || 1;
+          const newWeight = Math.max(1, currentWeight + 1);
+
+          await prisma.tagPreference.upsert({
+            where: {
+              userId_tagId: {
+                userId,
+                tagId: tag.id,
+              },
+            },
+            update: {
+              weight: newWeight,
+            },
+            create: {
+              userId,
+              tagId: tag.id,
+              weight: newWeight,
+            },
+          });
+        }
+      }
+    }
+
     console.log(`[updatePreferenceWeights] 가중치 업데이트 완료 (userId: ${userId})`);
   } catch (error) {
     console.error("[updatePreferenceWeights] 가중치 업데이트 실패:", error);
@@ -357,6 +446,8 @@ export async function POST(request: NextRequest) {
       colorDisliked,
       musicLiked,
       musicDisliked,
+      tagLiked = [],
+      tagDisliked = [],
     } = body;
 
     // 3. 목업 모드 확인 (관리자 계정)
@@ -368,6 +459,8 @@ export async function POST(request: NextRequest) {
         scentDisliked: Array.isArray(scentDisliked) ? scentDisliked.length : 0,
         musicLiked: Array.isArray(musicLiked) ? musicLiked.length : 0,
         musicDisliked: Array.isArray(musicDisliked) ? musicDisliked.length : 0,
+        tagLiked: Array.isArray(tagLiked) ? tagLiked.length : 0,
+        tagDisliked: Array.isArray(tagDisliked) ? tagDisliked.length : 0,
       });
       // 목업 모드: 실제 로직 실행 (메모리 저장소 사용, DB 저장 없음)
       // 가중치 업데이트 로직을 실행하여 유효한 아웃풋 생성
@@ -377,6 +470,8 @@ export async function POST(request: NextRequest) {
         Array.isArray(scentDisliked) ? scentDisliked : [],
         Array.isArray(musicLiked) ? musicLiked : [],
         Array.isArray(musicDisliked) ? musicDisliked : [],
+        Array.isArray(tagLiked) ? tagLiked : [],
+        Array.isArray(tagDisliked) ? tagDisliked : [],
         true, // isMockMode = true
       );
       console.log("[POST /api/preferences] 목업 모드: 가중치 업데이트 완료 (메모리 저장소)");
@@ -427,6 +522,8 @@ export async function POST(request: NextRequest) {
         Array.isArray(scentDisliked) ? scentDisliked : [],
         Array.isArray(musicLiked) ? musicLiked : [],
         Array.isArray(musicDisliked) ? musicDisliked : [],
+        Array.isArray(tagLiked) ? tagLiked : [],
+        Array.isArray(tagDisliked) ? tagDisliked : [],
         false, // isMockMode = false (일반 모드)
       );
     } catch (dbError) {

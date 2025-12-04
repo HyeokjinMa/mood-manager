@@ -12,8 +12,7 @@ import BottomNav from "@/components/navigation/BottomNav";
 import MoodDeleteModal from "./components/MoodDeleteModal";
 import MoodReplaceModal from "./components/MoodReplaceModal";
 import { blendWithWhite } from "@/lib/utils";
-import { getSavedMoods, deleteSavedMood, initializeSampleMoods, type SavedMood as SavedMoodType } from "@/lib/mock/savedMoodsStorage";
-import { ADMIN_EMAIL } from "@/lib/auth/mockMode";
+import { getSavedMoods, deleteSavedMood, type SavedMood as SavedMoodType } from "@/lib/mock/savedMoodsStorage";
 
 // Number of mood cards per page (2 x 3 grid)
 const MOODS_PER_PAGE = 6;
@@ -21,7 +20,7 @@ const MOODS_PER_PAGE = 6;
 export default function MoodSetPage() {
   const router = useRouter();
   const { data: session } = useSession();
-  const isAdminMode = session?.user?.email === ADMIN_EMAIL;
+  const isAdminMode = false; // V2: 관리자 샘플 목업 제거 - 항상 실제 저장 데이터만 사용
   
   const [savedMoods, setSavedMoods] = useState<SavedMoodType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,24 +32,13 @@ export default function MoodSetPage() {
   useEffect(() => {
     const fetchSavedMoods = async () => {
       try {
-        if (isAdminMode) {
-          // Admin mode: Read from localStorage (skip API call)
-          initializeSampleMoods(); // Initialize sample data (ignored if already exists)
-          const savedMoods = getSavedMoods();
-          // Sort by savedAt (newest first)
-          savedMoods.sort((a, b) => b.savedAt - a.savedAt);
-          setSavedMoods(savedMoods);
-          setIsLoading(false);
-          return; // Skip API call (mock mode optimization)
-        }
-        
-        // Normal mode: API call
-        const response = await fetch("/api/moods/saved", {
-          credentials: "include",
-        });
+        // 항상 실제 API 기반 데이터 사용 (목업 샘플 제거)
+        const response = await fetch("/api/moods/saved", { credentials: "include" });
         if (response.ok) {
           const data = await response.json();
           setSavedMoods(data.savedMoods || []);
+        } else {
+          console.error("Failed to fetch saved moods:", await response.text());
         }
       } catch (error) {
         console.error("Error fetching saved moods:", error);

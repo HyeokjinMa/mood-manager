@@ -72,6 +72,11 @@ export interface LLMInput {
     musicCategory?: string;
     iconSet: string[];
   } | null;
+  // 정규화된 선호도 가중치 (DB 기반, 없으면 비어 있을 수 있음)
+  genrePreferenceWeights?: Record<string, number>;
+  scentPreferenceWeights?: Record<string, number>;
+   // 무드/상황 태그 가중치 (예: focus, sleep, christmas 등)
+  tagPreferenceWeights?: Record<string, number>;
 }
 
 /**

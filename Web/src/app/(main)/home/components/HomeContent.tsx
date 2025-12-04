@@ -17,7 +17,7 @@ import React from "react";
 import MoodDashboard from "./MoodDashboard/MoodDashboard";
 import DeviceGrid from "./Device/DeviceGrid";
 import ScentBackground from "@/components/ui/ScentBackground";
-import { useMoodStream } from "@/hooks/useMoodStream";
+import { useMoodStreamContext } from "@/context/MoodStreamContext";
 import { useBackgroundParams } from "@/hooks/useBackgroundParams";
 import { useDeviceSync } from "@/hooks/useDeviceSync";
 import { detectCurrentEvent } from "@/lib/events/detectEvents";
@@ -60,12 +60,12 @@ export default function HomeContent({
   const { current: currentMood, onChange: onMoodChange, onScentChange, onSongChange } = moodState;
   const { devices, setDevices, expandedId, setExpandedId, onOpenAddModal, onDeleteRequest } = deviceState;
   const onBackgroundParamsChange = backgroundState?.onChange;
-  // 무드스트림 관리
+  // 무드스트림 관리 (전역 Context에서 가져오기)
   const { 
     moodStream, 
     isLoading: isLoadingMoodStream,
     currentSegmentIndex,
-  } = useMoodStream();
+  } = useMoodStreamContext();
   
   // LLM 배경 파라미터 관리 (새로고침 시에만 호출)
   const [shouldFetchLLM, setShouldFetchLLM] = useState(false);

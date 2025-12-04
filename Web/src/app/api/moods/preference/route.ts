@@ -4,14 +4,14 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth/session";
+import { prisma } from "@/lib/prisma";
 
 /**
  * POST /api/moods/preference
  * 
  * 무드 선호도 카운트 증가 API
  * - 무드 이름 더블클릭 시 호출
- * - 무드당 최대 3번까지만 카운트 가능
- * - 장르/향/컬러에 대한 선호도 카운트 증가
+ * - 장르/향/컬러에 대한 선호도 가중치 증가
  * 
  * Request Body:
  * {
@@ -41,12 +41,14 @@ export async function POST(request: NextRequest) {
     if (sessionOrError instanceof NextResponse) {
       return sessionOrError;
     }
-    // const session = sessionOrError; // 향후 사용 예정
+    const session = sessionOrError;
+    const userId = session.user.id;
 
     const body = await request.json();
     const { moodId, moodName, musicGenre, scentType, moodColor } = body;
 
     console.log("[POST /api/moods/preference] 요청 수신:", {
+      userId,
       moodId,
       moodName,
       musicGenre,
@@ -61,88 +63,123 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: 실제 DB 연동 시 Firestore 사용
-    // 현재는 메모리 기반 목업 데이터 구조만 정의
-    // 
-    // Firestore 구조:
-    // users/{userId}/preferences/mood/{moodId} {
-    //   count: number (1-3),
-    //   lastUpdated: timestamp
-    // }
-    // users/{userId}/preferences/music/{genre} {
-    //   count: number,
-    //   lastUpdated: timestamp
-    // }
-    // users/{userId}/preferences/scent/{scentType} {
-    //   count: number,
-    //   lastUpdated: timestamp
-    // }
-    // users/{userId}/preferences/color/{colorHex} {
-    //   count: number,
-    //   lastUpdated: timestamp
-    // }
+    // 장르/향 가중치 +3 (설문 기준과 동일한 스케일)
+    // - 저장 실패 시 UI는 그대로 두고, 서버 로그만 남긴다.
+    let updatedGenreWeight: number | null = null;
+    let updatedScentWeight: number | null = null;
 
-    // [MOCK] 목업 응답
-    // 실제 구현 시:
-    // 1. Firestore에서 현재 무드의 선호도 카운트 조회
-    // 2. 3번 미만이면 카운트 증가, 3번이면 에러 반환
-    // 3. 장르/향/컬러 카운트도 각각 증가
-    // 4. Firestore에 저장
-
-    const mockCurrentCount = Math.floor(Math.random() * 3) + 1; // 1-3 랜덤 (목업)
-    const maxReached = mockCurrentCount >= 3;
-
-    if (maxReached) {
-      console.log("[POST /api/moods/preference] 최대 선호도 도달:", {
-        moodId,
-        moodName,
-        currentCount: 3,
+    try {
+      // GenrePreference 업데이트 (장르 이름 기반)
+      const genre = await prisma.genre.upsert({
+        where: { name: musicGenre },
+        update: {},
+        create: {
+          name: musicGenre,
+          description: null,
+        },
       });
 
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Maximum preference count (3) reached for this mood",
-          currentCount: 3,
-          maxReached: true,
+      const genrePref = await prisma.genrePreference.upsert({
+        where: {
+          userId_genreId: {
+            userId,
+            genreId: genre.id,
+          },
         },
-        { status: 400 }
-      );
+        update: {
+          weight: {
+            increment: 3,
+          },
+        },
+        create: {
+          userId,
+          genreId: genre.id,
+          weight: 3,
+        },
+      });
+      updatedGenreWeight = genrePref.weight;
+    } catch (e) {
+      console.warn("[POST /api/moods/preference] GenrePreference 업데이트 실패(무시):", e);
     }
 
-    const newCount = mockCurrentCount + 1;
+    try {
+      // ScentPreference 업데이트 (향 이름을 Fragrance.name 으로 사용)
+      // Fragrance.name 은 unique 가 아니므로, upsert(where: { name }) 를 쓸 수 없다.
+      // 1) name 기준으로 기존 Fragrance 검색
+      // 2) 없으면 새로 생성
+      let fragrance = await prisma.fragrance.findFirst({
+        where: { name: scentType },
+      });
 
-    const responsePayload = {
-      success: true,
-      currentCount: newCount,
-      maxReached: newCount >= 3,
-      preferenceCounts: {
-        music: {
-          [musicGenre]: Math.floor(Math.random() * 5) + 1, // 목업: 1-5 랜덤
-        },
-        scent: {
-          [scentType]: Math.floor(Math.random() * 5) + 1, // 목업: 1-5 랜덤
-        },
-        color: {
-          [moodColor]: Math.floor(Math.random() * 5) + 1, // 목업: 1-5 랜덤
-        },
-      },
-    } as const;
+      if (!fragrance) {
+        fragrance = await prisma.fragrance.create({
+          data: {
+            name: scentType,
+            description: null,
+            color: moodColor,
+            intensityLevel: 5,
+            operatingMin: 5,
+            componentsJson: {},
+          },
+        });
+      }
 
-    console.log("[POST /api/moods/preference] 선호도 업데이트 (MOCK):", {
+      const scentPref = await prisma.scentPreference.upsert({
+        where: {
+          userId_scentId: {
+            userId,
+            scentId: fragrance.id,
+          },
+        },
+        update: {
+          weight: {
+            increment: 3,
+          },
+        },
+        create: {
+          userId,
+          scentId: fragrance.id,
+          weight: 3,
+        },
+      });
+      updatedScentWeight = scentPref.weight;
+    } catch (e) {
+      console.warn("[POST /api/moods/preference] ScentPreference 업데이트 실패(무시):", e);
+    }
+
+    console.log("[POST /api/moods/preference] 선호도 업데이트 완료(DB 기반):", {
+      userId,
       moodId,
       moodName,
-      newCount: responsePayload.currentCount,
-      preferenceCounts: responsePayload.preferenceCounts,
+      updatedGenreWeight,
+      updatedScentWeight,
     });
 
-    return NextResponse.json(responsePayload);
+    return NextResponse.json({
+      success: true,
+      // 하트 클릭 횟수는 별도 테이블이 없으므로, 현재는 null 로 두고
+      // 장르/향 가중치만 반환한다.
+      currentCount: null,
+      maxReached: false,
+      preferenceCounts: {
+        music: updatedGenreWeight != null ? { [musicGenre]: updatedGenreWeight } : {},
+        scent: updatedScentWeight != null ? { [scentType]: updatedScentWeight } : {},
+        color: { [moodColor]: 1 },
+      },
+    });
   } catch (error) {
-    console.error("Error updating mood preference:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error("[POST /api/moods/preference] 처리 중 예외 발생(무시 가능):", error);
+    // 요청 자체는 성공으로 돌려보내고, 클라이언트에서는 UI를 그대로 유지
+    return NextResponse.json({
+      success: false,
+      currentCount: null,
+      maxReached: false,
+      preferenceCounts: {
+        music: {},
+        scent: {},
+        color: {},
+      },
+    });
   }
 }
 
