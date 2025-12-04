@@ -80,7 +80,7 @@ export async function handleStreamMode({
 
   // ===== 1. 로그인 세션 기준으로 감정 카운터 조회 및 클렌징 =====
   const emotionCounts = getAndResetEmotionCounts(userId);
-  console.log(`[Stream Handler] Emotion counts for user ${userId}:`, {
+  console.log(`[Stream Handler] 🎚️ 사용자 ${userId} 감정 카운트(누적 후 클렌징):`, {
     laughter: emotionCounts.laughter,
     sigh: emotionCounts.sigh,
     crying: emotionCounts.crying,
@@ -107,10 +107,11 @@ export async function handleStreamMode({
     // 바로 LLM-only fallback으로 진행
     if (!process.env.PYTHON_SERVER_URL) {
       console.warn(
-        "[Stream Handler] PYTHON_SERVER_URL not set. Skipping Python step and using LLM-only fallback."
+        "[Stream Handler] ⚠️ PYTHON_SERVER_URL 미설정 - Python 단계 건너뛰고 LLM-only 모드로 동작합니다."
       );
       pythonResponse = null;
     } else {
+      console.log("[Stream Handler] ✅ PYTHON_SERVER_URL 설정됨 - Python 서버에 예측 요청을 시도합니다.");
       const pythonProvider = new PythonEmotionPredictionProvider();
 
       const predictionInput: EmotionPredictionInput = {
@@ -124,11 +125,11 @@ export async function handleStreamMode({
 
       // Python 응답 검증
       if (!validatePythonResponse(pythonResponse)) {
-        console.error("[Stream Handler] Invalid Python response, using fallback");
+        console.error("[Stream Handler] ❌ Python 응답 검증 실패, LLM-only fallback으로 전환합니다.");
         pythonResponse = null;
       } else {
         console.log("\n" + "=".repeat(80));
-        console.log("✅ [Stream Handler] Python response validated successfully:");
+        console.log("✅ [Stream Handler] Python response validated successfully (실제 ML 응답 사용):");
         console.log("=".repeat(80));
         console.log(JSON.stringify(pythonResponse, null, 2));
         console.log("=".repeat(80) + "\n");
@@ -141,17 +142,19 @@ export async function handleStreamMode({
 
   // Python 응답이 없으면 기존 방식으로 fallback
   if (!pythonResponse) {
-    console.warn("[Stream Handler] Python response not available, falling back to original prompt");
-  return handleStreamModeFallback({
-    segments,
-    preprocessed,
-    moodStream,
-    userPreferences,
-    forceFresh,
-    llmInput,
-    userId,
-    session,
-  });
+    console.warn(
+      "[Stream Handler] ℹ️ Python 응답이 없어 LLM-only fallback 경로로 진행합니다. (source: openai-fallback)"
+    );
+    return handleStreamModeFallback({
+      segments,
+      preprocessed,
+      moodStream,
+      userPreferences,
+      forceFresh,
+      llmInput,
+      userId,
+      session,
+    });
   }
 
   // ===== 3. Python 응답 JSON을 그대로 LLM 프롬프트에 포함 =====

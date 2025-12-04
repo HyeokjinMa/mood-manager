@@ -38,7 +38,7 @@ export function generateOptimizedPrompt(
   input: LLMInput,
   segments?: MoodStreamSegment[]
 ): string {
-  const { preprocessed, moodName, musicGenre, scentType, userPreferences, timeOfDay, season } = input;
+  const { preprocessed, moodName, musicGenre, scentType, userPreferences, timeOfDay, season, event } = input;
   
   // 날씨 정보 간소화
   const weather = `${preprocessed.weather.temperature}°C, ${preprocessed.weather.humidity}%, ${
@@ -52,25 +52,25 @@ export function generateOptimizedPrompt(
     anger: preprocessed.emotionEvents.anger?.length || 0,
     sadness: preprocessed.emotionEvents.sadness?.length || 0,
   })
-    .filter(([_, count]) => count > 0)
+    .filter(([, count]) => count > 0)
     .map(([emotion, count]) => `${emotion}(${count})`)
     .join(", ") || "calm";
   
   // 선호도 간소화 (선호만 표시)
   const musicPrefs = Object.entries(userPreferences.music)
-    .filter(([_, v]) => v === '+')
+    .filter(([, v]) => v === '+')
     .map(([k]) => k)
     .slice(0, 3)
     .join(', ');
   
   const colorPrefs = Object.entries(userPreferences.color)
-    .filter(([_, v]) => v === '+')
+    .filter(([, v]) => v === '+')
     .map(([k]) => k)
     .slice(0, 3)
     .join(', ');
   
   const scentPrefs = Object.entries(userPreferences.scent)
-    .filter(([_, v]) => v === '+')
+    .filter(([, v]) => v === '+')
     .map(([k]) => k)
     .slice(0, 3)
     .join(', ');
@@ -133,6 +133,11 @@ export function generateOptimizedPrompt(
     streamInfo = `[10 SEGMENTS] ${segmentDetails}`;
   }
   
+  // 이벤트 정보 (참고용 - 무조건 적용하지 않고 종합적으로 고려)
+  const eventContext = event 
+    ? `\n[SPECIAL EVENT - REFERENCE ONLY] ${event.name}: ${event.description}. Music category suggestion: ${event.musicCategory || "general"}. Consider incorporating this theme naturally if it fits the user's mood and emotional state. Do NOT force it - use it as a creative reference.`
+    : "";
+
   // 최적화된 프롬프트 (10개 세그먼트 각각에 대해 다른 값 생성 요청)
   return `Mood background design for 10 segments (Respond in English only)
 
@@ -141,7 +146,7 @@ export function generateOptimizedPrompt(
 [BIOMETRICS] stress:${preprocessed.recent_stress_index}/100 sleep:${preprocessed.latest_sleep_score}/100
 [WEATHER] ${weather}
 [EMOTIONS] ${emotions}
-[PREFERENCES] music:${musicPrefs} color:${colorPrefs} scent:${scentPrefs}
+[PREFERENCES] music:${musicPrefs} color:${colorPrefs} scent:${scentPrefs}${eventContext}
 
 ${streamInfo ? streamInfo + "\n" : ""}
 [ICON CATALOG]
@@ -151,22 +156,16 @@ ${iconCatalogText}
 [REQUIREMENTS]
 You must generate DIFFERENT values for EACH of the 10 segments. Each segment should have:
 - UNIQUE moodAlias (2-4 word English nickname, vary across segments)
-- UNIQUE musicSelection (different track title/style for each segment)
-- UNIQUE moodColor (CRITICAL: Each segment MUST have a different color. Use diverse palette: warm yellows (#FFD700, #FFA500), browns (#8B4513, #A0522D), greens (#228B22, #32CD32), purples (#9370DB, #8A2BE2), oranges (#FF6347, #FF8C00), pinks (#FF69B4, #FF1493), teals (#008080, #20B2AA), reds (#DC143C, #B22222). DO NOT use the same color for multiple segments. Maximum 1 duplicate color allowed across all 10 segments.)
-- UNIQUE backgroundIcon.category (choose different icons from catalog for each segment)
-- UNIQUE backgroundWind (vary direction and speed)
-- Vary animationSpeed, iconOpacity across segments
-
-CRITICAL COLOR REQUIREMENT: 
-- Generate 10 DISTINCT colors. You may reuse a color at most ONCE (so minimum 5 unique colors, ideally 8-10 unique colors).
-- Do NOT generate the same color for more than 2 segments.
-- Use the full color spectrum: warm, cool, pastel, vibrant tones.
-- Each segment's moodColor should be visually distinguishable from others.
+- UNIQUE musicSelection (different track title/style for each segment. If a special event is active, you may naturally incorporate event-appropriate music suggestions, but prioritize the user's emotional state and mood over forcing event themes)
+- moodColor: keep overall coherence with the base mood, but introduce gentle variation across segments (use related tones / shades rather than extreme jumps between unrelated colors)
+- backgroundIcon.category: use a VARIETY of icons across the 10 segments. Avoid reusing the exact same icon key more than 2 times in the whole stream. Prefer using 5–8 different icon keys per stream so that the background feels rich and not repetitive.
+- backgroundWind: vary direction and speed to create subtle movement differences
+- Vary animationSpeed, iconOpacity across segments (small variations are enough; do not create distracting extremes)
 
 Return a JSON object with this structure:
 {
   "segments": [
-{
+    {
       "moodAlias": "unique 2-4 word English nickname for segment 0",
       "musicSelection": "unique track title/style for segment 0",
       "moodColor": "#HEX (vary colors, not just blue)",

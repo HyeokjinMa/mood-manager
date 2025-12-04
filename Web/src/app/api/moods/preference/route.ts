@@ -46,6 +46,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { moodId, moodName, musicGenre, scentType, moodColor } = body;
 
+    console.log("[POST /api/moods/preference] 요청 수신:", {
+      moodId,
+      moodName,
+      musicGenre,
+      scentType,
+      moodColor,
+    });
+
     if (!moodId || !moodName || !musicGenre || !scentType || !moodColor) {
       return NextResponse.json(
         { error: "Missing required fields" },
@@ -81,10 +89,16 @@ export async function POST(request: NextRequest) {
     // 3. 장르/향/컬러 카운트도 각각 증가
     // 4. Firestore에 저장
 
-    const mockCurrentCount = Math.floor(Math.random() * 3) + 1; // 1-3 랜덤
+    const mockCurrentCount = Math.floor(Math.random() * 3) + 1; // 1-3 랜덤 (목업)
     const maxReached = mockCurrentCount >= 3;
 
     if (maxReached) {
+      console.log("[POST /api/moods/preference] 최대 선호도 도달:", {
+        moodId,
+        moodName,
+        currentCount: 3,
+      });
+
       return NextResponse.json(
         {
           success: false,
@@ -98,22 +112,31 @@ export async function POST(request: NextRequest) {
 
     const newCount = mockCurrentCount + 1;
 
-    return NextResponse.json({
+    const responsePayload = {
       success: true,
       currentCount: newCount,
       maxReached: newCount >= 3,
       preferenceCounts: {
         music: {
-          [musicGenre]: (Math.floor(Math.random() * 5) + 1), // 목업: 1-5 랜덤
+          [musicGenre]: Math.floor(Math.random() * 5) + 1, // 목업: 1-5 랜덤
         },
         scent: {
-          [scentType]: (Math.floor(Math.random() * 5) + 1), // 목업: 1-5 랜덤
+          [scentType]: Math.floor(Math.random() * 5) + 1, // 목업: 1-5 랜덤
         },
         color: {
-          [moodColor]: (Math.floor(Math.random() * 5) + 1), // 목업: 1-5 랜덤
+          [moodColor]: Math.floor(Math.random() * 5) + 1, // 목업: 1-5 랜덤
         },
       },
+    } as const;
+
+    console.log("[POST /api/moods/preference] 선호도 업데이트 (MOCK):", {
+      moodId,
+      moodName,
+      newCount: responsePayload.currentCount,
+      preferenceCounts: responsePayload.preferenceCounts,
     });
+
+    return NextResponse.json(responsePayload);
   } catch (error) {
     console.error("Error updating mood preference:", error);
     return NextResponse.json(

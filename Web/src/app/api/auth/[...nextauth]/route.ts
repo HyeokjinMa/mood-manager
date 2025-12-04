@@ -443,16 +443,6 @@ export const authOptions: NextAuthOptions = {
               `[NextAuth signIn]    Profile ${isProfileComplete ? "COMPLETE" : "INCOMPLETE - needs additional info"}`
             );
 
-            // 신규 사용자 기본 설정 생성 (기본 디바이스, Preset 등)
-            try {
-              const { createDefaultUserSetup } = await import("@/lib/auth/createDefaultUserSetup");
-              await createDefaultUserSetup(newUser.id);
-              console.log(`[NextAuth signIn] ✅ 기본 설정 생성 완료: User ID ${newUser.id}`);
-            } catch (setupError) {
-              console.error(`[NextAuth signIn] ⚠️ 기본 설정 생성 실패:`, setupError);
-              // 기본 설정 생성 실패해도 로그인은 진행
-            }
-
             // user.id를 DB의 ID로 설정
             user.id = String(newUser.id);
           } else {

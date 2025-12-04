@@ -70,28 +70,18 @@ export async function GET() {
   }
 
   try {
-    // 2. 사용자의 Manager 디바이스 찾기 (currentPresetId가 있는 디바이스)
-    let managerDevice;
-    
+    // 2. 기존 Manager 디바이스/프리셋 기반 로직 제거
+    //    - 신규 사용자는 디바이스/프리셋 없이도 목업/LLM 기반 스트림으로만 동작
+    //    - Manager 디바이스를 강제로 생성하지 않음
     try {
-      managerDevice = await prisma.device.findFirst({
+      // DB 접근만 테스트하고, 실패 시에는 목업으로 대체
+      await prisma.device.count({
         where: {
           userId: session.user.id,
-          type: "manager",
-        },
-        include: {
-          preset: {
-            include: {
-              fragrance: true,
-              light: true,
-              sound: true,
-            },
-          },
         },
       });
     } catch (dbError) {
       console.error("[GET /api/moods/current] DB 조회 실패, 목업 데이터 반환:", dbError);
-      // [MOCK] DB 연결 실패 시 목업 데이터 반환
       const { getMockMoodStream } = await import("@/lib/mock/mockData");
       const mockData = getMockMoodStream();
       return NextResponse.json({
@@ -101,183 +91,14 @@ export async function GET() {
       });
     }
 
-    // 3. Manager 디바이스가 없거나 Preset이 없으면 기본 설정 생성
-    if (!managerDevice || !managerDevice.preset) {
-      try {
-        const { createDefaultUserSetup } = await import("@/lib/auth/createDefaultUserSetup");
-        await createDefaultUserSetup(session.user.id);
-        
-        // 다시 Manager 디바이스 조회
-        const newManagerDevice = await prisma.device.findFirst({
-          where: {
-            userId: session.user.id,
-            type: "manager",
-          },
-          include: {
-            preset: {
-              include: {
-                fragrance: true,
-                light: true,
-                sound: true,
-              },
-            },
-          },
-        });
-        
-        if (!newManagerDevice || !newManagerDevice.preset) {
-          // [MOCK] 기본 설정 생성 실패 시 목업 데이터 반환
-          console.log("[GET /api/moods/current] 기본 설정 생성 실패, 목업 데이터 반환");
-          const { getMockMoodStream } = await import("@/lib/mock/mockData");
-          const mockData = getMockMoodStream();
-          return NextResponse.json({
-            currentMood: mockData.currentMood,
-            moodStream: mockData.segments,
-            userDataCount: mockData.userDataCount,
-          });
-        }
-        
-        // 새로 생성된 디바이스 사용
-        const preset = newManagerDevice.preset;
-        
-        // Sound componentsJson에서 genre 추출
-        const soundComponents = parseSoundComponents(preset.sound.componentsJson);
-        const musicGenre = soundComponents.genre;
-
-        // Fragrance componentsJson에서 type 추출
-        const fragranceComponents = parseFragranceComponents(preset.fragrance.componentsJson);
-        const scentType = fragranceComponents.type;
-
-        // 사용자 데이터 개수 조회
-        const userDataCount = 0; // 기본값
-
-        // HEX to RGB 변환 (utils에서 import)
-
-        // 무드스트림 생성
-        const now = Date.now();
-        const segmentDuration = 180 * 1000; // 3분을 밀리초로
-        const moodStream = Array.from({ length: 10 }, (_, index) => ({
-          timestamp: now + index * segmentDuration,
-          mood: {
-            id: preset.id,
-            name: preset.name,
-            color: preset.light.color,
-            music: {
-              genre: musicGenre,
-              title: preset.sound.name,
-            },
-            scent: {
-              type: scentType,
-              name: preset.fragrance.name,
-            },
-            lighting: {
-              color: preset.light.color,
-              rgb: hexToRgb(preset.light.color),
-            },
-          },
-          duration: segmentDuration,
-        }));
-
-        return NextResponse.json({
-          currentMood: {
-            id: preset.id,
-            name: preset.name,
-            color: preset.light.color,
-            music: {
-              genre: musicGenre,
-              title: preset.sound.name,
-            },
-            scent: {
-              type: scentType,
-              name: preset.fragrance.name,
-            },
-            lighting: {
-              color: preset.light.color,
-              rgb: hexToRgb(preset.light.color),
-            },
-          },
-          moodStream: moodStream,
-          userDataCount: userDataCount,
-        });
-      } catch (setupError) {
-        console.error("[GET /api/moods/current] 기본 설정 생성 실패:", setupError);
-        return NextResponse.json({
-          currentMood: null,
-          userDataCount: 0,
-        });
-      }
-    }
-
-    const preset = managerDevice.preset;
-
-    // 4. Preset과 관련된 모든 활성 디바이스 조회 (향후 사용 예정)
-    // const updatedDevices = await prisma.device.findMany({
-    //   where: {
-    //     userId: session.user.id,
-    //     currentPresetId: preset.id,
-    //   },
-    // });
-
-    // 5. Sound componentsJson에서 genre 추출
-    const soundComponents = parseSoundComponents(preset.sound.componentsJson);
-    const musicGenre = soundComponents.genre;
-
-    // 6. Fragrance componentsJson에서 type 추출
-    const fragranceComponents = parseFragranceComponents(preset.fragrance.componentsJson);
-    const scentType = fragranceComponents.type;
-
-    // 7. 사용자 데이터 개수 조회 (Firestore 또는 DB)
-    // TODO: 실제 Firestore에서 조회하도록 구현
-    const userDataCount = 0; // 기본값
-
-    // 8. HEX to RGB 변환 (utils에서 import)
-
-    // 9. 무드스트림 생성 (현재 Preset을 기반으로 10개 세그먼트 생성)
-    // 각 세그먼트는 3분(180초)씩, 총 30분 스트림
-    const now = Date.now();
-    const segmentDuration = 180 * 1000; // 3분을 밀리초로
-    const moodStream = Array.from({ length: 10 }, (_, index) => ({
-      timestamp: now + index * segmentDuration,
-      mood: {
-        id: preset.id,
-        name: preset.name,
-        color: preset.light.color,
-        music: {
-          genre: musicGenre,
-          title: preset.sound.name,
-        },
-        scent: {
-          type: scentType,
-          name: preset.fragrance.name,
-        },
-        lighting: {
-          color: preset.light.color,
-          rgb: hexToRgb(preset.light.color),
-        },
-      },
-      duration: segmentDuration,
-    }));
-
-    // 10. 응답 포맷팅 (LLM Input 스펙에 맞춤)
+    // 3. 현재는 Manager/프리셋 의존성을 제거하고, 목업 스트림을 기본값으로 사용
+    //    (실제 DB 기반 무드스트림은 V2 이후 별도 설계에서 재도입)
+    const { getMockMoodStream } = await import("@/lib/mock/mockData");
+    const mockData = getMockMoodStream();
     return NextResponse.json({
-      currentMood: {
-        id: preset.id,
-        name: preset.name,
-        color: preset.light.color,
-        music: {
-          genre: musicGenre,
-          title: preset.sound.name,
-        },
-        scent: {
-          type: scentType,
-          name: preset.fragrance.name,
-        },
-        lighting: {
-          color: preset.light.color,
-          rgb: hexToRgb(preset.light.color),
-        },
-      },
-      moodStream: moodStream,
-      userDataCount: userDataCount,
+      currentMood: mockData.currentMood,
+      moodStream: mockData.segments,
+      userDataCount: mockData.userDataCount,
     });
   } catch (error) {
     console.error("[GET /api/moods/current] Error:", error);

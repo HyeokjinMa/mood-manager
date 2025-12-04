@@ -26,7 +26,9 @@ import {
   drawDust,
   drawFragment,
   drawPowder,
+  drawIconByKey,
 } from "./drawing";
+import { getIconSetForEvent, getRandomIconFromSet } from "@/lib/events/iconMapping";
 
 export default function ScentBackground({
   scentType,
@@ -38,6 +40,7 @@ export default function ScentBackground({
   animationSpeed = 4,
   iconOpacity = 0.7,
   backgroundColor,
+  event, // 이벤트 정보
 }: ScentBackgroundProps) {
   // backgroundIcon은 향후 구현 예정이므로 현재는 사용하지 않음
   void backgroundIcon;
@@ -46,8 +49,9 @@ export default function ScentBackground({
   const particlesRef = useRef<ScentParticle[]>([]);
   const [particleCount, setParticleCount] = useState(0);
   const [currentBgColor, setCurrentBgColor] = useState<string>("");
-
-  const style = SCENT_ANIMATION_STYLES[scentType];
+  // scentType 이 예상치 못한 값이거나 undefined 여도 안전하게 동작하도록 기본 스타일 설정
+  const fallbackStyle = SCENT_ANIMATION_STYLES.Floral;
+  const style = SCENT_ANIMATION_STYLES[scentType] ?? fallbackStyle;
 
   // 배경 색상 부드러운 전환
   useEffect(() => {
@@ -60,7 +64,7 @@ export default function ScentBackground({
     setCurrentBgColor(bg);
 
     // 배경 색상 전환 (파티클 컬러는 애니메이션 루프에서 직접 backgroundColor 사용)
-  }, [backgroundColor, style.backgroundColor]);
+  }, [backgroundColor, style]);
 
   // 파티클 수 계산 (향 레벨에 따라)
   useEffect(() => {
@@ -69,7 +73,7 @@ export default function ScentBackground({
     const intensityMultiplier = intensity / 10;
     const count = Math.floor(baseCount * densityMultiplier * intensityMultiplier);
     setParticleCount(count);
-  }, [scentType, intensity, style.density]);
+  }, [scentType, intensity, style]);
 
   // 파티클 초기화
   useEffect(() => {
@@ -87,6 +91,9 @@ export default function ScentBackground({
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
 
+    // 이벤트 아이콘 세트 가져오기 (여러 아이콘 혼합용)
+    const iconSet = getIconSetForEvent(event?.type || null, scentType);
+
     // 파티클 생성 (불규칙성을 위한 랜덤 요소 추가)
     const createParticle = (initialY?: number): ScentParticle => {
       const sizeRange = style.size;
@@ -97,6 +104,9 @@ export default function ScentBackground({
       const yPosition = initialY !== undefined 
         ? initialY 
         : Math.random() * canvas.height * 1.5 - canvas.height * 0.5; // -0.5h ~ 1.5h 범위
+      
+      // 이벤트가 있으면 랜덤 아이콘 선택, 없으면 향 타입별 기본 아이콘
+      const iconKey = getRandomIconFromSet(iconSet);
       
       return {
         id: Math.random(),
@@ -113,6 +123,7 @@ export default function ScentBackground({
         turbulence: Math.random() * 0.5 + 0.3, // 난류 강도 (0.3 ~ 0.8)
         life: 1.0, // 초기 생명력
         lifeSpeed: 0.0003 + Math.random() * 0.0005, // 생명력 감소 속도 감소 (더 오래 유지)
+        iconKey, // 이벤트 아이콘 키 (여러 아이콘 혼합)
       };
     };
 
@@ -161,6 +172,8 @@ export default function ScentBackground({
           particle.turbulence = Math.random() * 0.5 + 0.3;
           particle.life = 1.0;
           particle.lifeSpeed = 0.0003 + Math.random() * 0.0005; // 생명력 감소 속도 감소 (더 오래 유지)
+          // 재생성 시 새로운 랜덤 아이콘 선택 (여러 아이콘 혼합)
+          particle.iconKey = getRandomIconFromSet(iconSet);
         }
 
         // LLM 풍향/풍속 적용
@@ -187,6 +200,8 @@ export default function ScentBackground({
           particle.windX = (Math.random() - 0.5) * 0.2;
           particle.turbulence = Math.random() * 0.5 + 0.3;
           particle.rotation = Math.random() * 360;
+          // 재생성 시 새로운 랜덤 아이콘 선택 (여러 아이콘 혼합)
+          particle.iconKey = getRandomIconFromSet(iconSet);
         }
 
         // 회전 업데이트 (향 타입별 회전 속도)
@@ -198,50 +213,56 @@ export default function ScentBackground({
         ctx.rotate((particle.rotation * Math.PI) / 180);
         ctx.globalAlpha = (particle.opacity * particle.life) * (iconOpacity || 0.7); // LLM iconOpacity 반영
 
-        // 향 타입별 모양 그리기 (무드 컬러 직접 사용)
+        // 무드 컬러 직접 사용
         ctx.fillStyle = particleColor;
         ctx.strokeStyle = particleColor;
         ctx.lineWidth = 1;
 
-        switch (scentType) {
-          case "Floral":
-            drawPetal(ctx, particle.size, particleColor);
-            break;
-          case "Marine":
-            drawWaterDrop(ctx, particle.size, particleColor);
-            break;
-          case "Citrus":
-            drawCircle(ctx, particle.size, particleColor);
-            break;
-          case "Woody":
-            drawLeaf(ctx, particle.size, particleColor);
-            break;
-          case "Musk":
-            drawCloud(ctx, particle.size, particleColor);
-            break;
-          case "Aromatic":
-            drawHerbLeaf(ctx, particle.size, particleColor);
-            break;
-          case "Green":
-            drawLeaf(ctx, particle.size, particleColor);
-            break;
-          case "Spicy":
-            drawParticle(ctx, particle.size, particleColor);
-            break;
-          case "Honey":
-            drawHoneyDrop(ctx, particle.size, particleColor);
-            break;
-          case "Dry":
-            drawDust(ctx, particle.size, particleColor);
-            break;
-          case "Leathery":
-            drawFragment(ctx, particle.size, particleColor);
-            break;
-          case "Powdery":
-            drawPowder(ctx, particle.size, particleColor);
-            break;
-          default:
-            drawCircle(ctx, particle.size, particleColor);
+        // 이벤트 아이콘이 있으면 사용, 없으면 향 타입별 기본 아이콘
+        if (particle.iconKey) {
+          drawIconByKey(ctx, particle.iconKey, particle.size, particleColor);
+        } else {
+          // 향 타입별 기본 모양 (fallback)
+          switch (scentType) {
+            case "Floral":
+              drawPetal(ctx, particle.size, particleColor);
+              break;
+            case "Marine":
+              drawWaterDrop(ctx, particle.size, particleColor);
+              break;
+            case "Citrus":
+              drawCircle(ctx, particle.size, particleColor);
+              break;
+            case "Woody":
+              drawLeaf(ctx, particle.size, particleColor);
+              break;
+            case "Musk":
+              drawCloud(ctx, particle.size, particleColor);
+              break;
+            case "Aromatic":
+              drawHerbLeaf(ctx, particle.size, particleColor);
+              break;
+            case "Green":
+              drawLeaf(ctx, particle.size, particleColor);
+              break;
+            case "Spicy":
+              drawParticle(ctx, particle.size, particleColor);
+              break;
+            case "Honey":
+              drawHoneyDrop(ctx, particle.size, particleColor);
+              break;
+            case "Dry":
+              drawDust(ctx, particle.size, particleColor);
+              break;
+            case "Leathery":
+              drawFragment(ctx, particle.size, particleColor);
+              break;
+            case "Powdery":
+              drawPowder(ctx, particle.size, particleColor);
+              break;
+            default:
+              drawCircle(ctx, particle.size, particleColor);
+          }
         }
 
         ctx.restore();
@@ -258,7 +279,7 @@ export default function ScentBackground({
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [particleCount, scentType, scentColor, backgroundColor, style, backgroundWind, animationSpeed, iconOpacity, currentBgColor]);
+  }, [particleCount, scentType, scentColor, backgroundColor, style, backgroundWind, animationSpeed, iconOpacity, currentBgColor, event]);
 
   return (
     <div

@@ -14,7 +14,6 @@ interface MoodHeaderProps {
   isSaved: boolean;
   onSaveToggle: () => void;
   onRefresh: () => void;
-  llmSource?: string;
   onPreferenceClick?: () => void; // preference click handler
   preferenceCount?: number; // current mood preference count (0-3)
   maxReached?: boolean; // max 3 times reached
@@ -27,7 +26,6 @@ export default function MoodHeader({
   isSaved,
   onSaveToggle,
   onRefresh,
-  llmSource,
   onPreferenceClick,
   maxReached = false,
   isRefreshing = false,
@@ -79,26 +77,6 @@ export default function MoodHeader({
           >
             {mood.name}
           </div>
-          {/* LLM 사용 여부 항상 명확하게 표시 */}
-          <span
-            className="inline-flex mt-0.5 max-w-[160px] items-center rounded-full bg-white/70 px-2 py-[1px] text-[9px] font-medium text-gray-600"
-            title={
-              llmSource
-                ? llmSource === "openai-fallback"
-                  ? "LLM: OpenAI only (without Markov pipeline)"
-                  : `LLM source: ${llmSource}`
-                : "LLM: Not called yet or mock response"
-            }
-          >
-            {(() => {
-              if (!llmSource) return "LLM: idle/mock";
-              if (llmSource === "openai-fallback")
-                return "LLM: active (openai / no markov)";
-              if (llmSource.startsWith("openai") || llmSource === "cache")
-                return `LLM: active (${llmSource})`;
-              return `LLM: mock (${llmSource})`;
-            })()}
-          </span>
         </div>
         <div className="flex items-center gap-2">
           {/* mood set save button (star) */}

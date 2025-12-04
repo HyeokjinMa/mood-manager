@@ -45,7 +45,7 @@ export async function GET() {
 
   // 관리자 모드 확인
   if (await checkMockMode(session)) {
-    console.log("[GET /api/preprocessing] Mock mode: Admin account");
+    console.log("[GET /api/preprocessing] 🧪 관리자 목업 모드 - 실제 Firestore/ML 대신 목업 전처리 데이터 사용");
     const { getMockPreprocessingData } = await import("@/lib/mock/mockData");
     return NextResponse.json(getMockPreprocessingData());
   }
@@ -61,8 +61,14 @@ export async function GET() {
     
     try {
       todayRawData = await fetchTodayPeriodicRaw(USER_ID);
+      console.log(
+        `[preprocessing] ✅ Firestore raw_periodic 데이터 ${todayRawData.length}건을 기반으로 실제 전처리를 수행합니다.`
+      );
     } catch (error) {
-      console.warn("[preprocessing] Firestore query failed, returning mock data:", error);
+      console.warn(
+        "[preprocessing] ⚠️ Firestore 조회 실패, 목업 전처리 데이터로 대체합니다:",
+        error
+      );
       // [MOCK] Firestore 조회 실패 시 목업 데이터 반환
       const { getMockPreprocessingData } = await import("@/lib/mock/mockData");
       return NextResponse.json(getMockPreprocessingData());
@@ -70,7 +76,9 @@ export async function GET() {
 
     if (todayRawData.length === 0) {
       // [MOCK] 데이터가 없을 경우 목업 데이터 반환 (UI FLOW 확인용)
-      console.log("[preprocessing] No data found, returning mock data");
+      console.log(
+        "[preprocessing] ⚠️ 오늘자 Firestore 데이터가 없어 목업 전처리 데이터로 대체합니다."
+      );
       const { getMockPreprocessingData } = await import("@/lib/mock/mockData");
       return NextResponse.json(getMockPreprocessingData());
     }
@@ -93,8 +101,9 @@ export async function GET() {
     let weather = undefined;
     try {
       weather = await fetchWeather();
+      console.log("[preprocessing] ✅ 실제 기상청(KMA) 날씨 데이터를 사용합니다.");
     } catch (err) {
-      console.warn("[preprocessing] Weather query failed:", err);
+      console.warn("[preprocessing] ⚠️ Weather query failed, 기본 날씨 값으로 대체:", err);
     }
 
     // ------------------------------------------------------------
@@ -110,6 +119,9 @@ export async function GET() {
       latestSleepDuration = sleepResult.totalMinutes;
     } else {
       // 수면 데이터 없을 때 기본값
+      console.log(
+        "[preprocessing] ℹ️ 오늘 수면 데이터가 없어 기본 수면 점수/시간(70점/8시간)을 사용합니다."
+      );
       latestSleepScore = 70;   // 중간 점수
       latestSleepDuration = 480; // 8시간
     }
@@ -123,6 +135,7 @@ export async function GET() {
     // ------------------------------------------------------------
     // 6) 최종 JSON 응답 (Python + LLM 입력 스펙에 맞춤)
     // ------------------------------------------------------------
+    console.log("[preprocessing] ✅ 실제 전처리 결과(JSON)를 반환합니다. (mock 아님)");
     return NextResponse.json(
       {
         average_stress_index: averageStressIndex,
@@ -159,7 +172,7 @@ export async function GET() {
       { status: 200 }
     );
   } catch (err) {
-    console.error("[preprocessing] Error occurred:", err);
+    console.error("[preprocessing] ❌ 전처리 중 오류 발생, INTERNAL_ERROR 반환:", err);
     return NextResponse.json({ error: "INTERNAL_ERROR" }, { status: 500 });
   }
 }

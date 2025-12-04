@@ -5,6 +5,8 @@
  * 백엔드 API 응답을 조합하여 LLM 프롬프트에 전송할 Input 생성
  */
 
+import { detectCurrentEvent } from "@/lib/events/detectEvents";
+
 interface PreprocessingResponse {
   average_stress_index: number;
   recent_stress_index: number;
@@ -63,6 +65,13 @@ export interface LLMInput {
   userDataCount?: number;
   previousMood?: string;
   season?: string;
+  event?: {
+    type: string;
+    name: string;
+    description: string;
+    musicCategory?: string;
+    iconSet: string[];
+  } | null;
 }
 
 /**
@@ -142,6 +151,9 @@ export async function prepareLLMInput(
 ): Promise<LLMInput> {
   const timeOfDay = new Date().getHours();
   const season = inferSeason(new Date().getMonth() + 1);
+  
+  // 현재 이벤트 감지 (크리스마스, 신년 등)
+  const currentEvent = detectCurrentEvent();
 
   return {
     moodName: moodStream.currentMood.name,
@@ -153,6 +165,13 @@ export async function prepareLLMInput(
     currentCluster: moodStream.currentMood.cluster,
     userDataCount: moodStream.userDataCount,
     season,
+    event: currentEvent ? {
+      type: currentEvent.type || "",
+      name: currentEvent.name,
+      description: currentEvent.description,
+      musicCategory: currentEvent.musicCategory,
+      iconSet: currentEvent.iconSet,
+    } : null,
   };
 }
 

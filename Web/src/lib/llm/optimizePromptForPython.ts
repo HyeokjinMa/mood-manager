@@ -24,6 +24,7 @@ export async function generatePromptFromPythonResponse(
   const scentType = llmInput.scentType;
   const timeOfDay = llmInput.timeOfDay || new Date().getHours();
   const season = llmInput.season || "Winter";
+  const event = llmInput.event;
   
   // Python 응답을 JSON 문자열로 변환 (그대로 포함)
   const pythonResponseJson = JSON.stringify(pythonResponse, null, 2);
@@ -46,7 +47,7 @@ ${preferenceWeights}
 - Season: ${season}
 - Stress: average ${llmInput.preprocessed.average_stress_index}/100, recent ${llmInput.preprocessed.recent_stress_index}/100
 - Sleep: score ${llmInput.preprocessed.latest_sleep_score}/100, duration ${llmInput.preprocessed.latest_sleep_duration}min
-- Weather: temp ${llmInput.preprocessed.weather.temperature}°C, humidity ${llmInput.preprocessed.weather.humidity}%, rain ${llmInput.preprocessed.weather.rainType}, sky ${llmInput.preprocessed.weather.sky}
+- Weather: temp ${llmInput.preprocessed.weather.temperature}°C, humidity ${llmInput.preprocessed.weather.humidity}%, rain ${llmInput.preprocessed.weather.rainType}, sky ${llmInput.preprocessed.weather.sky}${event ? `\n- Special Event (Reference Only): ${event.name} - ${event.description}. Music category suggestion: ${event.musicCategory || "general"}. Consider naturally if it fits the user's emotional state, but prioritize mood coherence over forcing event themes.` : ""}
 
 [REQUIREMENTS]
 Generate background parameters for 3 segments that reflect the emotional transition based on the ML model prediction above.

@@ -189,4 +189,31 @@
     /* 자연스러운 배경 전환 */
     mix-blend-mode: multiply;
   }
+
+  /* Phase 2: 색상 전환 대각선 껍질 효과 */
+  @keyframes colorPeel {
+    0% {
+      /* 우측상단에서 시작 (완전히 숨김) */
+      clip-path: polygon(100% 0%, 100% 0%, 100% 0%);
+      opacity: 0;
+    }
+    10% {
+      opacity: 1;
+    }
+    50% {
+      /* 대각선으로 반쯤 드러남 */
+      clip-path: polygon(100% 0%, 50% 50%, 100% 100%, 100% 0%);
+    }
+    100% {
+      /* 좌측하단까지 완전히 드러남 (전체 화면 덮음) */
+      clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+      opacity: 1;
+    }
+  }
+
+  .animate-color-peel {
+    animation: colorPeel 1.2s ease-in-out forwards;
+    /* 자연스러운 색상 블렌딩 */
+    mix-blend-mode: normal;
+  }
   }

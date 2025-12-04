@@ -67,29 +67,8 @@ export async function GET() {
       return NextResponse.json({ devices: getMockDevices() });
     }
 
-    // 3. 디바이스가 없으면 기본 설정 생성
-    if (devices.length === 0) {
-      try {
-        const { createDefaultUserSetup } = await import("@/lib/auth/createDefaultUserSetup");
-        await createDefaultUserSetup(session.user.id);
-        
-        // 다시 디바이스 조회
-        devices = await prisma.device.findMany({
-          where: {
-            userId: session.user.id,
-            status: "active",
-          },
-          orderBy: {
-            registeredAt: "desc",
-          },
-        });
-      } catch (setupError) {
-        console.error("[GET /api/devices] 기본 설정 생성 실패, 목업 데이터 반환:", setupError);
-        // [MOCK] 기본 설정 생성 실패 시 목업 데이터 반환
-        const { getMockDevices } = await import("@/lib/mock/mockData");
-        return NextResponse.json({ devices: getMockDevices() });
-      }
-    }
+    // 3. 디바이스가 없으면 그대로 빈 배열 반환 (자동 Manager 생성 제거)
+    //    - 신규 사용자는 스스로 디바이스를 등록하는 플로우를 유지
 
     // 4. 디바이스 데이터 포맷팅
     const formattedDevices = devices.map((device) => ({

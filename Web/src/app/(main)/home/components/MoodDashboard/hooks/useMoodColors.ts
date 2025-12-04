@@ -19,7 +19,6 @@ interface MoodColors {
   baseColor: string; // original mood color (LLM or default mood)
   accentColor: string; // pastel tone point color for UI
   displayAlias: string; // mood alias to display
-  llmSource?: string; // LLM source information
 }
 
 /**
@@ -39,16 +38,12 @@ export function useMoodColors({
     
     // displayAlias: LLM 추천 별명 또는 기본 무드 이름 사용
     const displayAlias = backgroundParams?.moodAlias || mood.name;
-    
-    // llmSource: LLM 소스 정보 가져오기
-    const llmSource = backgroundParams?.source;
 
     return {
       baseColor,
       accentColor,
       displayAlias,
-      llmSource,
     };
-  }, [mood.color, mood.name, backgroundParams?.moodColor, backgroundParams?.moodAlias, backgroundParams?.source]);
+  }, [mood.color, mood.name, backgroundParams?.moodColor, backgroundParams?.moodAlias]);
 }
 

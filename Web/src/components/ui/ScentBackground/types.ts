@@ -4,6 +4,8 @@
 
 import type { ScentType } from "@/types/mood";
 
+import type { IconKey } from "@/lib/events/iconMapping";
+
 export interface ScentParticle {
   id: number;
   x: number;
@@ -19,7 +21,10 @@ export interface ScentParticle {
   turbulence: number; // 난류 효과
   life: number; // 파티클 생명주기 (0-1)
   lifeSpeed: number; // 생명주기 감소 속도
+  iconKey?: IconKey; // 이벤트 아이콘 키 (여러 아이콘 혼합용)
 }
+
+import type { EventInfo } from "@/lib/events/detectEvents";
 
 export interface ScentBackgroundProps {
   scentType: ScentType;
@@ -37,5 +42,6 @@ export interface ScentBackgroundProps {
   animationSpeed?: number;
   iconOpacity?: number;
   backgroundColor?: string; // LLM 추천 배경 색상 (사용하더라도 아주 약하게만)
+  event?: EventInfo | null; // 이벤트 정보 (크리스마스, 신년 등)
 }
 

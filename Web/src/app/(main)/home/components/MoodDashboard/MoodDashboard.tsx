@@ -22,7 +22,6 @@ import { useMusicTrackPlayer } from "@/hooks/useMusicTrackPlayer";
 import { useMoodColors } from "./hooks/useMoodColors";
 import { useHeartAnimation } from "./hooks/useHeartAnimation";
 import { useSegmentSelector } from "./hooks/useSegmentSelector";
-import { useSegmentTransition } from "./hooks/useSegmentTransition";
 import type { BackgroundParams } from "@/hooks/useBackgroundParams";
 import { hexToRgba } from "@/lib/utils";
 import MoodHeader from "./components/MoodHeader";
@@ -31,7 +30,6 @@ import AlbumSection from "./components/AlbumSection";
 import MusicControls from "./components/MusicControls";
 import MoodDuration from "./components/MoodDuration";
 import HeartAnimation from "./components/HeartAnimation";
-import SegmentTransition from "./components/SegmentTransition";
 
 interface MoodDashboardProps {
   mood: Mood;
@@ -89,22 +87,13 @@ export default function MoodDashboard({
   });
 
   // 색상 계산
-  const { baseColor, accentColor, displayAlias, llmSource } = useMoodColors({
+  const { baseColor, accentColor, displayAlias } = useMoodColors({
     mood,
     backgroundParams,
   });
 
   // 하트 애니메이션 관리 (현재 세그먼트 전달)
-  const { heartAnimation, handleDashboardDoubleClick, clearHeartAnimation } = useHeartAnimation();
-
-  // 세그먼트 전환 애니메이션 관리
-  const {
-    isTransitioning,
-    fromColor,
-    toColor,
-    triggerTransition,
-    onTransitionComplete,
-  } = useSegmentTransition();
+  const { heartAnimation, handleDashboardClick, clearHeartAnimation } = useHeartAnimation();
 
   // 세그먼트 선택
   const { handleSegmentSelect } = useSegmentSelector({
@@ -114,7 +103,8 @@ export default function MoodDashboard({
     onMoodChange,
     allSegmentsParams,
     setBackgroundParams,
-    onTransitionTrigger: triggerTransition,
+    // 전환 애니메이션은 V2 이후 재설계 예정이므로 현재는 사용하지 않음
+    onTransitionTrigger: undefined,
   });
 
   // 음악 트랙 재생 관리 (3세그 구조)
@@ -169,14 +159,6 @@ export default function MoodDashboard({
           onComplete={clearHeartAnimation}
         />
       )}
-      {isTransitioning && fromColor && toColor && (
-        <SegmentTransition
-          fromColor={fromColor}
-          toColor={toColor}
-          isVisible={isTransitioning}
-          onComplete={onTransitionComplete}
-        />
-      )}
       <div
         className="rounded-xl px-3 mb-1 w-full backdrop-blur-sm border transition-all duration-500 ease-in-out"
         style={{
@@ -186,7 +168,7 @@ export default function MoodDashboard({
           paddingTop: "11px",
           paddingBottom: "8px",
         }}
-        onDoubleClick={(e) => handleDashboardDoubleClick(e, currentSegment)}
+        onClick={(e) => handleDashboardClick(e, currentSegment)}
         key={`dashboard-${currentSegmentIndex}`}
       >
       <MoodHeader
@@ -198,7 +180,6 @@ export default function MoodDashboard({
         // 저장/삭제 토글 핸들러 호출 (인자 없이)
         onSaveToggle={setIsSaved}
         onRefresh={handleRefreshWithStream} // 무드스트림 재생성 포함
-        llmSource={llmSource}
         // 새로고침/스트림 생성 관련 작업 진행 중 스피너 표시
         isRefreshing={isRefreshing}
         onPreferenceClick={handlePreferenceClick}

@@ -20,6 +20,7 @@ import ScentBackground from "@/components/ui/ScentBackground";
 import { useMoodStream } from "@/hooks/useMoodStream";
 import { useBackgroundParams } from "@/hooks/useBackgroundParams";
 import { useDeviceSync } from "@/hooks/useDeviceSync";
+import { detectCurrentEvent } from "@/lib/events/detectEvents";
 import type { Device } from "@/types/device";
 import type { Mood } from "@/types/mood";
 import type { BackgroundParams } from "@/hooks/useBackgroundParams";
@@ -123,6 +124,9 @@ export default function HomeContent({
     [devices]
   );
 
+  // 현재 이벤트 감지 (크리스마스, 신년 등)
+  const currentEvent = useMemo(() => detectCurrentEvent(), []);
+
   // 무드 컬러(raw & pastel) - 메모이제이션
   const rawMoodColor = useMemo(() => {
     return backgroundParams?.moodColor || currentMood.color;
@@ -166,6 +170,7 @@ export default function HomeContent({
         animationSpeed={backgroundParams?.animationSpeed}
         iconOpacity={backgroundParams?.iconOpacity}
         backgroundColor={rawMoodColor}
+        event={currentEvent} // 이벤트 정보 전달 (크리스마스, 신년 등)
       />
 
       <div className="pt-2 px-3 flex flex-col flex-1 overflow-hidden relative z-10">
