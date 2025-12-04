@@ -382,6 +382,10 @@ Gemini is Google's advanced AI model designed for reasoning, coding assistance, 
 
 \section{Specification}
 
+\subsection{Splashing Page}
+
+When the application is launched, a dedicated splash screen is displayed for approximately one to two seconds to prevent users from seeing an empty or uninitialized interface during data loading. This screen ensures a smooth and visually coherent startup experience by masking initial delays while core resources, user session data, and essential UI components are being prepared in the background. Once loading is complete, the app automatically transitions to the main interface without requiring any user interaction, creating a seamless and polished first impression.
+
 \subsection{Sign Up Page}
 
 \subsubsection{Email Registration}
@@ -510,6 +514,8 @@ Supporting these operations is the Backend Service Layer, implemented using Node
 The final component is the AI Inference Module, which uses OpenAI's few-shot prompting to convert processed biometric and contextual inputs into structured mood profiles. It generates recommendations for lighting, scent, and sound, along with a descriptive mood name that reflects the inferred emotional state. This module encapsulates the system's adaptive reasoning and provides the core intelligence behind the personalized mood experience.
 
 \subsection{Directory Organization}
+
+\onecolumn
 
 \begin{longtable}{|p{5cm}|p{8cm}|}
 \caption{Directory Organization - BACKEND} \\
@@ -686,6 +692,34 @@ ML/apps/ml\_classification/onnx\_model & model\_quantized.onnx, config.json, ort
 ML/apps/ml\_classification/saved\_model & config.json, preprocessor\_config.json \\
 \hline
 \end{longtable}
+
+\begin{longtable}{|p{5cm}|p{8cm}|}
+\caption{Directory Organization - WearOS} \\
+\hline
+\textbf{Directory} & \textbf{File Name} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Directory} & \textbf{File Name} \\
+\hline
+\endhead
+\hline
+\endfoot
+Watch & build.gradle.kts, gradle.properties, settings.gradle.kts \\
+\hline
+Watch/app & build.gradle.kts, lint.xml \\
+\hline
+Watch/app/src/main & AndroidManifest.xml \\
+\hline
+Watch/app/src/main/java/com/moodmanager/watch/presentation & MainActivity.kt, AudioEventService.kt, PeriodicDataService.kt, FirebaseViewModel.kt \\
+\hline
+Watch/app/src/main/java/com/moodmanager/watch/presentation/theme & Theme.kt \\
+\hline
+Watch/app/src/main/res & drawable/, mipmap-*, values/, values-round/ \\
+\hline
+\end{longtable}
+
+\twocolumn
 
 \subsection{Module 1: Backend}
 
@@ -883,6 +917,31 @@ https://github.com/Ma-Hyekjin/mood-manager/ML
 \item preprocessor\_config.json : Rules for audio preprocessing prior to model inference.
 \item saved\_model/config.json : Full model configuration for reproducibility.
 \item saved\_model/preprocessor\_config.json : Preprocessor settings for locally saved model.
+\end{itemize}
+
+\subsection{Module 5: WearOS}
+
+\subsubsection{Purpose}
+The WearOS Module of Mood Manager serves as the primary data acquisition layer, continuously collecting multimodal physiological and acoustic signals directly from the user's wrist-worn device. Implemented as a native Kotlin application for Wear OS, this module operates autonomously in the background through foreground services, ensuring uninterrupted data capture even when the device screen is off or the user is engaged in other activities. By integrating with Android's Health Connect API and native audio recording capabilities, the WearOS app gathers essential biometric metrics—including heart rate, heart rate variability, stress indices, and respiratory rate—alongside contextual audio events that indicate emotional states such as laughter or sighs. All collected data is transmitted in real time to Firebase Firestore, establishing a reliable and structured data stream that feeds into the backend preprocessing pipeline and ultimately drives AI-powered mood inference. As the foundational sensor layer of the Mood Manager ecosystem, the WearOS module bridges the gap between raw physiological measurements and intelligent mood prediction, enabling the system to respond dynamically to the user's emotional and physical state throughout the day.
+
+\subsubsection{Functionality}
+The WearOS Module implements two independent foreground services that run continuously to ensure robust data collection without interruption. The PeriodicDataService queries the Health Connect API at regular intervals to retrieve biometric measurements such as instantaneous heart rate, heart rate variability metrics, stress levels derived from HRV analysis, and respiratory rate estimates. These data points are normalized, timestamped, and uploaded to the Firestore collection `users/{userId}/raw_periodic`, creating a time-series dataset that supports sleep detection, stress tracking, and daily wellness scoring. In parallel, the AudioEventService activates the device microphone every minute for a brief two-second recording window, capturing ambient sound and analyzing it for emotional cues. Using lightweight on-device heuristics based on audio amplitude and frequency characteristics, the service classifies detected events as laughter, sighs, or background noise, encoding the raw audio as Base64-encoded WAV and uploading validated events to `users/{userId}/raw_events`. The MainActivity coordinates permission management for sensitive data access—requesting notifications, body sensors, and audio recording permissions—and initializes both services upon app launch. All operations comply with Android's battery optimization and privacy constraints by leveraging foreground service notifications and maintaining minimal resource consumption. The WearOS app's data flows directly into the backend's real-time Firestore listeners, ensuring seamless integration with the broader Mood Manager architecture and enabling context-aware mood recommendations driven by continuous physiological and emotional monitoring.
+
+\subsubsection{Location of Source Code}
+https://github.com/Ma-Hyekjin/mood-manager/Watch
+
+\subsubsection{Class Components}
+
+\begin{itemize}
+\item MainActivity.kt : Main activity that handles permission requests and starts foreground services.
+\item AudioEventService.kt : Foreground service that records audio every minute and detects laughter/sigh events.
+\item PeriodicDataService.kt : Foreground service that collects biometric data periodically from Health Connect API.
+\item FirebaseViewModel.kt : ViewModel for managing Firebase Firestore data synchronization.
+\item Theme.kt : Wear OS Material Design theme configuration.
+\item AndroidManifest.xml : App configuration including permissions and service declarations.
+\item build.gradle.kts : Gradle build configuration for Watch app module.
+\item gradle.properties : Gradle project-wide properties.
+\item settings.gradle.kts : Gradle settings for multi-module project structure.
 \end{itemize}
 
 \section{Use Case}
