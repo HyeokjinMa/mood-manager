@@ -1,0 +1,43 @@
+Epoch 1/10 | Train Loss: 0.5630 | Val Acc: 93.778802%
+Best Performance - Model saved at ./saved_model
+Epoch 2/10 | Train Loss: 0.2958 | Val Acc: 87.557604%
+Epoch 3/10 | Train Loss: 0.2518 | Val Acc: 94.700461%
+Best Performance - Model saved at ./saved_model
+Epoch 4/10 | Train Loss: 0.2166 | Val Acc: 94.470046%
+Epoch 5/10 | Train Loss: 0.1986 | Val Acc: 95.622120%
+Best Performance - Model saved at ./saved_model
+Epoch 6/10 | Train Loss: 0.1687 | Val Acc: 92.396313%
+Epoch 7/10 | Train Loss: 0.1724 | Val Acc: 94.700461%
+Epoch 8/10 | Train Loss: 0.1702 | Val Acc: 94.930876%
+Epoch 9/10 | Train Loss: 0.1445 | Val Acc: 92.857143%
+Epoch 10/10 | Train Loss: 0.1578 | Val Acc: 94.239631%
+  -> 434 File load completed
+Model Test Set
+
+========== Evaluation Results ==========
+Accuracy: 93.55%
+Macro F1: 0.9157
+
+--- Per-Class Metrics ---
+laughter: Precision=0.903, Recall=0.915, F1=0.909, AP=0.963
+sigh: Precision=0.865, Recall=0.901, F1=0.883, AP=0.949
+negative: Precision=0.962, Recall=0.949, F1=0.955, AP=0.983
+
+--- Confusion Matrix ---
+[[ 65   2   4]
+ [  0  64   7]
+ [  7   8 277]]
+
+--- Classification Report ---
+              precision    recall  f1-score   support
+
+    laughter       0.90      0.92      0.91        71
+        sigh       0.86      0.90      0.88        71
+    negative       0.96      0.95      0.96       292
+
+    accuracy                           0.94       434
+   macro avg       0.91      0.92      0.92       434
+weighted avg       0.94      0.94      0.94       434
+
+
+Overall mAP: 0.9647

@@ -4,7 +4,7 @@
 """
 어제 생성된 마르코프 기반 무드 모델을 사용해서
 실시간 인풋(스트레스/수면/날씨/웃음/한숨)을 받아,
-현재 상태와 30분 후 상태를 예측하는 Flask 서버 (POST 방식).
+현재 상태와 30분 후 상태를 예측하는 Flask 서버 (POST 방식 <- 왜 POST여야 함?).
 
 - 서버: localhost:3000
 - 엔드포인트:
@@ -16,9 +16,12 @@
         "recent_stress_index": ...,
         "latest_sleep_score": ...,
         "latest_sleep_duration": ...,
-        "weather": {...},
-        "preferences": {...},   # 현재 모델에는 사용하지 않지만 그대로 받아도 됨
-        "emotion": {...}
+        "temperature": ...,
+        "humidity": ...,
+        "rainType": ...,
+        "sky": ...,
+        "sigh": ...,
+        "laughter": ...
       }
 
       → 아래 필드를 포함한 JSON 반환:
@@ -42,12 +45,12 @@ import json
 
 import numpy as np
 import pandas as pd
-
 from flask import Flask, request, Response
 
 # ==============================
 # 공통 설정
 # ==============================
+app = Flask(__name__)
 
 BASE_DEBUG_DIR = Path("./debug_outputs")
 MODEL_DIR = BASE_DEBUG_DIR / "model"
@@ -68,26 +71,19 @@ def build_raw_point_from_payload(payload: dict) -> dict:
 
     기대 입력 예시:
     {
-      "user_id": "user_001",
-      "average_stress_index": 45,
-      "recent_stress_index": 39,
-      "latest_sleep_score": 79,
-      "latest_sleep_duration": 600,
-      "weather": {
+        "user_id": "user_001",
+        "average_stress_index": 45,
+        "recent_stress_index": 39,
+        "latest_sleep_score": 79,
+        "latest_sleep_duration": 600,
         "temperature": 9.6,
         "humidity": 26,
         "rainType": 0,
-        "sky": 1
-      },
-      "preferences": {...},
-      "emotion": {
-        "sigh_count": 3,
-        "laugh_count": 12
-      }
+        "sky": 1,
+        "sigh": 3,
+        "laughter": 12
     }
     """
-    weather = payload.get("weather", {}) or {}
-    emotion = payload.get("emotion", {}) or {}
 
     raw_point = {
         # 1) 스트레스 / 수면
@@ -95,16 +91,12 @@ def build_raw_point_from_payload(payload: dict) -> dict:
         "recent_stress_index": payload["recent_stress_index"],
         "latest_sleep_score": payload["latest_sleep_score"],
         "latest_sleep_duration": payload["latest_sleep_duration"],
-
-        # 2) 날씨 (weather 객체에서 flatten)
-        "temperature": weather.get("temperature"),
-        "humidity": weather.get("humidity"),
-        "rainType": weather.get("rainType"),
-        "sky": weather.get("sky"),
-
-        # 3) 감정 신호 (emotion 객체에서 count 사용)
-        "sigh": emotion.get("sigh_count", 0),
-        "laughter": emotion.get("laugh_count", 0),
+        "temparature": payload["temperature"],
+        "humidity": payload["humidity"],
+        "rainType": payload["rainType"],
+        "sky": payload["sky"],
+        "sigh": payload["sigh"],
+        "laughter": payload["laughter"]
     }
 
     return raw_point
@@ -391,7 +383,7 @@ def infer_state_simple(
 
     return {
         "user_id": yesterday_model["user_id"],
-        "inference_time": datetime.utcnow().isoformat(),
+        "inference_time": datetime.datetime.now(datetime.UTC).isoformat(),
         "current_id": current_cluster,
         "current_title": cur_title,
         "current_description": cur_desc,
@@ -405,39 +397,17 @@ def infer_state_simple(
 # 6. Flask 서버 세팅 (POST /inference)
 # ==============================
 
-app = Flask(__name__)
-
-
 @app.route("/", methods=["GET"])
 def health():
     return "Mood inference POST server is running.", 200
 
 
 @app.route("/inference", methods=["POST"])
-def inference_endpoint():
+def inference():
     """
-    POST http://localhost:3000/inference
-    Body(JSON):
-    {
-      "user_id": "user_001",
-      "average_stress_index": 45,
-      "recent_stress_index": 39,
-      "latest_sleep_score": 79,
-      "latest_sleep_duration": 600,
-      "weather": {
-        "temperature": 9.6,
-        "humidity": 26,
-        "rainType": 0,
-        "sky": 1
-      },
-      "preferences": {...},
-      "emotion": {
-        "sigh_count": 3,
-        "laugh_count": 12
-      }
-    }
+    POST http://localhost:5000/inference   
     """
-    now = datetime.utcnow()
+    now = datetime.datetime.now(datetime.UTC)
     today = now
 
     try:
@@ -492,8 +462,3 @@ def inference_endpoint():
         err = {"error": "internal_error", "message": str(e)}
         body = json.dumps(err, ensure_ascii=False)
         return Response(body, status=500, mimetype="application/json; charset=utf-8")
-
-
-if __name__ == "__main__":
-    # localhost:3000 에서 서비스
-    app.run(host="0.0.0.0", port=3000, debug=True)

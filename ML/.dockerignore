@@ -1,0 +1,6 @@
+saved_model/
+__pycache__/
+.git/
+venv/
+.DS_Store
+Thumbs.db
