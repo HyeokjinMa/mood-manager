@@ -64,6 +64,7 @@ next-env.d.ts
 **/.DS_Store
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 # 음악 파일 및 앨범 이미지 (용량이 크므로 GitHub 제외)
 Web/public/musics/
@@ -71,6 +72,9 @@ Web/public/musics_img/
 =======
 ML/moodManagerCredKey.json
 >>>>>>> origin/main
+=======
+ML/moodManagerCredKey.json
+>>>>>>> d0d8bcea58172f567292e44d4b6a74c139f3a551
 =======
 ML/moodManagerCredKey.json
 >>>>>>> d0d8bcea58172f567292e44d4b6a74c139f3a551
