@@ -21,6 +21,8 @@ Web/prisma/migrations/
 # next.js
 /.next/
 Web/.next/
+Web/.next/**
+Web/server/
 Web/.build-artifacts/
 /out/
 
