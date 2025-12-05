@@ -6,9 +6,6 @@
 → feature score 5개 계산
 → 슬라이딩 윈도우 → DTW 클러스터링 + 마르코프 + endpoint μ_k
 → debug_outputs/ 이하에 중간 산출물 + {user_id}_{date}_yesterday_model_meta.json 저장.
-
-⚠️ 모든 인풋은 API에서만 받아온다.
-   - 유저별 하루 raw 데이터: fetch_day_raw_from_api()
 """
 
 from __future__ import annotations
@@ -18,16 +15,17 @@ from datetime import datetime, timedelta
 import json
 
 from flask import Flask, request, Response
-
 import numpy as np
 import pandas as pd
+import psycopg2
+import psycopg2.extras
 from tslearn.clustering import TimeSeriesKMeans
-# import requests  # 실제 API 사용 시 주석 해제
 
 
 # ============================================================
 # 0. 공통 설정 + 디렉토리
 # ============================================================
+app = Flask(__name__)
 
 SLOT_MINUTES = 10             # 10분 간격
 SLOTS_PER_DAY = 24 * 60 // SLOT_MINUTES  # 144
@@ -387,24 +385,58 @@ def build_yesterday_model_from_raw(
 # 6. 실제 서비스 API에서 하루 raw 가져오는 함수 (템플릿)
 # ============================================================
 
-def fetch_day_raw_from_api(user_id: str, date: datetime) -> pd.DataFrame:
+def fetch_day_raw_from_rds(user_id: str, date: datetime) -> pd.DataFrame:
     """
-    실제 서비스 백엔드에서 하루(144개) raw 데이터를 가져오는 부분.
-
-    ⚠️ 여기는 나중에 실제 API 스펙에 맞게 수정하면 된다.
-       지금은 예시로 빈 DataFrame을 던지거나, NotImplementedError를 던지도록 해둠.
+    RDS에서 하루(144개) raw 데이터를 가져오는 부분.
     """
-    # 예시 형태 (실제 구현 시 참고용):
-    # url = "https://your-service/api/mood/raw/day"
-    # params = {"user_id": user_id, "date": date.strftime("%Y-%m-%d")}
-    # r = requests.get(url, params=params, timeout=5)
-    # r.raise_for_status()
-    # data = r.json()
-    # df = pd.DataFrame(data["rows"])
-    # return df
 
-    raise NotImplementedError("fetch_day_raw_from_api()를 실제 서비스 API에 맞게 구현하세요.")
+    host = "mood-manager-db.cd4iisicagg0.ap-northeast-2.rds.amazonaws.com"
+    port = "5432"
+    db = "mymood"
+    user = "postgres"
+    pw = "moodmanagerrds"
 
+    date_str = date.strftime("%Y-%m-%d")
+    start_ts = f"{date_str} 00:00:00"
+    end_ts = f"{date_str} 23:59:59"
+
+    conn = psycopg2.connect(
+        host=host,
+        port=port,
+        dbname=db,
+        user=user,
+        password=pw,
+    )
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            query = """
+                SELECT timestamp,
+                       average_stress_index,
+                       recent_stress_index,
+                       latest_sleep_score,
+                       latest_sleep_duration,
+                       temperature,
+                       humidity,
+                       rainType,
+                       sky,
+                       laughter,
+                       sigh
+                FROM DailyPreprocessedSlot
+                WHERE user_id = %s
+                  AND timestamp BETWEEN %s AND %s
+                ORDER BY timestamp ASC;
+            """
+            cur.execute(query, (user_id, start_ts, end_ts))
+            rows = cur.fetchall()
+
+            if not rows:
+                return pd.DataFrame()
+
+            df = pd.DataFrame(rows)
+            df["timestamp"] = pd.to_datetime(df["timestamp"])  # df timestamp 변환
+            return df
+    finally:
+        conn.close()
 
 # ============================================================
 # 7. 유저 1명 빌드
@@ -416,7 +448,7 @@ def build_yesterday_model_for_user(user_id: str, date: datetime) -> None:
 
     print(f"\n===== [USER {user_id}] Build yesterday model for {date_str} =====")
 
-    raw_df = fetch_day_raw_from_api(user_id, date)
+    raw_df = fetch_day_raw_from_rds(user_id, date)
 
     raw_path = RAW_DIR / f"{prefix}_raw.csv"
     raw_df.to_csv(raw_path, index=False, encoding="utf-8-sig")
@@ -433,25 +465,22 @@ def build_yesterday_model_for_user(user_id: str, date: datetime) -> None:
 # 8. Flask 서버: 어제 모델 빌드 POST API
 # ============================================================
 
-app = Flask(__name__)
-
-
 @app.route("/", methods=["GET"])
 def health():
     return "Yesterday model build POST server is running.", 200
 
 
-@app.route("/build_yesterday", methods=["POST"])
-def build_yesterday_endpoint():
+@app.route("/build-yesterday", methods=["POST"])
+def build_yesterday():
     """
-    POST http://localhost:3001/build_yesterday
+    POST http://localhost:5001/build-yesterday
     Body(JSON):
     {
       "user_id": "user_001",
       "date": "2025-11-30"   # (선택) 없으면 서버 기준 어제 날짜로 처리
     }
     """
-    now = datetime.utcnow()
+    now = datetime.datetime.now(datetime.UTC)
 
     # 1) JSON 파싱
     try:
@@ -519,10 +548,3 @@ def build_yesterday_endpoint():
         return Response(body, status=500,
                         mimetype="application/json; charset=utf-8")
 
-
-# ============================================================
-# 9. 메인 (Flask 서버 실행)
-# ============================================================
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=3001, debug=True)
