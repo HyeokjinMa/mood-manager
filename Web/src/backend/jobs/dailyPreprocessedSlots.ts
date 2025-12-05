@@ -39,8 +39,9 @@ function normalizeDateToMidnight(date: Date): Date {
 
 /**
  * 144개 슬롯에 사용할 기본 목업/중립 값
+ * slotIndex (0~143)에 따라 시간대별 패턴을 적용하여 자연스러운 하루 변화를 시뮬레이션
  */
-function getDefaultSlotValues(): {
+function getDefaultSlotValues(slotIndex: number): {
   average_stress_index: number;
   recent_stress_index: number;
   latest_sleep_score: number;
@@ -53,18 +54,55 @@ function getDefaultSlotValues(): {
   sigh: number;
   crying: number;
 } {
+  // slotIndex를 0~1 범위로 정규화
+  const t = slotIndex / 143;
+  
+  // 시간대 구분 (0~143 슬롯 = 00:00~23:50, 10분 간격)
+  const hour = (slotIndex * 10) / 60; // 시간 (0~24)
+  
+  // === 스트레스 패턴 ===
+  // 새벽(0~6시): 낮음, 오전(6~12시): 증가, 오후(12~18시): 높음, 저녁(18~24시): 감소
+  const stressBase = 40 + 30 * Math.sin((hour - 6) * Math.PI / 12);
+  const average_stress_index = Math.max(20, Math.min(80, stressBase));
+  const recent_stress_index = average_stress_index + (Math.random() - 0.5) * 10; // 약간의 변동
+  
+  // === 수면 점수 ===
+  // 새벽(0~6시): 높음(잠 잘 잤음), 오후(12~18시): 낮음(피로 누적)
+  const sleepScore = 75 + 15 * Math.cos((hour - 12) * Math.PI / 12);
+  const latest_sleep_score = Math.max(50, Math.min(95, sleepScore));
+  
+  // === 수면 시간 ===
+  // 새벽에는 수면 시간이 길고, 오후에는 짧음
+  const sleepDuration = 420 + 120 * Math.cos((hour - 12) * Math.PI / 12);
+  const latest_sleep_duration = Math.max(300, Math.min(600, sleepDuration));
+  
+  // === 날씨 패턴 ===
+  // 오전에 온도 상승, 오후에 최고점, 밤에 하강
+  const temperature = 18 + 8 * Math.sin((hour - 6) * Math.PI / 12);
+  const humidity = 40 + 20 * (1 - Math.abs(t - 0.5) * 2); // 오후에 습도 높음
+  
+  // === 감정 카운트 ===
+  // 웃음: 오전~오후에 많고, 밤에 적음
+  const laughter = Math.max(0, Math.floor(5 + 8 * Math.sin((hour - 6) * Math.PI / 12)));
+  
+  // 한숨: 오후~저녁에 많고, 새벽에 적음
+  const sigh = Math.max(0, Math.floor(2 + 5 * Math.sin((hour - 12) * Math.PI / 12)));
+  
+  // 울음: 전체적으로 낮지만, 오후에 약간 증가
+  const crying = Math.max(0, Math.floor(0.5 + 1.5 * Math.sin((hour - 12) * Math.PI / 12)));
+  
   return {
-    average_stress_index: 50,
-    recent_stress_index: 50,
-    latest_sleep_score: 70,
-    latest_sleep_duration: 480, // 8시간 (분 단위)
-    temperature: 22,
-    humidity: 50,
-    rainType: 0,
-    sky: 1,
-    laughter: 0,
-    sigh: 0,
-    crying: 0,
+    average_stress_index: Math.round(average_stress_index),
+    recent_stress_index: Math.round(recent_stress_index),
+    latest_sleep_score: Math.round(latest_sleep_score),
+    latest_sleep_duration: Math.round(sleepDuration),
+    temperature: Math.round(temperature * 10) / 10,
+    humidity: Math.round(humidity),
+    rainType: 0, // 맑음
+    sky: 1, // 맑음
+    laughter,
+    sigh,
+    crying,
   };
 }
 
@@ -83,12 +121,12 @@ export async function ensureDailySlotsForUser(userId: string, date: Date): Promi
     return;
   }
 
-  const defaults = getDefaultSlotValues();
+  // 각 slotIndex마다 시간대별 패턴이 적용된 목업 값 생성
   const data = Array.from({ length: 144 }, (_, slotIndex) => ({
     userId,
     date: normalizedDate,
     slotIndex,
-    ...defaults,
+    ...getDefaultSlotValues(slotIndex),
   }));
 
   await prisma.dailyPreprocessedSlot.createMany({

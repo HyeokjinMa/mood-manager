@@ -24,6 +24,8 @@ import type { EmotionPredictionInput } from "@/lib/prediction/EmotionPredictionP
 import type { StreamHandlerParams } from "../types";
 import OpenAI from "openai";
 import { getAllUserPreferenceWeights } from "@/lib/preferences/getUserPreferenceWeights";
+import { mapMusicIDToTrack } from "@/lib/music/mapMusicIDToTrack";
+import { getMusicTracksByGenre } from "@/lib/music/getMusicTrackByID";
 
 export async function handleStreamMode({
   segments,
@@ -93,12 +95,6 @@ export async function handleStreamMode({
 
   // ===== 1. 로그인 세션 기준으로 감정 카운터 조회 및 클렌징 =====
   const emotionCounts = getAndResetEmotionCounts(userId);
-  console.log(`[Stream Handler] 🎚️ 사용자 ${userId} 감정 카운트(누적 후 클렌징):`, {
-    laughter: emotionCounts.laughter,
-    sigh: emotionCounts.sigh,
-    crying: emotionCounts.crying,
-    accumulationDuration: Math.floor((Date.now() - emotionCounts.lastResetTime) / 1000),
-  });
 
   // 전처리 데이터에 감정 카운터 추가
   const preprocessedWithCounts = {
@@ -119,12 +115,8 @@ export async function handleStreamMode({
     // PYTHON_SERVER_URL 이 없는 환경에서는 Python 단계를 건너뛰고
     // 바로 LLM-only fallback으로 진행
     if (!process.env.PYTHON_SERVER_URL) {
-      console.warn(
-        "[Stream Handler] ⚠️ PYTHON_SERVER_URL 미설정 - Python 단계 건너뛰고 LLM-only 모드로 동작합니다."
-      );
       pythonResponse = null;
     } else {
-      console.log("[Stream Handler] ✅ PYTHON_SERVER_URL 설정됨 - Python 서버에 예측 요청을 시도합니다.");
       const pythonProvider = new PythonEmotionPredictionProvider();
 
       const predictionInput: EmotionPredictionInput = {
@@ -138,26 +130,15 @@ export async function handleStreamMode({
 
       // Python 응답 검증
       if (!validatePythonResponse(pythonResponse)) {
-        console.error("[Stream Handler] ❌ Python 응답 검증 실패, LLM-only fallback으로 전환합니다.");
         pythonResponse = null;
-      } else {
-        console.log("\n" + "=".repeat(80));
-        console.log("✅ [Stream Handler] Python response validated successfully (실제 ML 응답 사용):");
-        console.log("=".repeat(80));
-        console.log(JSON.stringify(pythonResponse, null, 2));
-        console.log("=".repeat(80) + "\n");
       }
     }
   } catch (pythonError) {
-    console.error("[Stream Handler] Python server error, using fallback:", pythonError);
     pythonResponse = null;
   }
 
   // Python 응답이 없으면 기존 방식으로 fallback
   if (!pythonResponse) {
-    console.warn(
-      "[Stream Handler] ℹ️ Python 응답이 없어 LLM-only fallback 경로로 진행합니다. (source: openai-fallback)"
-    );
     return handleStreamModeFallback({
       segments,
       preprocessed,
@@ -190,7 +171,6 @@ export async function handleStreamMode({
   if (!forceFresh) {
     const cachedResponse = getCachedResponse(cacheKey);
     if (cachedResponse) {
-      console.log("[LLM Cache] Cache hit (with Python response), returning cached response");
       return NextResponse.json({ ...cachedResponse, source: "cache" });
     }
   }
@@ -198,7 +178,6 @@ export async function handleStreamMode({
   // ===== 4. LLM으로 배경 파라미터 생성 =====
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    console.warn("OPENAI_API_KEY not found, using mock response");
     const mockResponse = { ...getMockResponse(), source: "mock-no-key" as const };
     setCachedResponse(cacheKey, mockResponse);
     return NextResponse.json(mockResponse);
@@ -210,40 +189,280 @@ export async function handleStreamMode({
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "JSON만 응답" },
+        { 
+          role: "system", 
+          content: `Generate 10 mood segments. JSON Schema enforces structure.
+
+Required: segments[].{moodAlias, moodColor, lighting{rgb[], brightness, temperature}, scent{type, name, level, interval}, music{musicID:10-69, volume, fadeIn, fadeOut}, background{icons[], wind{}, animation{}}}
+
+Use music.musicID (not musicSelection). Use background.icons (not backgroundIcons).` 
+        },
         { role: "user", content: prompt },
       ],
-      response_format: { type: "json_object" },
-      temperature: 0.9,
-      max_tokens: 3000,
+      response_format: { 
+        type: "json_schema",
+        json_schema: {
+          name: "complete_segment_output",
+          strict: true,
+          schema: {
+            type: "object",
+            required: ["segments"],
+            properties: {
+              segments: {
+                type: "array",
+                minItems: 10,
+                maxItems: 10,
+                items: {
+                  type: "object",
+                  required: ["moodAlias", "moodColor", "lighting", "scent", "music", "background"],
+                  properties: {
+                    moodAlias: { type: "string" },
+                    moodColor: { type: "string", pattern: "^#[A-Fa-f0-9]{6}$" },
+                    lighting: {
+                      type: "object",
+                      required: ["rgb", "brightness", "temperature"],
+                      properties: {
+                        rgb: {
+                          type: "array",
+                          minItems: 3,
+                          maxItems: 3,
+                          items: { type: "integer", minimum: 0, maximum: 255 }
+                        },
+                        brightness: { type: "integer", minimum: 0, maximum: 100 },
+                        temperature: { type: "integer", minimum: 2000, maximum: 6500 }
+                      },
+                      additionalProperties: false
+                    },
+                    scent: {
+                      type: "object",
+                      required: ["type", "name", "level", "interval"],
+                      properties: {
+                        type: { type: "string", enum: ["Floral", "Woody", "Spicy", "Fresh", "Citrus", "Herbal", "Musk", "Oriental"] },
+                        name: { type: "string" },
+                        level: { type: "integer", minimum: 1, maximum: 10 },
+                        interval: { type: "integer", enum: [5, 10, 15, 20, 25, 30] }
+                      },
+                      additionalProperties: false
+                    },
+                    music: {
+                      type: "object",
+                      required: ["musicID", "volume", "fadeIn", "fadeOut"],
+                      properties: {
+                        musicID: { type: "integer", minimum: 10, maximum: 69 },
+                        volume: { type: "integer", minimum: 0, maximum: 100 },
+                        fadeIn: { type: "integer", minimum: 0, maximum: 5000 },
+                        fadeOut: { type: "integer", minimum: 0, maximum: 5000 }
+                      },
+                      additionalProperties: false
+                    },
+                    background: {
+                      type: "object",
+                      required: ["icons", "wind", "animation"],
+                      properties: {
+                        icons: {
+                          type: "array",
+                          minItems: 1,
+                          maxItems: 4,
+                          items: { type: "string" }
+                        },
+                        wind: {
+                          type: "object",
+                          required: ["direction", "speed"],
+                          properties: {
+                            direction: { type: "integer", minimum: 0, maximum: 360 },
+                            speed: { type: "number", minimum: 0, maximum: 10 }
+                          },
+                          additionalProperties: false
+                        },
+                        animation: {
+                          type: "object",
+                          required: ["speed", "iconOpacity"],
+                          properties: {
+                            speed: { type: "number", minimum: 0, maximum: 10 },
+                            iconOpacity: { type: "number", minimum: 0, maximum: 1 }
+                          },
+                          additionalProperties: false
+                        }
+                      },
+                      additionalProperties: false
+                    }
+                  },
+                  additionalProperties: false
+                }
+              }
+            },
+            additionalProperties: false
+          }
+        }
+      },
+      temperature: 0.0, // 구조 준수 최우선: 생체 데이터 기반이므로 창의도 불필요, 정확한 구조 준수만 필요
+      max_tokens: 8000, // JSON Schema + 10개 세그먼트 = 많은 토큰 필요
     });
 
     const rawResponse = JSON.parse(completion.choices[0].message.content || "{}");
     
-    // ===== LLM 원시 응답 로깅 =====
-    console.log("\n" + "=".repeat(80));
-    console.log("🎨 [LLM API] Raw Response from OpenAI (with Python input):");
-    console.log("=".repeat(80));
+    // ===== LLM 원본 응답 로깅 =====
+    console.log("\n" + "=".repeat(100));
+    console.log("📋 [LLM 원본 응답]");
+    console.log("=".repeat(100));
     console.log(JSON.stringify(rawResponse, null, 2));
-    console.log("=".repeat(80) + "\n");
+    console.log("=".repeat(100) + "\n");
     
     const validatedResponse = validateAndNormalizeResponse(rawResponse);
     
     // ===== 검증된 응답 로깅 =====
-    console.log("\n" + "=".repeat(80));
-    console.log("✅ [LLM API] Validated Response (with Python input):");
-    console.log("=".repeat(80));
+    console.log("\n" + "=".repeat(100));
+    console.log("✅ [검증된 LLM 응답]");
+    console.log("=".repeat(100));
     if ('segments' in validatedResponse && Array.isArray(validatedResponse.segments)) {
-      console.log(`Total segments: ${validatedResponse.segments.length}`);
+      console.log(`총 ${validatedResponse.segments.length}개 세그먼트`);
       validatedResponse.segments.forEach((seg, idx) => {
-        console.log(`\n--- Segment ${idx} ---`);
+        console.log(`\n[Segment ${idx}]`);
         console.log(`  moodAlias: "${seg.moodAlias}"`);
-        console.log(`  musicSelection: "${seg.musicSelection}"`);
+        console.log(`  musicSelection: ${seg.musicSelection} (type: ${typeof seg.musicSelection})`);
         console.log(`  moodColor: "${seg.moodColor}"`);
-        console.log(`  backgroundIcon: { name: "${seg.backgroundIcon.name}", category: "${seg.backgroundIcon.category}" }`);
+        console.log(`  lighting: brightness=${seg.lighting?.brightness}, temperature=${seg.lighting?.temperature}K`);
+        console.log(`  backgroundIcon: ${seg.backgroundIcon?.name} (${seg.backgroundIcon?.category})`);
+        console.log(`  backgroundIcons: [${seg.iconKeys?.join(", ") || ""}]`);
+        console.log(`  backgroundWind: direction=${seg.backgroundWind?.direction}°, speed=${seg.backgroundWind?.speed}`);
+        console.log(`  animationSpeed: ${seg.animationSpeed}, iconOpacity: ${seg.iconOpacity}`);
       });
+    } else {
+      console.log(JSON.stringify(validatedResponse, null, 2));
     }
-    console.log("=".repeat(80) + "\n");
+    console.log("=".repeat(100) + "\n");
+    
+    if ('segments' in validatedResponse && Array.isArray(validatedResponse.segments)) {
+      // 10개 세그먼트 응답
+      for (let i = 0; i < validatedResponse.segments.length; i++) {
+        const segment = validatedResponse.segments[i];
+        const originalSegment = segments?.[i];
+        
+        try {
+          // musicSelection이 musicID (숫자)로 전달됨
+          const musicID = typeof segment.musicSelection === 'number' 
+            ? segment.musicSelection 
+            : parseInt(String(segment.musicSelection), 10);
+          
+          if (isNaN(musicID) || musicID < 10 || musicID > 69) {
+            console.warn(`[Segment ${i}] 잘못된 musicID: "${segment.musicSelection}" → Fallback`);
+            // Fallback: Pop 장르의 첫 번째 트랙 (musicID 20)
+            const fallbackTrack = await mapMusicIDToTrack(20);
+            segment.musicTracks = fallbackTrack;
+            if (fallbackTrack.length > 0 && fallbackTrack[0]?.duration) {
+              segment.duration = fallbackTrack[0].duration;
+            }
+          } else {
+            const musicTracks = await mapMusicIDToTrack(musicID);
+            
+            if (musicTracks.length > 0) {
+              segment.musicTracks = musicTracks;
+              // 실제 MP3 길이로 segment duration 업데이트
+              if (musicTracks[0]?.duration) {
+                segment.duration = musicTracks[0].duration;
+              }
+              console.log(`[Segment ${i}] ✅ musicID ${musicID} 매핑 성공: ${musicTracks[0].title}`);
+            } else {
+              console.warn(`[Segment ${i}] 매핑 실패: musicID ${musicID} → Fallback`);
+              // Fallback: Pop 장르의 첫 번째 트랙 (musicID 20)
+              const fallbackTrack = await mapMusicIDToTrack(20);
+              segment.musicTracks = fallbackTrack;
+              if (fallbackTrack.length > 0 && fallbackTrack[0]?.duration) {
+                segment.duration = fallbackTrack[0].duration;
+              }
+            }
+          }
+        } catch (error) {
+          console.error(`[Segment ${i}] 에러:`, error);
+          // Fallback: Pop 장르의 첫 번째 트랙 (musicID 20)
+          const fallbackTrack = await mapMusicIDToTrack(20);
+          segment.musicTracks = fallbackTrack;
+          if (fallbackTrack.length > 0 && fallbackTrack[0]?.duration) {
+            segment.duration = fallbackTrack[0].duration;
+          }
+        }
+      }
+    } else {
+      // 단일 세그먼트 응답
+      const segment = validatedResponse as BackgroundParamsResponse;
+      const originalSegment = segments?.[0];
+      
+      try {
+        // musicSelection이 musicID (숫자)로 전달됨
+        const musicID = typeof segment.musicSelection === 'number' 
+          ? segment.musicSelection 
+          : parseInt(String(segment.musicSelection), 10);
+        
+        if (isNaN(musicID) || musicID < 10 || musicID > 69) {
+          console.warn(`[단일 세그먼트] 잘못된 musicID: "${segment.musicSelection}" → Fallback`);
+          const fallbackTrack = await mapMusicIDToTrack(20);
+          segment.musicTracks = fallbackTrack;
+        } else {
+          const musicTracks = await mapMusicIDToTrack(musicID);
+          
+          if (musicTracks.length > 0) {
+            segment.musicTracks = musicTracks;
+            if (musicTracks[0]?.duration) {
+              segment.duration = musicTracks[0].duration;
+            }
+            console.log(`[단일 세그먼트] ✅ musicID ${musicID} 매핑 성공: ${musicTracks[0].title}`);
+          } else {
+            console.warn(`[단일 세그먼트] 매핑 실패: musicID ${musicID} → Fallback`);
+            const fallbackTrack = await mapMusicIDToTrack(20);
+            segment.musicTracks = fallbackTrack;
+          }
+        }
+      } catch (error) {
+        console.error(`[단일 세그먼트] 에러:`, error);
+        const fallbackTrack = await mapMusicIDToTrack(20);
+        segment.musicTracks = fallbackTrack;
+        if (fallbackTrack.length > 0 && fallbackTrack[0]?.duration) {
+          segment.duration = fallbackTrack[0].duration;
+        }
+      }
+    }
+    
+    
+    // ===== 최종 mood JSON 로깅 =====
+    console.log("\n" + "=".repeat(100));
+    console.log("🎵 [최종 Mood JSON - 음악 매핑 완료 후]");
+    console.log("=".repeat(100));
+    if ('segments' in validatedResponse && Array.isArray(validatedResponse.segments)) {
+      validatedResponse.segments.forEach((seg, idx) => {
+        console.log(`\n[Segment ${idx}]`);
+        console.log(`  moodAlias: "${seg.moodAlias}"`);
+        console.log(`  musicSelection: ${seg.musicSelection}`);
+        console.log(`  musicTracks: ${seg.musicTracks?.length || 0}개`);
+        if (seg.musicTracks && seg.musicTracks.length > 0) {
+          const track = seg.musicTracks[0];
+          console.log(`    - title: "${track.title}"`);
+          console.log(`    - artist: "${track.artist || "Unknown"}"`);
+          console.log(`    - duration: ${track.duration}ms (${Math.round(track.duration / 1000)}초)`);
+          console.log(`    - fileUrl: ${track.fileUrl}`);
+          console.log(`    - albumImageUrl: ${track.albumImageUrl || "N/A"}`);
+        }
+        console.log(`  moodColor: "${seg.moodColor}"`);
+        console.log(`  backgroundIcon: ${seg.backgroundIcon?.name} (${seg.backgroundIcon?.category})`);
+        console.log(`  backgroundIcons: [${seg.iconKeys?.join(", ") || ""}]`);
+        console.log(`  backgroundWind: direction=${seg.backgroundWind?.direction}, speed=${seg.backgroundWind?.speed}`);
+        console.log(`  animationSpeed: ${seg.animationSpeed}`);
+        console.log(`  iconOpacity: ${seg.iconOpacity}`);
+      });
+    } else {
+      const seg = validatedResponse as BackgroundParamsResponse;
+      console.log(`  moodAlias: "${seg.moodAlias}"`);
+      console.log(`  musicSelection: ${seg.musicSelection}`);
+      console.log(`  musicTracks: ${seg.musicTracks?.length || 0}개`);
+      if (seg.musicTracks && seg.musicTracks.length > 0) {
+        const track = seg.musicTracks[0];
+        console.log(`    - title: "${track.title}"`);
+        console.log(`    - artist: "${track.artist || "Unknown"}"`);
+        console.log(`    - duration: ${track.duration}ms (${Math.round(track.duration / 1000)}초)`);
+        console.log(`    - fileUrl: ${track.fileUrl}`);
+        console.log(`    - albumImageUrl: ${track.albumImageUrl || "N/A"}`);
+      }
+    }
+    console.log("=".repeat(100) + "\n");
     
     // 캐시 저장
     const cacheResponse: BackgroundParamsResponse = 'segments' in validatedResponse && Array.isArray(validatedResponse.segments)
@@ -257,7 +476,16 @@ export async function handleStreamMode({
       pythonResponse: pythonResponse, // Python 응답도 함께 반환 (디버깅/검증용)
     });
   } catch (openaiError) {
-    console.error("[LLM API] OpenAI API 호출 실패:", openaiError);
+    console.error("[LLM API] 에러:", openaiError);
+    // 에러 상세 정보 로깅
+    if (openaiError instanceof Error) {
+      console.error("[LLM API] 에러 메시지:", openaiError.message);
+      console.error("[LLM API] 에러 스택:", openaiError.stack);
+    }
+    // API 키 확인
+    if (!process.env.OPENAI_API_KEY) {
+      console.error("[LLM API] OPENAI_API_KEY가 설정되지 않았습니다.");
+    }
     const mockResponse = { ...getMockResponse(), source: "mock-openai-error" as const };
     setCachedResponse(cacheKey, mockResponse);
     return NextResponse.json(mockResponse);
@@ -295,20 +523,214 @@ async function handleStreamModeFallback({
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "JSON만 응답" },
+        { 
+          role: "system", 
+          content: `Generate 10 mood segments. JSON Schema enforces structure.
+
+Required: segments[].{moodAlias, moodColor, lighting{rgb[], brightness, temperature}, scent{type, name, level, interval}, music{musicID:10-69, volume, fadeIn, fadeOut}, background{icons[], wind{}, animation{}}}
+
+Use music.musicID (not musicSelection). Use background.icons (not backgroundIcons).` 
+        },
         { role: "user", content: prompt },
       ],
-      response_format: { type: "json_object" },
-      temperature: 0.9,
-      max_tokens: 3000,
+      response_format: { 
+        type: "json_schema",
+        json_schema: {
+          name: "complete_segment_output",
+          strict: true,
+          schema: {
+            type: "object",
+            required: ["segments"],
+            properties: {
+              segments: {
+                type: "array",
+                minItems: 10,
+                maxItems: 10,
+                items: {
+                  type: "object",
+                  required: ["moodAlias", "moodColor", "lighting", "scent", "music", "background"],
+                  properties: {
+                    moodAlias: { type: "string" },
+                    moodColor: { type: "string", pattern: "^#[A-Fa-f0-9]{6}$" },
+                    lighting: {
+                      type: "object",
+                      required: ["rgb", "brightness", "temperature"],
+                      properties: {
+                        rgb: {
+                          type: "array",
+                          minItems: 3,
+                          maxItems: 3,
+                          items: { type: "integer", minimum: 0, maximum: 255 }
+                        },
+                        brightness: { type: "integer", minimum: 0, maximum: 100 },
+                        temperature: { type: "integer", minimum: 2000, maximum: 6500 }
+                      },
+                      additionalProperties: false
+                    },
+                    scent: {
+                      type: "object",
+                      required: ["type", "name", "level", "interval"],
+                      properties: {
+                        type: { type: "string", enum: ["Floral", "Woody", "Spicy", "Fresh", "Citrus", "Herbal", "Musk", "Oriental"] },
+                        name: { type: "string" },
+                        level: { type: "integer", minimum: 1, maximum: 10 },
+                        interval: { type: "integer", enum: [5, 10, 15, 20, 25, 30] }
+                      },
+                      additionalProperties: false
+                    },
+                    music: {
+                      type: "object",
+                      required: ["musicID", "volume", "fadeIn", "fadeOut"],
+                      properties: {
+                        musicID: { type: "integer", minimum: 10, maximum: 69 },
+                        volume: { type: "integer", minimum: 0, maximum: 100 },
+                        fadeIn: { type: "integer", minimum: 0, maximum: 5000 },
+                        fadeOut: { type: "integer", minimum: 0, maximum: 5000 }
+                      },
+                      additionalProperties: false
+                    },
+                    background: {
+                      type: "object",
+                      required: ["icons", "wind", "animation"],
+                      properties: {
+                        icons: {
+                          type: "array",
+                          minItems: 1,
+                          maxItems: 4,
+                          items: { type: "string" }
+                        },
+                        wind: {
+                          type: "object",
+                          required: ["direction", "speed"],
+                          properties: {
+                            direction: { type: "integer", minimum: 0, maximum: 360 },
+                            speed: { type: "number", minimum: 0, maximum: 10 }
+                          },
+                          additionalProperties: false
+                        },
+                        animation: {
+                          type: "object",
+                          required: ["speed", "iconOpacity"],
+                          properties: {
+                            speed: { type: "number", minimum: 0, maximum: 10 },
+                            iconOpacity: { type: "number", minimum: 0, maximum: 1 }
+                          },
+                          additionalProperties: false
+                        }
+                      },
+                      additionalProperties: false
+                    }
+                  },
+                  additionalProperties: false
+                }
+              }
+            },
+            additionalProperties: false
+          }
+        }
+      },
+      temperature: 0.0, // 구조 준수 최우선: 생체 데이터 기반이므로 창의도 불필요, 정확한 구조 준수만 필요
+      max_tokens: 8000, // JSON Schema + 10개 세그먼트 = 많은 토큰 필요
     });
 
-    const rawResponse = JSON.parse(completion.choices[0].message.content || "{}");
+    // JSON Schema를 사용하면 응답이 이미 검증되었지만, 여전히 문자열로 반환됨
+    let rawResponse: any;
+    try {
+      const content = completion.choices[0].message.content || "{}";
+      rawResponse = typeof content === 'string' ? JSON.parse(content) : content;
+    } catch (parseError) {
+      console.error("[Fallback] JSON 파싱 에러:", parseError);
+      if (completion.choices[0].message.content) {
+        const content = completion.choices[0].message.content;
+        console.error("[Fallback] 원본 응답 길이:", content.length);
+        console.error("[Fallback] 원본 응답 (처음 500자):", content.substring(0, 500));
+        console.error("[Fallback] 원본 응답 (마지막 500자):", content.substring(Math.max(0, content.length - 500)));
+        // 에러 위치 주변 확인
+        const errorMatch = (parseError as Error).message.match(/position (\d+)/);
+        if (errorMatch) {
+          const errorPos = parseInt(errorMatch[1], 10);
+          const start = Math.max(0, errorPos - 100);
+          const end = Math.min(content.length, errorPos + 100);
+          console.error("[Fallback] 에러 위치 주변:", content.substring(start, end));
+        }
+      }
+      // 에러 발생 시 목업 응답 반환
+      const mockResponse = { ...getMockResponse(), source: "mock-json-parse-error" as const };
+      return NextResponse.json(mockResponse);
+    }
+    
     const validatedResponse = validateAndNormalizeResponse(rawResponse);
+    
+    // ===== musicSelection을 musicTracks로 변환 (Fallback) =====
+    if ('segments' in validatedResponse && Array.isArray(validatedResponse.segments)) {
+      for (let i = 0; i < validatedResponse.segments.length; i++) {
+        const segment = validatedResponse.segments[i];
+        const originalSegment = segments?.[i];
+        
+        try {
+          // musicSelection이 musicID (숫자)로 전달됨
+          const musicID = typeof segment.musicSelection === 'number' 
+            ? segment.musicSelection 
+            : parseInt(String(segment.musicSelection), 10);
+          
+          if (isNaN(musicID) || musicID < 10 || musicID > 69) {
+            console.warn(`[Fallback Segment ${i}] 잘못된 musicID: "${segment.musicSelection}" → Fallback`);
+            const fallbackTrack = await mapMusicIDToTrack(20);
+            segment.musicTracks = fallbackTrack;
+          } else {
+            const musicTracks = await mapMusicIDToTrack(musicID);
+            
+            if (musicTracks.length > 0) {
+              segment.musicTracks = musicTracks;
+              console.log(`[Fallback Segment ${i}] ✅ musicID ${musicID} 매핑 성공: ${musicTracks[0].title}`);
+            } else {
+              console.warn(`[Fallback Segment ${i}] 매핑 실패: musicID ${musicID} → Fallback`);
+              const fallbackTrack = await mapMusicIDToTrack(20);
+              segment.musicTracks = fallbackTrack;
+            }
+          }
+        } catch (error) {
+          console.error(`[Fallback Segment ${i}] 에러:`, error);
+          const fallbackTrack = await mapMusicIDToTrack(20);
+          segment.musicTracks = fallbackTrack;
+        }
+      }
+    } else {
+      const segment = validatedResponse as BackgroundParamsResponse;
+      const originalSegment = segments?.[0];
+      
+      try {
+        // musicSelection이 musicID (숫자)로 전달됨
+        const musicID = typeof segment.musicSelection === 'number' 
+          ? segment.musicSelection 
+          : parseInt(String(segment.musicSelection), 10);
+        
+        if (isNaN(musicID) || musicID < 10 || musicID > 69) {
+          console.warn(`[Fallback 단일 세그먼트] 잘못된 musicID: "${segment.musicSelection}" → Fallback`);
+          const fallbackTrack = await mapMusicIDToTrack(20);
+          segment.musicTracks = fallbackTrack;
+        } else {
+          const musicTracks = await mapMusicIDToTrack(musicID);
+          
+          if (musicTracks.length > 0) {
+            segment.musicTracks = musicTracks;
+            console.log(`[Fallback 단일 세그먼트] ✅ musicID ${musicID} 매핑 성공: ${musicTracks[0].title}`);
+          } else {
+            console.warn(`[Fallback 단일 세그먼트] 매핑 실패: musicID ${musicID} → Fallback`);
+            const fallbackTrack = await mapMusicIDToTrack(20);
+            segment.musicTracks = fallbackTrack;
+          }
+        }
+      } catch (error) {
+        console.error(`[Fallback 단일 세그먼트] 에러:`, error);
+        const fallbackTrack = await mapMusicIDToTrack(20);
+        segment.musicTracks = fallbackTrack;
+      }
+    }
     
     return NextResponse.json({ ...validatedResponse, source: "openai-fallback" });
   } catch (error) {
-    console.error("[Stream Handler Fallback] Error:", error);
+    console.error("[Fallback] 에러:", error);
     return NextResponse.json(getMockResponse());
   }
 }

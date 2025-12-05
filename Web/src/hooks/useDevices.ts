@@ -22,7 +22,7 @@ function _getDefaultOutput(_type: Device["type"]): Device["output"] {
  *
  * DB 연동 버전 (실제 API 호출)
  */
-export function useDevices(currentMood: Mood) {
+export function useDevices(currentMood: Mood | null) {
   const [devices, setDevices] = useState<Device[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -68,6 +68,8 @@ export function useDevices(currentMood: Mood) {
   // 무드 변경 시 디바이스 업데이트 (로컬 상태만 업데이트)
   // TODO: 백엔드 무드 API 구현 후 실제 API 호출로 변경
   useEffect(() => {
+    if (!currentMood) return; // currentMood가 null이면 업데이트하지 않음
+    
     setDevices((prev) =>
       prev.map((d) => {
         if (d.type === "manager") {

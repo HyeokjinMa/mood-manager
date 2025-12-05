@@ -84,7 +84,11 @@ export async function GET() {
         include: {
           fragrance: true,
           light: true,
-          sound: true,
+          sound: {
+            include: {
+              genre: true,
+            },
+          },
         },
       });
 
@@ -150,8 +154,9 @@ export async function GET() {
                 artist: "Mood Manager",
                 duration,
                 startOffset: 0,
-                fadeIn: 2000,
-                fadeOut: 2000,
+                fadeIn: 750,
+                fadeOut: 750,
+                fileUrl: preset.sound.fileUrl,
               },
             ],
           };

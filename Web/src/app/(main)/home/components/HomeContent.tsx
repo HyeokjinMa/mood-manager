@@ -17,16 +17,18 @@ import React from "react";
 import MoodDashboard from "./MoodDashboard/MoodDashboard";
 import DeviceGrid from "./Device/DeviceGrid";
 import ScentBackground from "@/components/ui/ScentBackground";
+import { MoodDashboardSkeleton } from "@/components/ui/Skeleton";
 import { useMoodStreamContext } from "@/context/MoodStreamContext";
 import { useBackgroundParams } from "@/hooks/useBackgroundParams";
 import { useDeviceSync } from "@/hooks/useDeviceSync";
 import { detectCurrentEvent } from "@/lib/events/detectEvents";
+import { convertSegmentMoodToMood } from "./MoodDashboard/utils/moodStreamConverter";
 import type { Device } from "@/types/device";
 import type { Mood } from "@/types/mood";
 import type { BackgroundParams } from "@/hooks/useBackgroundParams";
 
 interface MoodState {
-  current: Mood;
+  current: Mood | null;
   onChange: (mood: Mood) => void;
   onScentChange: (mood: Mood) => void;
   onSongChange: (mood: Mood) => void;
@@ -118,6 +120,20 @@ export default function HomeContent({
     currentMood,
   });
   
+  // moodStream이 로드되면 첫 번째 세그먼트로 currentMood 초기화
+  useEffect(() => {
+    if (moodStream && moodStream.segments && moodStream.segments.length > 0 && !currentMood) {
+      const firstSegment = moodStream.segments[0];
+      if (firstSegment?.mood) {
+        // convertSegmentMoodToMood를 사용하여 Mood 타입으로 변환
+        // segment 전체를 전달하여 musicTracks에서 duration 가져오기
+        const convertedMood = convertSegmentMoodToMood(firstSegment.mood, null, firstSegment);
+        onMoodChange(convertedMood);
+      }
+    }
+  }, [moodStream, currentMood, onMoodChange]);
+  
+  // 모든 hooks는 early return 전에 호출해야 함 (React Hooks 규칙)
   // 현재 향 레벨 가져오기 (Manager 디바이스에서) - 파티클 밀도 조절용
   const currentScentLevel = useMemo(
     () => devices.find((d) => d.type === "manager")?.output?.scentLevel || 5,
@@ -129,8 +145,8 @@ export default function HomeContent({
 
   // 무드 컬러(raw & pastel) - 메모이제이션
   const rawMoodColor = useMemo(() => {
-    return backgroundParams?.moodColor || currentMood.color;
-  }, [backgroundParams?.moodColor, currentMood.color]);
+    return backgroundParams?.moodColor || currentMood?.color || "#E6F3FF";
+  }, [backgroundParams?.moodColor, currentMood?.color]);
 
   // 새로고침 요청 핸들러 - 메모이제이션
   const handleRefreshRequest = useCallback(() => {
@@ -139,18 +155,31 @@ export default function HomeContent({
 
   // DeviceGrid에 전달할 currentMood - 메모이제이션
   const deviceGridMood = useMemo(
-    () => ({
-      ...currentMood,
-      color: backgroundParams?.moodColor || currentMood.color,
-    }),
+    () => {
+      if (!currentMood) {
+        // 타입 가드 (currentMood가 null일 때 기본값 반환)
+        return {
+          id: "default",
+          name: "Unknown Mood",
+          color: "#E6F3FF",
+          song: { title: "Unknown Song", duration: 180 },
+          scent: { type: "Musk" as const, name: "Default", color: "#9CAF88" },
+        };
+      }
+      return {
+        ...currentMood,
+        color: backgroundParams?.moodColor || currentMood.color || "#E6F3FF",
+      };
+    },
     [currentMood, backgroundParams?.moodColor]
   );
   
-  // 무드스트림이 없으면 로딩 표시
-  if (isLoadingMoodStream && !moodStream) {
+  // 무드스트림이 없거나 currentMood가 없으면 스켈레톤 UI 표시 (early return)
+  // 모든 hooks 호출 후에 체크
+  if ((isLoadingMoodStream && !moodStream) || !currentMood) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-gray-500">Loading mood stream...</p>
+        <MoodDashboardSkeleton />
       </div>
     );
   }

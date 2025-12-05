@@ -84,7 +84,7 @@ export async function handleMusicMode({
   if (!apiKey) {
     console.warn("OPENAI_API_KEY not found, returning minimal mock for music");
     const mock: BackgroundParamsResponse = {
-      moodAlias: segment?.mood?.name || "Calm Breeze",
+      moodAlias: segment?.mood?.name || "Unknown Mood",
       musicSelection: segment?.mood?.music?.title || llmInput.moodName,
       moodColor: segment?.mood?.lighting?.color || "#E6F3FF",
       lighting: {
@@ -140,7 +140,7 @@ export async function handleMusicMode({
   
   // 기존 세그먼트 값으로 완전한 BackgroundParamsResponse 구성
   const result: BackgroundParamsResponse = {
-      moodAlias: segment.mood?.name || "Calm Breeze",
+      moodAlias: segment.mood?.name || "Unknown Mood",
         musicSelection: raw.musicSelection || segment.mood?.music?.title || llmInput.moodName,
         moodColor: segment.mood?.lighting?.color || "#E6F3FF",
         lighting: {

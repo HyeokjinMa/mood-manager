@@ -1,0 +1,24 @@
+{
+  "description": "마크다운 파일 작성 시 사용할 JSON 형식",
+  "example": {
+    "title": "A glass of soju",
+    "mp3": "Balad/Balad_1.mp3",
+    "png": "Balad/A-glass-of-soju.png",
+    "artist": "Lim Changjung",
+    "description": "A heartfelt ballad capturing the pain of love poured out like a glass of soju.",
+    "duration": 291
+  },
+  "rules": {
+    "title": "이미지 파일명과 정확히 일치 (확장자 제외). 예: 이미지가 'A glass of soju.png'면 title은 'A glass of soju'",
+    "mp3": "형식: {Genre}/{Genre}_{Number}.mp3 (예: Balad/Balad_1.mp3) - 숫자 형식으로 작성",
+    "png": "형식: {Genre}/{Title-with-hyphens}.png (예: Balad/A-glass-of-soju.png) - 하이픈 형식으로 작성 가능 (코드에서 공백으로 변환)",
+    "artist": "아티스트 이름",
+    "description": "노래 설명 (영문)",
+    "duration": "노래 길이 (초 단위)"
+  },
+  "fileNaming": {
+    "mp3": "{Genre}_{Number}.mp3 (예: Balad_1.mp3) - 숫자 형식",
+    "image": "{Title}.png (예: A glass of soju.png) - 공백 사용 (실제 파일명), 마크다운에서는 하이픈 사용 가능"
+  },
+  "note": "PNG 파일명은 마크다운에서 하이픈 형식으로 작성해도 코드에서 공백으로 변환하여 실제 파일과 매칭합니다."
+}

@@ -175,7 +175,7 @@ export function useBackgroundParams(
         // 에러 발생 시 기본값 사용
         if (moodStream.currentMood) {
           setBackgroundParams({
-            moodAlias: moodStream.currentMood.name || "Calm Breeze",
+            moodAlias: moodStream.currentMood.name || "Unknown Mood",
             musicSelection: moodStream.currentMood.music?.title || "Unknown",
             moodColor: moodStream.currentMood.lighting?.color || "#E6F3FF",
             lighting: {

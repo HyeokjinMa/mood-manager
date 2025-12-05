@@ -49,7 +49,7 @@ async function createDefaultPresetComponents() {
   // 기본 Sound 생성
   const defaultSound = await prisma.sound.create({
     data: {
-      name: "Calm Breeze",
+      name: "Default Mood",
       fileUrl: "/sounds/calm-breeze.mp3",
       duration: 180,
       componentsJson: {
@@ -77,7 +77,7 @@ export async function createDefaultUserSetup(userId: string) {
         fragranceId: defaultFragrance.id,
         lightId: defaultLight.id,
         soundId: defaultSound.id,
-        name: "Calm Breeze",
+        name: "Default Mood",
         cluster: "0", // 중립
         isDefault: true,
       },

@@ -134,6 +134,7 @@ model Sound {
   id             Int    @id @default(autoincrement())
   name           String
   fileUrl        String
+  albumImageUrl  String? // 앨범 이미지 URL (예: /albums/Title(Artist)_Genre.jpg)
   duration       Int? // 곡 길이 (초 단위)
   genreId        Int? // 장르 ID (Genre 테이블 참조)
   componentsJson Json? // { "genre": "newage", "mood": "calm", ... }

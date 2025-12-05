@@ -92,7 +92,7 @@ export default function ScentBackground({
     window.addEventListener("resize", resizeCanvas);
 
     // 이벤트 아이콘 세트 가져오기 (여러 아이콘 혼합용)
-    const iconSet = getIconSetForEvent(event?.type || null, scentType);
+    const iconSet = getIconSetForEvent(event ?? null, scentType);
 
     // 파티클 생성 (불규칙성을 위한 랜덤 요소 추가)
     const createParticle = (initialY?: number): ScentParticle => {

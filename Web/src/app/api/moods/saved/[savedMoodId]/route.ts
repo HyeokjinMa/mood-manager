@@ -101,11 +101,11 @@ export async function POST(
     const savedMood: SavedMood = {
       id: savedMoodId,
       moodId: "calm-1",
-      moodName: "Calm Breeze",
+      moodName: "Unknown Mood",
       moodColor: "#E6F3FF",
       music: {
         genre: "newage",
-        title: "Calm Breeze",
+        title: "Unknown Song",
       },
       scent: {
         type: "Marine",

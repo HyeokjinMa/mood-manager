@@ -56,11 +56,11 @@ export async function POST(request: NextRequest) {
 
         // 1. 장르 처리 (없으면 생성)
         const genreName = music.genre || "newage";
-        let genre = await (prisma as any).genre.findUnique({
+        let genre = await prisma.genre.findUnique({
           where: { name: genreName },
         });
         if (!genre) {
-          genre = await (prisma as any).genre.create({
+          genre = await prisma.genre.create({
             data: {
               name: genreName,
               description: `${genreName} (auto-created)`,
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
 
         // 2. 사운드 처리 (이름 + 장르 기준으로 조회, 없으면 생성)
         const soundTitle = music.title || moodName;
-        let sound = await (prisma as any).sound.findFirst({
+        let sound = await prisma.sound.findFirst({
           where: {
             name: soundTitle,
             genreId: genre.id,
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
         });
 
         if (!sound) {
-          sound = await (prisma as any).sound.create({
+          sound = await prisma.sound.create({
             data: {
               name: soundTitle,
               fileUrl: "/audio/mock/" + encodeURIComponent(soundTitle), // V2: 실제 파일 경로로 대체 예정
@@ -90,19 +90,19 @@ export async function POST(request: NextRequest) {
                 moodId,
                 // 현재 무드 전체 상태를 함께 저장 (LLM/추천용 레퍼런스 데이터)
                 fullMood,
-              },
-            } as any,
+              } as object,
+            },
           });
         }
 
         // 3. 향(Fragrance) 처리 (이름 기준으로 조회, 없으면 생성)
         const fragranceName = scent.name || scent.type || "Default Fragrance";
-        let fragrance = await (prisma as any).fragrance.findFirst({
+        let fragrance = await prisma.fragrance.findFirst({
           where: { name: fragranceName },
         });
 
         if (!fragrance) {
-          fragrance = await (prisma as any).fragrance.create({
+          fragrance = await prisma.fragrance.create({
             data: {
               name: fragranceName,
               description: scent.type ?? null,
@@ -112,20 +112,20 @@ export async function POST(request: NextRequest) {
               componentsJson: {
                 type: scent.type,
                 name: fragranceName,
-              },
+              } as object,
             },
           });
         }
 
         // 4. 조명(Light) 처리 (색상 기준으로 조회, 없으면 생성)
-        let light = await (prisma as any).light.findFirst({
+        let light = await prisma.light.findFirst({
           where: {
             color: moodColor,
           },
         });
 
         if (!light) {
-          light = await (prisma as any).light.create({
+          light = await prisma.light.create({
             data: {
               name: `${moodName} Light`,
               color: moodColor,
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 5. Preset 생성 (별표 표시용)
-        const preset = await (prisma as any).preset.create({
+        const preset = await prisma.preset.create({
           data: {
             userId,
             fragranceId: fragrance.id,
@@ -282,7 +282,7 @@ export async function GET() {
     // ============================================
     if (!(await checkMockMode(session))) {
       try {
-        const presets = await (prisma as any).preset.findMany({
+        const presets = await prisma.preset.findMany({
           where: {
             userId: session.user.id,
             isStarred: true,
@@ -297,8 +297,15 @@ export async function GET() {
           },
         });
 
-        const savedMoodsFromDb = (presets as any[]).map((preset) => {
-          const components = (preset.sound?.componentsJson || {}) as any;
+        const savedMoodsFromDb = presets.map((preset: {
+          id: string;
+          name: string;
+          createdAt: Date;
+          sound?: { name: string; componentsJson: unknown } | null;
+          light?: { color: string } | null;
+          fragrance?: { name: string } | null;
+        }) => {
+          const components = ((preset.sound?.componentsJson as Record<string, unknown>) || {});
           const fullMood = components.fullMood as
             | {
                 mood?: { name?: string; color?: string; song?: { title?: string }; scent?: { type?: string; name?: string } };
@@ -363,11 +370,11 @@ export async function GET() {
       {
         id: "saved-1",
         moodId: "calm-1",
-        moodName: "Calm Breeze",
+        moodName: "Unknown Mood",
         moodColor: "#E6F3FF",
         music: {
           genre: "newage",
-          title: "Calm Breeze",
+          title: "Unknown Song",
         },
         scent: {
           type: "Marine",
@@ -443,7 +450,7 @@ export async function GET() {
       {
         id: "saved-6",
         moodId: "calm-2",
-        moodName: "Calm Breeze",
+        moodName: "Unknown Mood",
         moodColor: "#D4E6F1",
         music: {
           genre: "nature",
@@ -523,7 +530,7 @@ export async function GET() {
       {
         id: "saved-11",
         moodId: "calm-3",
-        moodName: "Calm Breeze",
+        moodName: "Unknown Mood",
         moodColor: "#AED6F1",
         music: {
           genre: "nature",

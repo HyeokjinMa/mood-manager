@@ -8,8 +8,8 @@ import type { Device } from "@/types/device";
  * [MOCK] 목업 모드로 동작
  * TODO: 백엔드 API로 교체 필요
  */
-export function useMood(initialMood: Mood, setDevices: React.Dispatch<React.SetStateAction<Device[]>>) {
-  const [currentMood, setCurrentMood] = useState<Mood>(initialMood);
+export function useMood(initialMood: Mood | null, setDevices: React.Dispatch<React.SetStateAction<Device[]>>) {
+  const [currentMood, setCurrentMood] = useState<Mood | null>(initialMood);
 
   // [MOCK] 센트 변경 (로컬 상태만 업데이트)
   // TODO: 백엔드 API로 교체 필요

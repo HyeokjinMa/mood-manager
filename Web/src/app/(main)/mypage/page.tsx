@@ -11,7 +11,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -114,10 +114,31 @@ export default function MyPage() {
     }
   };
 
+  const redirectingRef = useRef(false); // 리다이렉트 중복 방지
+
   // 인증되지 않은 경우 로그인 페이지로 리다이렉트
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
+    // loading 상태에서는 리다이렉트하지 않음 (시크릿 모드 세션 불안정 대응)
+    if (status === "loading") {
+      redirectingRef.current = false;
+      return;
+    }
+
+    if (status === "unauthenticated" && !redirectingRef.current) {
+      redirectingRef.current = true;
+      // 약간의 딜레이를 추가하여 세션 상태가 안정화될 시간을 줌
+      const timer = setTimeout(() => {
+        router.replace("/login");
+      }, 100);
+      
+      return () => {
+        clearTimeout(timer);
+      };
+    }
+    
+    // authenticated 상태로 돌아오면 플래그 리셋
+    if (status === "authenticated") {
+      redirectingRef.current = false;
     }
   }, [status, router]);
 

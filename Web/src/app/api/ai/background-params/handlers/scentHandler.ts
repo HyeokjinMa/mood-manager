@@ -84,7 +84,7 @@ export async function handleScentMode({
   if (!apiKey) {
     console.warn("OPENAI_API_KEY not found, returning minimal mock for scent");
     const mock: BackgroundParamsResponse = {
-      moodAlias: "Calm Breeze",
+      moodAlias: "Unknown Mood",
       musicSelection: "Ambient Meditation",
       moodColor: "#E6F3FF",
       lighting: {
@@ -141,7 +141,7 @@ export async function handleScentMode({
   
   // 기존 세그먼트 값으로 완전한 BackgroundParamsResponse 구성
   const result: BackgroundParamsResponse = {
-    moodAlias: segment.mood?.name || "Calm Breeze",
+    moodAlias: segment.mood?.name || "Unknown Mood",
     musicSelection: segment.mood?.music?.title || "Ambient Meditation",
     moodColor: segment.mood?.lighting?.color || "#E6F3FF",
     lighting: {

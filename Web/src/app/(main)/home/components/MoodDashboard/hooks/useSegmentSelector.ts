@@ -75,8 +75,8 @@ export function useSegmentSelector({
       }
       
       if (target?.mood) {
-        // 타입 안전한 변환 함수 사용
-        const convertedMood = convertSegmentMoodToMood(target.mood, currentMood);
+        // 타입 안전한 변환 함수 사용 (segment 전체를 전달하여 musicTracks에서 duration 가져오기)
+        const convertedMood = convertSegmentMoodToMood(target.mood, currentMood, target);
         
         // backgroundParams의 musicSelection이 있으면 무드의 song.title에 반영
         if (allSegmentsParams && allSegmentsParams.length > clampedIndex) {

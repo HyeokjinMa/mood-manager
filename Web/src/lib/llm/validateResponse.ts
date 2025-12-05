@@ -3,11 +3,24 @@
  * LLM 응답 검증 및 정규화
  * 
  * OpenAI 응답에서 필요한 값만 추출하고 검증
+ * 
+ * Phase 2: 새로운 CompleteSegmentOutput 구조 지원 추가
+ * 하위 호환성을 위해 기존 BackgroundParamsResponse 구조도 유지
  */
 
+import type { MusicTrack } from "@/hooks/useMoodStream/types";
+import type { CompleteSegmentOutput } from "./types/completeOutput";
+import { validateCompleteSegmentOutput, convertToBackgroundParamsResponse } from "./validators/completeOutputValidator";
+
+/**
+ * @deprecated BackgroundParamsResponse는 Phase 1 리팩토링으로 인해 점진적으로 제거됩니다.
+ * 새로운 CompleteSegmentOutput 타입을 사용하세요.
+ * 
+ * 하위 호환성을 위해 일시적으로 유지됩니다.
+ */
 export interface BackgroundParamsResponse {
   moodAlias: string;
-  musicSelection: string;
+  musicSelection: number | string; // musicID (10-69) 또는 문자열 (하위 호환성)
   moodColor: string;
   lighting: {
     brightness: number;
@@ -25,11 +38,14 @@ export interface BackgroundParamsResponse {
   };
   animationSpeed: number;
   iconOpacity: number;
-  iconCount?: number;
-  iconSize?: number;
-  particleEffect?: boolean;
-  gradientColors?: string[];
-  transitionDuration?: number;
+  // 사용되지 않는 필드들 (제거 예정)
+  // iconCount?: number;
+  // iconSize?: number;
+  // particleEffect?: boolean;
+  // gradientColors?: string[];
+  // transitionDuration?: number;
+  // DB에서 매핑된 실제 음악 트랙 (선택적, streamHandler에서 추가)
+  musicTracks?: MusicTrack[];
 }
 
 /**
@@ -96,7 +112,7 @@ const ICON_CATEGORY_MAP: Record<
   default: { name: "FaCircle", category: "abstract" },
 };
 
-function mapIconCategory(rawCategory: unknown): { name: string; category: string } {
+export function mapIconCategory(rawCategory: unknown): { name: string; category: string } {
   const key = String(rawCategory || "leaf_gentle").toLowerCase().trim();
   const mapped = ICON_CATEGORY_MAP[key] || ICON_CATEGORY_MAP["default"];
   
@@ -131,11 +147,7 @@ interface RawLLMResponse {
     };
     animationSpeed?: unknown;
     iconOpacity?: unknown;
-    iconCount?: unknown;
-    iconSize?: unknown;
-    particleEffect?: unknown;
-    gradientColors?: unknown;
-    transitionDuration?: unknown;
+    // 사용되지 않는 필드 제거
   }>;
   // 단일 세그먼트 응답 (하위 호환성)
   moodAlias?: unknown;
@@ -197,12 +209,12 @@ function validateSingleSegment(
   // 1) backgroundIcons (배열) 또는 2) backgroundIcon.categories (배열) 또는 3) backgroundIcon.category (단일)
   let rawIconKeys: string[] = [];
 
-  if (Array.isArray((rawSegment as any).backgroundIcons)) {
-    rawIconKeys = (rawSegment as any).backgroundIcons
+  if (Array.isArray((rawSegment as Record<string, unknown>).backgroundIcons)) {
+    rawIconKeys = ((rawSegment as Record<string, unknown>).backgroundIcons as unknown[])
       .map((v: unknown) => String(v || "").trim())
       .filter((v: string) => v.length > 0);
-  } else if (Array.isArray(rawSegment.backgroundIcon?.categories)) {
-    rawIconKeys = (rawSegment.backgroundIcon?.categories as unknown[])
+  } else if (rawSegment.backgroundIcon && typeof rawSegment.backgroundIcon === 'object' && 'categories' in rawSegment.backgroundIcon && Array.isArray(rawSegment.backgroundIcon.categories)) {
+    rawIconKeys = (rawSegment.backgroundIcon.categories as unknown[])
       .map((v: unknown) => String(v || "").trim())
       .filter((v: string) => v.length > 0);
   } else if (rawSegment.backgroundIcon?.category) {
@@ -251,34 +263,21 @@ function validateSingleSegment(
     1
   );
 
-  // 선택적 필드
-  const iconCount = rawSegment.iconCount
-    ? clamp(Math.round(Number(rawSegment.iconCount)), 5, 10)
-    : 8;
+  // 사용되지 않는 필드 제거 (iconCount, iconSize, particleEffect, gradientColors, transitionDuration)
 
-  const iconSize = rawSegment.iconSize
-    ? clamp(Math.round(Number(rawSegment.iconSize)), 0, 100)
-    : 50;
-
-  const particleEffect = Boolean(rawSegment.particleEffect);
-
-  // 그라데이션 색상 검증
-  const gradientColors: string[] = [];
-  if (Array.isArray(rawSegment.gradientColors)) {
-    for (const color of rawSegment.gradientColors.slice(0, 3)) {
-      if (typeof color === 'string' && isValidHexColor(color)) {
-        gradientColors.push(color);
-      }
-    }
+  // musicSelection을 숫자로 변환 시도 (musicID 10-69)
+  const musicSelectionRaw = rawSegment.musicSelection;
+  let musicSelection: number | string;
+  if (typeof musicSelectionRaw === 'number') {
+    musicSelection = musicSelectionRaw;
+  } else {
+    const parsed = parseInt(String(musicSelectionRaw || ""), 10);
+    musicSelection = isNaN(parsed) ? String(musicSelectionRaw || "").trim() : parsed;
   }
-
-  const transitionDuration = rawSegment.transitionDuration
-    ? clamp(Math.round(Number(rawSegment.transitionDuration)), 100, 5000)
-    : 1000;
 
   return {
     moodAlias: String(rawSegment.moodAlias || "").trim(),
-    musicSelection: String(rawSegment.musicSelection || "").trim(),
+    musicSelection,
     moodColor: rawSegment.moodColor as string,
     lighting: {
       brightness,
@@ -294,11 +293,6 @@ function validateSingleSegment(
     },
     animationSpeed,
     iconOpacity,
-    iconCount,
-    iconSize,
-    particleEffect,
-    gradientColors: gradientColors.length > 0 ? gradientColors : undefined,
-    transitionDuration,
     iconKeys: rawIconKeys,
   };
 }
@@ -313,32 +307,35 @@ function validateSingleSegment(
 export function validateAndNormalizeResponse(
   rawResponse: RawLLMResponse
 ): BackgroundParamsResponse | { segments: BackgroundParamsResponse[] } {
-  // ===== 검증 전 원시 데이터 로깅 =====
-  console.log("\n" + "🔍 [validateResponse] Raw input:");
-  console.log(JSON.stringify(rawResponse, null, 2));
-  
   // 10개 세그먼트 배열 응답 처리
   if (rawResponse.segments && Array.isArray(rawResponse.segments)) {
-    console.log(`\n📦 [validateResponse] Processing ${rawResponse.segments.length} segments...`);
-    console.log(`\n📋 [validateResponse] Raw segments summary:`);
-    rawResponse.segments.forEach((seg, idx: number) => {
-      const segment = seg as RawLLMResponse["segments"] extends Array<infer T> ? T : RawLLMResponse;
-      console.log(`  Segment ${idx}:`);
-      console.log(`    moodAlias: "${String(segment.moodAlias || 'MISSING')}"`);
-      console.log(`    musicSelection: "${String(segment.musicSelection || 'MISSING')}"`);
-      console.log(`    moodColor: "${String(segment.moodColor || 'MISSING')}"`);
-      console.log(`    backgroundIcon.category: "${String(segment.backgroundIcon?.category || 'MISSING')}"`);
-    });
+    // 새로운 구조인지 확인 (lighting.rgb, scent, music 객체 존재 여부)
+    const firstSegment = rawResponse.segments[0];
+    const isNewStructure = !!(firstSegment?.lighting?.rgb || firstSegment?.scent || firstSegment?.music);
+    
+    console.log(`\n✅ [LLM Response] ${rawResponse.segments.length} segments, ${isNewStructure ? "NEW structure" : "OLD structure"}`);
     
     const validatedSegments = rawResponse.segments.map((segment, index) => {
       try {
-        return validateSingleSegment(segment as RawLLMResponse);
+        if (isNewStructure) {
+          // 새로운 구조: CompleteSegmentOutput 검증 후 BackgroundParamsResponse로 변환
+          const completeOutput = validateCompleteSegmentOutput(segment);
+          // 로그 간소화: 에러만 표시
+          if (index < 3 || index === rawResponse.segments.length - 1) {
+            console.log(`  Segment ${index}: ${completeOutput.moodAlias} | musicID ${completeOutput.music.musicID} | ${completeOutput.background.icons.length} icons`);
+          }
+          return convertToBackgroundParamsResponse(completeOutput);
+        } else {
+          // 기존 구조: 기존 검증 로직 사용
+          console.log(`[validateResponse] Segment ${index} ⚠️  OLD structure (will be converted)`);
+          return validateSingleSegment(segment as RawLLMResponse);
+        }
       } catch (error) {
         console.error(`[validateResponse] Segment ${index} validation failed:`, error);
         // 기본값으로 대체
         return {
           moodAlias: `Segment ${index}`,
-          musicSelection: "Unknown",
+          musicSelection: 20, // Fallback musicID
           moodColor: "#E6F3FF",
           lighting: { brightness: 50, temperature: 4000 },
           backgroundIcon: { name: "FaCircle", category: "abstract" },
@@ -350,7 +347,7 @@ export function validateAndNormalizeResponse(
     });
     
     // 컬러 중복 체크 및 수정 (최대 1개 중복 허용)
-    console.log("\n🎨 [validateResponse] Color analysis before fix:");
+    // 색상 중복 검사 및 수정 (로그 간소화)
     const colorCounts = new Map<string, number[]>();
     validatedSegments.forEach((seg, idx) => {
       const color = seg.moodColor.toLowerCase();
@@ -360,13 +357,7 @@ export function validateAndNormalizeResponse(
       colorCounts.get(color)!.push(idx);
     });
     
-    colorCounts.forEach((indices, color) => {
-      if (indices.length > 1) {
-        console.log(`  ${color}: used in segments [${indices.join(', ')}] (${indices.length} times)`);
-      }
-    });
-    
-    // 중복이 2개 이상인 경우 수정
+    // 중복이 3개 이상인 경우 수정
     const alternativeColors = [
       "#FFD700", "#FFA500", "#8B4513", "#A0522D", "#228B22", "#32CD32",
       "#9370DB", "#8A2BE2", "#FF6347", "#FF8C00", "#FF69B4", "#FF1493",
@@ -378,18 +369,15 @@ export function validateAndNormalizeResponse(
     
     colorCounts.forEach((indices, color) => {
       if (indices.length > 2) {
-        console.log(`\n🔧 [validateResponse] Fixing color ${color} (used ${indices.length} times, max 2 allowed)`);
         // 3개 이상 중복인 경우, 첫 번째는 유지하고 나머지는 변경
         for (let i = 1; i < indices.length; i++) {
           const segIndex = indices[i];
-          // 기존 색상과 다른 색상 찾기
           let newColor = alternativeColors[colorIndex % alternativeColors.length];
           while (newColor.toLowerCase() === color || 
                  validatedSegments.some((s, idx) => idx !== segIndex && s.moodColor.toLowerCase() === newColor.toLowerCase())) {
             colorIndex++;
             newColor = alternativeColors[colorIndex % alternativeColors.length];
           }
-          console.log(`  Segment ${segIndex}: ${color} → ${newColor}`);
           validatedSegments[segIndex].moodColor = newColor;
           colorIndex++;
           fixedCount++;
@@ -398,14 +386,8 @@ export function validateAndNormalizeResponse(
     });
     
     if (fixedCount > 0) {
-      console.log(`\n✅ [validateResponse] Fixed ${fixedCount} color(s)`);
+      console.log(`  ⚠️  Fixed ${fixedCount} duplicate color(s)`);
     }
-    
-    // 최종 컬러 상태 로깅
-    console.log("\n🎨 [validateResponse] Final colors:");
-    validatedSegments.forEach((seg, idx) => {
-      console.log(`  Segment ${idx}: ${seg.moodColor}`);
-    });
     
     return { segments: validatedSegments };
   }

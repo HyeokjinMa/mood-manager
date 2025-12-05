@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -13,11 +13,38 @@ import toast from "react-hot-toast";
 export default function LoginPage() {
   const router = useRouter();
   const { status } = useSession();
+  const redirectingRef = useRef(false); // 리다이렉트 중복 방지
+  const lastStatusRef = useRef<string | null>(null); // 이전 상태 추적
 
   // 로그인된 상태에서는 login 페이지 접근 금지 → 즉시 home으로 이동
   useEffect(() => {
-    if (status === "authenticated") {
-      router.replace("/home"); // 뒤로가기 방지
+    // 상태가 변하지 않았으면 무시 (불필요한 리렌더링 방지)
+    if (lastStatusRef.current === status) {
+      return;
+    }
+    lastStatusRef.current = status;
+
+    // loading 상태에서는 리다이렉트하지 않음 (시크릿 모드 세션 불안정 대응)
+    if (status === "loading") {
+      redirectingRef.current = false;
+      return;
+    }
+
+    if (status === "authenticated" && !redirectingRef.current) {
+      redirectingRef.current = true;
+      // 약간의 딜레이를 추가하여 세션 상태가 안정화될 시간을 줌
+      const timer = setTimeout(() => {
+        router.replace("/home"); // 뒤로가기 방지
+      }, 300);
+      
+      return () => {
+        clearTimeout(timer);
+      };
+    }
+    
+    // unauthenticated 상태로 돌아오면 플래그 리셋
+    if (status === "unauthenticated") {
+      redirectingRef.current = false;
     }
   }, [status, router]);
 

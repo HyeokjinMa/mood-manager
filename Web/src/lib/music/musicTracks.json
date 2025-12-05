@@ -1,0 +1,606 @@
+{
+  "version": "2.0.0",
+  "lastUpdated": "2025-12-05",
+  "tracks": [
+    {
+      "musicID": 10,
+      "genre": "Balad",
+      "title": "Balad 1",
+      "mp3Url": "/musics/Balad/Balad_1.mp3",
+      "imageUrl": "/musics_img/Balad/Balad_1.png",
+      "artist": "Unknown",
+      "description": "Balad 1 by Unknown - balad music",
+      "duration": 180
+    },
+    {
+      "musicID": 11,
+      "genre": "Balad",
+      "title": "Balad 10",
+      "mp3Url": "/musics/Balad/Balad_10.mp3",
+      "imageUrl": "/musics_img/Balad/Balad_10.png",
+      "artist": "Unknown",
+      "description": "Balad 10 by Unknown - balad music",
+      "duration": 180
+    },
+    {
+      "musicID": 12,
+      "genre": "Balad",
+      "title": "Balad 2",
+      "mp3Url": "/musics/Balad/Balad_2.mp3",
+      "imageUrl": "/musics_img/Balad/Balad_2.png",
+      "artist": "Unknown",
+      "description": "Balad 2 by Unknown - balad music",
+      "duration": 180
+    },
+    {
+      "musicID": 13,
+      "genre": "Balad",
+      "title": "Balad 3",
+      "mp3Url": "/musics/Balad/Balad_3.mp3",
+      "imageUrl": "/musics_img/Balad/Balad_3.png",
+      "artist": "Unknown",
+      "description": "Balad 3 by Unknown - balad music",
+      "duration": 180
+    },
+    {
+      "musicID": 14,
+      "genre": "Balad",
+      "title": "Balad 4",
+      "mp3Url": "/musics/Balad/Balad_4.mp3",
+      "imageUrl": "/musics_img/Balad/Balad_4.png",
+      "artist": "Unknown",
+      "description": "Balad 4 by Unknown - balad music",
+      "duration": 180
+    },
+    {
+      "musicID": 15,
+      "genre": "Balad",
+      "title": "Balad 5",
+      "mp3Url": "/musics/Balad/Balad_5.mp3",
+      "imageUrl": "/musics_img/Balad/Balad_5.png",
+      "artist": "Unknown",
+      "description": "Balad 5 by Unknown - balad music",
+      "duration": 180
+    },
+    {
+      "musicID": 16,
+      "genre": "Balad",
+      "title": "Balad 6",
+      "mp3Url": "/musics/Balad/Balad_6.mp3",
+      "imageUrl": "/musics_img/Balad/Balad_6.png",
+      "artist": "Unknown",
+      "description": "Balad 6 by Unknown - balad music",
+      "duration": 180
+    },
+    {
+      "musicID": 17,
+      "genre": "Balad",
+      "title": "Balad 7",
+      "mp3Url": "/musics/Balad/Balad_7.mp3",
+      "imageUrl": "/musics_img/Balad/Balad_7.png",
+      "artist": "Unknown",
+      "description": "Balad 7 by Unknown - balad music",
+      "duration": 180
+    },
+    {
+      "musicID": 18,
+      "genre": "Balad",
+      "title": "Balad 8",
+      "mp3Url": "/musics/Balad/Balad_8.mp3",
+      "imageUrl": "/musics_img/Balad/Balad_8.png",
+      "artist": "Unknown",
+      "description": "Balad 8 by Unknown - balad music",
+      "duration": 180
+    },
+    {
+      "musicID": 19,
+      "genre": "Balad",
+      "title": "Balad 9",
+      "mp3Url": "/musics/Balad/Balad_9.mp3",
+      "imageUrl": "/musics_img/Balad/Balad_9.png",
+      "artist": "Unknown",
+      "description": "Balad 9 by Unknown - balad music",
+      "duration": 180
+    },
+    {
+      "musicID": 60,
+      "genre": "Carol",
+      "title": "Carol 1",
+      "mp3Url": "/musics/Carol/Carol_1.mp3",
+      "imageUrl": "/musics_img/Carol/Carol_1.png",
+      "artist": "Unknown",
+      "description": "Carol 1 by Unknown - carol music",
+      "duration": 180
+    },
+    {
+      "musicID": 61,
+      "genre": "Carol",
+      "title": "Carol 10",
+      "mp3Url": "/musics/Carol/Carol_10.mp3",
+      "imageUrl": "/musics_img/Carol/Carol_10.png",
+      "artist": "Unknown",
+      "description": "Carol 10 by Unknown - carol music",
+      "duration": 180
+    },
+    {
+      "musicID": 62,
+      "genre": "Carol",
+      "title": "Carol 2",
+      "mp3Url": "/musics/Carol/Carol_2.mp3",
+      "imageUrl": "/musics_img/Carol/Carol_2.png",
+      "artist": "Unknown",
+      "description": "Carol 2 by Unknown - carol music",
+      "duration": 180
+    },
+    {
+      "musicID": 63,
+      "genre": "Carol",
+      "title": "Carol 3",
+      "mp3Url": "/musics/Carol/Carol_3.mp3",
+      "imageUrl": "/musics_img/Carol/Carol_3.png",
+      "artist": "Unknown",
+      "description": "Carol 3 by Unknown - carol music",
+      "duration": 180
+    },
+    {
+      "musicID": 64,
+      "genre": "Carol",
+      "title": "Carol 4",
+      "mp3Url": "/musics/Carol/Carol_4.mp3",
+      "imageUrl": "/musics_img/Carol/Carol_4.png",
+      "artist": "Unknown",
+      "description": "Carol 4 by Unknown - carol music",
+      "duration": 180
+    },
+    {
+      "musicID": 65,
+      "genre": "Carol",
+      "title": "Carol 5",
+      "mp3Url": "/musics/Carol/Carol_5.mp3",
+      "imageUrl": "/musics_img/Carol/Carol_5.png",
+      "artist": "Unknown",
+      "description": "Carol 5 by Unknown - carol music",
+      "duration": 180
+    },
+    {
+      "musicID": 66,
+      "genre": "Carol",
+      "title": "Carol 6",
+      "mp3Url": "/musics/Carol/Carol_6.mp3",
+      "imageUrl": "/musics_img/Carol/Carol_6.png",
+      "artist": "Unknown",
+      "description": "Carol 6 by Unknown - carol music",
+      "duration": 180
+    },
+    {
+      "musicID": 67,
+      "genre": "Carol",
+      "title": "Carol 7",
+      "mp3Url": "/musics/Carol/Carol_7.mp3",
+      "imageUrl": "/musics_img/Carol/Carol_7.png",
+      "artist": "Unknown",
+      "description": "Carol 7 by Unknown - carol music",
+      "duration": 180
+    },
+    {
+      "musicID": 68,
+      "genre": "Carol",
+      "title": "Carol 8",
+      "mp3Url": "/musics/Carol/Carol_8.mp3",
+      "imageUrl": "/musics_img/Carol/Carol_8.png",
+      "artist": "Unknown",
+      "description": "Carol 8 by Unknown - carol music",
+      "duration": 180
+    },
+    {
+      "musicID": 69,
+      "genre": "Carol",
+      "title": "Carol 9",
+      "mp3Url": "/musics/Carol/Carol_9.mp3",
+      "imageUrl": "/musics_img/Carol/Carol_9.png",
+      "artist": "Unknown",
+      "description": "Carol 9 by Unknown - carol music",
+      "duration": 180
+    },
+    {
+      "musicID": 30,
+      "genre": "Classic",
+      "title": "Classic 1",
+      "mp3Url": "/musics/Classic/Classic_1.mp3",
+      "imageUrl": "/musics_img/Classic/Classic_1.png",
+      "artist": "Unknown",
+      "description": "Classic 1 by Unknown - classic music",
+      "duration": 180
+    },
+    {
+      "musicID": 31,
+      "genre": "Classic",
+      "title": "Classic 10",
+      "mp3Url": "/musics/Classic/Classic_10.mp3",
+      "imageUrl": "/musics_img/Classic/Classic_10.png",
+      "artist": "Unknown",
+      "description": "Classic 10 by Unknown - classic music",
+      "duration": 180
+    },
+    {
+      "musicID": 32,
+      "genre": "Classic",
+      "title": "Classic 2",
+      "mp3Url": "/musics/Classic/Classic_2.mp3",
+      "imageUrl": "/musics_img/Classic/Classic_2.png",
+      "artist": "Unknown",
+      "description": "Classic 2 by Unknown - classic music",
+      "duration": 180
+    },
+    {
+      "musicID": 33,
+      "genre": "Classic",
+      "title": "Classic 3",
+      "mp3Url": "/musics/Classic/Classic_3.mp3",
+      "imageUrl": "/musics_img/Classic/Classic_3.png",
+      "artist": "Unknown",
+      "description": "Classic 3 by Unknown - classic music",
+      "duration": 180
+    },
+    {
+      "musicID": 34,
+      "genre": "Classic",
+      "title": "Classic 4",
+      "mp3Url": "/musics/Classic/Classic_4.mp3",
+      "imageUrl": "/musics_img/Classic/Classic_4.png",
+      "artist": "Unknown",
+      "description": "Classic 4 by Unknown - classic music",
+      "duration": 180
+    },
+    {
+      "musicID": 35,
+      "genre": "Classic",
+      "title": "Classic 5",
+      "mp3Url": "/musics/Classic/Classic_5.mp3",
+      "imageUrl": "/musics_img/Classic/Classic_5.png",
+      "artist": "Unknown",
+      "description": "Classic 5 by Unknown - classic music",
+      "duration": 180
+    },
+    {
+      "musicID": 36,
+      "genre": "Classic",
+      "title": "Classic 6",
+      "mp3Url": "/musics/Classic/Classic_6.mp3",
+      "imageUrl": "/musics_img/Classic/Classic_6.png",
+      "artist": "Unknown",
+      "description": "Classic 6 by Unknown - classic music",
+      "duration": 180
+    },
+    {
+      "musicID": 37,
+      "genre": "Classic",
+      "title": "Classic 7",
+      "mp3Url": "/musics/Classic/Classic_7.mp3",
+      "imageUrl": "/musics_img/Classic/Classic_7.png",
+      "artist": "Unknown",
+      "description": "Classic 7 by Unknown - classic music",
+      "duration": 180
+    },
+    {
+      "musicID": 38,
+      "genre": "Classic",
+      "title": "Classic 8",
+      "mp3Url": "/musics/Classic/Classic_8.mp3",
+      "imageUrl": "/musics_img/Classic/Classic_8.png",
+      "artist": "Unknown",
+      "description": "Classic 8 by Unknown - classic music",
+      "duration": 180
+    },
+    {
+      "musicID": 39,
+      "genre": "Classic",
+      "title": "Classic 9",
+      "mp3Url": "/musics/Classic/Classic_9.mp3",
+      "imageUrl": "/musics_img/Classic/Classic_9.png",
+      "artist": "Unknown",
+      "description": "Classic 9 by Unknown - classic music",
+      "duration": 180
+    },
+    {
+      "musicID": 50,
+      "genre": "Hiphop",
+      "title": "Hiphop 1",
+      "mp3Url": "/musics/Hiphop/Hiphop_1.mp3",
+      "imageUrl": "/musics_img/Hiphop/Hiphop_1.png",
+      "artist": "Unknown",
+      "description": "Hiphop 1 by Unknown - hiphop music",
+      "duration": 180
+    },
+    {
+      "musicID": 51,
+      "genre": "Hiphop",
+      "title": "Hiphop 10",
+      "mp3Url": "/musics/Hiphop/Hiphop_10.mp3",
+      "imageUrl": "/musics_img/Hiphop/Hiphop_10.png",
+      "artist": "Unknown",
+      "description": "Hiphop 10 by Unknown - hiphop music",
+      "duration": 180
+    },
+    {
+      "musicID": 52,
+      "genre": "Hiphop",
+      "title": "Hiphop 2",
+      "mp3Url": "/musics/Hiphop/Hiphop_2.mp3",
+      "imageUrl": "/musics_img/Hiphop/Hiphop_2.png",
+      "artist": "Unknown",
+      "description": "Hiphop 2 by Unknown - hiphop music",
+      "duration": 180
+    },
+    {
+      "musicID": 53,
+      "genre": "Hiphop",
+      "title": "Hiphop 3",
+      "mp3Url": "/musics/Hiphop/Hiphop_3.mp3",
+      "imageUrl": "/musics_img/Hiphop/Hiphop_3.png",
+      "artist": "Unknown",
+      "description": "Hiphop 3 by Unknown - hiphop music",
+      "duration": 180
+    },
+    {
+      "musicID": 54,
+      "genre": "Hiphop",
+      "title": "Hiphop 4",
+      "mp3Url": "/musics/Hiphop/Hiphop_4.mp3",
+      "imageUrl": "/musics_img/Hiphop/Hiphop_4.png",
+      "artist": "Unknown",
+      "description": "Hiphop 4 by Unknown - hiphop music",
+      "duration": 180
+    },
+    {
+      "musicID": 55,
+      "genre": "Hiphop",
+      "title": "Hiphop 5",
+      "mp3Url": "/musics/Hiphop/Hiphop_5.mp3",
+      "imageUrl": "/musics_img/Hiphop/Hiphop_5.png",
+      "artist": "Unknown",
+      "description": "Hiphop 5 by Unknown - hiphop music",
+      "duration": 180
+    },
+    {
+      "musicID": 56,
+      "genre": "Hiphop",
+      "title": "Hiphop 6",
+      "mp3Url": "/musics/Hiphop/Hiphop_6.mp3",
+      "imageUrl": "/musics_img/Hiphop/Hiphop_6.png",
+      "artist": "Unknown",
+      "description": "Hiphop 6 by Unknown - hiphop music",
+      "duration": 180
+    },
+    {
+      "musicID": 57,
+      "genre": "Hiphop",
+      "title": "Hiphop 7",
+      "mp3Url": "/musics/Hiphop/Hiphop_7.mp3",
+      "imageUrl": "/musics_img/Hiphop/Hiphop_7.png",
+      "artist": "Unknown",
+      "description": "Hiphop 7 by Unknown - hiphop music",
+      "duration": 180
+    },
+    {
+      "musicID": 58,
+      "genre": "Hiphop",
+      "title": "Hiphop 8",
+      "mp3Url": "/musics/Hiphop/Hiphop_8.mp3",
+      "imageUrl": "/musics_img/Hiphop/Hiphop_8.png",
+      "artist": "Unknown",
+      "description": "Hiphop 8 by Unknown - hiphop music",
+      "duration": 180
+    },
+    {
+      "musicID": 59,
+      "genre": "Hiphop",
+      "title": "Hiphop 9",
+      "mp3Url": "/musics/Hiphop/Hiphop_9.mp3",
+      "imageUrl": "/musics_img/Hiphop/Hiphop_9.png",
+      "artist": "Unknown",
+      "description": "Hiphop 9 by Unknown - hiphop music",
+      "duration": 180
+    },
+    {
+      "musicID": 40,
+      "genre": "Jazz",
+      "title": "Jazz 1",
+      "mp3Url": "/musics/Jazz/Jazz_1.mp3",
+      "imageUrl": "/musics_img/Jazz/Jazz_1.png",
+      "artist": "Unknown",
+      "description": "Jazz 1 by Unknown - jazz music",
+      "duration": 180
+    },
+    {
+      "musicID": 41,
+      "genre": "Jazz",
+      "title": "Jazz 10",
+      "mp3Url": "/musics/Jazz/Jazz_10.mp3",
+      "imageUrl": "/musics_img/Jazz/Jazz_10.png",
+      "artist": "Unknown",
+      "description": "Jazz 10 by Unknown - jazz music",
+      "duration": 180
+    },
+    {
+      "musicID": 42,
+      "genre": "Jazz",
+      "title": "Jazz 2",
+      "mp3Url": "/musics/Jazz/Jazz_2.mp3",
+      "imageUrl": "/musics_img/Jazz/Jazz_2.png",
+      "artist": "Unknown",
+      "description": "Jazz 2 by Unknown - jazz music",
+      "duration": 180
+    },
+    {
+      "musicID": 43,
+      "genre": "Jazz",
+      "title": "Jazz 3",
+      "mp3Url": "/musics/Jazz/Jazz_3.mp3",
+      "imageUrl": "/musics_img/Jazz/Jazz_3.png",
+      "artist": "Unknown",
+      "description": "Jazz 3 by Unknown - jazz music",
+      "duration": 180
+    },
+    {
+      "musicID": 44,
+      "genre": "Jazz",
+      "title": "Jazz 4",
+      "mp3Url": "/musics/Jazz/Jazz_4.mp3",
+      "imageUrl": "/musics_img/Jazz/Jazz_4.png",
+      "artist": "Unknown",
+      "description": "Jazz 4 by Unknown - jazz music",
+      "duration": 180
+    },
+    {
+      "musicID": 45,
+      "genre": "Jazz",
+      "title": "Jazz 5",
+      "mp3Url": "/musics/Jazz/Jazz_5.mp3",
+      "imageUrl": "/musics_img/Jazz/Jazz_5.png",
+      "artist": "Unknown",
+      "description": "Jazz 5 by Unknown - jazz music",
+      "duration": 180
+    },
+    {
+      "musicID": 46,
+      "genre": "Jazz",
+      "title": "Jazz 6",
+      "mp3Url": "/musics/Jazz/Jazz_6.mp3",
+      "imageUrl": "/musics_img/Jazz/Jazz_6.png",
+      "artist": "Unknown",
+      "description": "Jazz 6 by Unknown - jazz music",
+      "duration": 180
+    },
+    {
+      "musicID": 47,
+      "genre": "Jazz",
+      "title": "Jazz 7",
+      "mp3Url": "/musics/Jazz/Jazz_7.mp3",
+      "imageUrl": "/musics_img/Jazz/Jazz_7.png",
+      "artist": "Unknown",
+      "description": "Jazz 7 by Unknown - jazz music",
+      "duration": 180
+    },
+    {
+      "musicID": 48,
+      "genre": "Jazz",
+      "title": "Jazz 8",
+      "mp3Url": "/musics/Jazz/Jazz_8.mp3",
+      "imageUrl": "/musics_img/Jazz/Jazz_8.png",
+      "artist": "Unknown",
+      "description": "Jazz 8 by Unknown - jazz music",
+      "duration": 180
+    },
+    {
+      "musicID": 49,
+      "genre": "Jazz",
+      "title": "Jazz 9",
+      "mp3Url": "/musics/Jazz/Jazz_9.mp3",
+      "imageUrl": "/musics_img/Jazz/Jazz_9.png",
+      "artist": "Unknown",
+      "description": "Jazz 9 by Unknown - jazz music",
+      "duration": 180
+    },
+    {
+      "musicID": 20,
+      "genre": "Pop",
+      "title": "Pop 1",
+      "mp3Url": "/musics/Pop/Pop_1.mp3",
+      "imageUrl": "/musics_img/Pop/Pop_1.png",
+      "artist": "Unknown",
+      "description": "Pop 1 by Unknown - pop music",
+      "duration": 180
+    },
+    {
+      "musicID": 21,
+      "genre": "Pop",
+      "title": "Pop 10",
+      "mp3Url": "/musics/Pop/Pop_10.mp3",
+      "imageUrl": "/musics_img/Pop/Pop_10.png",
+      "artist": "Unknown",
+      "description": "Pop 10 by Unknown - pop music",
+      "duration": 180
+    },
+    {
+      "musicID": 22,
+      "genre": "Pop",
+      "title": "Pop 2",
+      "mp3Url": "/musics/Pop/Pop_2.mp3",
+      "imageUrl": "/musics_img/Pop/Pop_2.png",
+      "artist": "Unknown",
+      "description": "Pop 2 by Unknown - pop music",
+      "duration": 180
+    },
+    {
+      "musicID": 23,
+      "genre": "Pop",
+      "title": "Pop 3",
+      "mp3Url": "/musics/Pop/Pop_3.mp3",
+      "imageUrl": "/musics_img/Pop/Pop_3.png",
+      "artist": "Unknown",
+      "description": "Pop 3 by Unknown - pop music",
+      "duration": 180
+    },
+    {
+      "musicID": 24,
+      "genre": "Pop",
+      "title": "Pop 4",
+      "mp3Url": "/musics/Pop/Pop_4.mp3",
+      "imageUrl": "/musics_img/Pop/Pop_4.png",
+      "artist": "Unknown",
+      "description": "Pop 4 by Unknown - pop music",
+      "duration": 180
+    },
+    {
+      "musicID": 25,
+      "genre": "Pop",
+      "title": "Pop 5",
+      "mp3Url": "/musics/Pop/Pop_5.mp3",
+      "imageUrl": "/musics_img/Pop/Pop_5.png",
+      "artist": "Unknown",
+      "description": "Pop 5 by Unknown - pop music",
+      "duration": 180
+    },
+    {
+      "musicID": 26,
+      "genre": "Pop",
+      "title": "Pop 6",
+      "mp3Url": "/musics/Pop/Pop_6.mp3",
+      "imageUrl": "/musics_img/Pop/Pop_6.png",
+      "artist": "Unknown",
+      "description": "Pop 6 by Unknown - pop music",
+      "duration": 180
+    },
+    {
+      "musicID": 27,
+      "genre": "Pop",
+      "title": "Pop 7",
+      "mp3Url": "/musics/Pop/Pop_7.mp3",
+      "imageUrl": "/musics_img/Pop/Pop_7.png",
+      "artist": "Unknown",
+      "description": "Pop 7 by Unknown - pop music",
+      "duration": 180
+    },
+    {
+      "musicID": 28,
+      "genre": "Pop",
+      "title": "Pop 8",
+      "mp3Url": "/musics/Pop/Pop_8.mp3",
+      "imageUrl": "/musics_img/Pop/Pop_8.png",
+      "artist": "Unknown",
+      "description": "Pop 8 by Unknown - pop music",
+      "duration": 180
+    },
+    {
+      "musicID": 29,
+      "genre": "Pop",
+      "title": "Pop 9",
+      "mp3Url": "/musics/Pop/Pop_9.mp3",
+      "imageUrl": "/musics_img/Pop/Pop_9.png",
+      "artist": "Unknown",
+      "description": "Pop 9 by Unknown - pop music",
+      "duration": 180
+    }
+  ]
+}

@@ -7,5 +7,12 @@ export default function SessionProviderWrapper({
 }: {
   children: React.ReactNode;
 }) {
-  return <SessionProvider>{children}</SessionProvider>;
+  return (
+    <SessionProvider
+      refetchInterval={0} // 자동 리프레시 비활성화 (시크릿 모드 대응)
+      refetchOnWindowFocus={false} // 윈도우 포커스 시 리프레시 비활성화
+    >
+      {children}
+    </SessionProvider>
+  );
 }

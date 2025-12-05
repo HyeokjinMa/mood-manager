@@ -199,7 +199,7 @@ ${iconCatalogText}
 [REQUIREMENTS]
 You must generate DIFFERENT values for EACH of the 10 segments. Each segment should have:
 - UNIQUE moodAlias (2-4 word English nickname, vary across segments)
-- UNIQUE musicSelection (different track title/style for each segment. If a special event is active, you may naturally incorporate event-appropriate music suggestions, but prioritize the user's emotional state and mood over forcing event themes)
+- UNIQUE musicSelection (different music ID (10-69) for each segment. Select by music ID number from the available music list. If a special event is active, you may naturally incorporate event-appropriate music suggestions, but prioritize the user's emotional state and mood over forcing event themes)
 - moodColor: keep overall coherence with the base mood, but introduce gentle variation across segments (use related tones / shades rather than extreme jumps between unrelated colors)
 - backgroundIcons: for each segment, choose between 1 and 4 icon keys from the catalog above. Inside one stream (10 segments), prefer using 5–8 different icon keys overall so that the background feels rich and not repetitive. Avoid using the exact same combination of icons for different segments.
 - backgroundWind: vary direction and speed to create subtle movement differences
@@ -210,7 +210,7 @@ Return a JSON object with this structure:
   "segments": [
     {
       "moodAlias": "unique 2-4 word English nickname for segment 0",
-      "musicSelection": "unique track title/style for segment 0",
+      "musicSelection": 10-69 (MUST be a MUSIC ID NUMBER from the music list, NOT a title. Return ONLY the number, e.g., 10, 15, 23, 45, 67),
       "moodColor": "#HEX (vary colors, not just blue)",
       "lighting": { "brightness": 0-100, "temperature": 2000-6500 },
       "backgroundIcons": [

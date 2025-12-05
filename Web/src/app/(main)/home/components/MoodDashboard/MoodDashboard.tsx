@@ -13,7 +13,7 @@
 
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { MoodDashboardSkeleton } from "@/components/ui/Skeleton";
 import type { Mood } from "@/types/mood";
 import { useMoodDashboard } from "./hooks/useMoodDashboard";
@@ -67,6 +67,9 @@ export default function MoodDashboard({
     isGeneratingNextStream,
   } = useMoodStreamContext();
   
+  // 사용자 인터랙션 추적 (한 번 클릭하면 이후 자동재생 가능)
+  const userInteractedRef = useRef(false);
+
   // 무드 대시보드 상태 및 핸들러 관리
   const {
     isLoading,
@@ -114,6 +117,7 @@ export default function MoodDashboard({
     totalProgress,
     segmentDuration,
     totalTracks,
+    seek,
   } = useMusicTrackPlayer({
     segment: currentSegment,
     playing,
@@ -160,13 +164,16 @@ export default function MoodDashboard({
         />
       )}
       <div
-        className="rounded-xl px-3 mb-1 w-full backdrop-blur-sm border transition-all duration-500 ease-in-out"
+        className="rounded-xl px-3 mb-1 w-full backdrop-blur-sm border transition-all duration-700 ease-in-out"
         style={{
           // 무드 컬러 투명도 높게 카드 배경 사용 (뒤 파티클 비치도록)
           backgroundColor: hexToRgba(baseColor, 0.25),
           borderColor: accentColor,
           paddingTop: "11px",
           paddingBottom: "8px",
+          // 세그먼트 전환 시 부드러운 페이드 효과
+          opacity: isLoading ? 0.5 : 1,
+          transform: isLoading ? "scale(0.98)" : "scale(1)",
         }}
         onClick={(e) => handleDashboardClick(e, currentSegment)}
         key={`dashboard-${currentSegmentIndex}`}
@@ -188,12 +195,17 @@ export default function MoodDashboard({
       />
 
       {/* V1: 향/앨범 개별 새로고침 기능 제거, UI만 유지 (클릭 시 동작 없음) */}
-      <ScentControl mood={mood} onScentClick={() => {}} moodColor={baseColor} />
+      <ScentControl 
+        mood={currentSegment?.mood || mood} 
+        onScentClick={() => {}} 
+        moodColor={baseColor} 
+      />
 
       <AlbumSection 
         mood={mood}
         onAlbumClick={() => {}}
-        musicSelection={backgroundParams?.musicSelection}
+        musicSelection={currentTrack?.title || backgroundParams?.musicSelection}
+        albumImageUrl={currentTrack?.albumImageUrl}
       />
 
       <MusicControls
@@ -205,7 +217,10 @@ export default function MoodDashboard({
         currentTrackIndex={0}
         totalTracks={totalTracks}
         playing={playing}
-        onPlayToggle={() => setPlaying(!playing)}
+        onPlayToggle={() => {
+          userInteractedRef.current = true; // 사용자 인터랙션 기록
+          setPlaying(!playing);
+        }}
         onPrevious={() => {
           // V1: 트랙 이동 대신 세그먼트 이동으로 단순화
           if (!moodStream) return;
@@ -219,6 +234,7 @@ export default function MoodDashboard({
           const nextIndex = Math.min(lastIndex, currentSegmentIndex + 1);
           handleSegmentSelect(nextIndex);
         }}
+        onSeek={seek}
       />
 
       <MoodDuration

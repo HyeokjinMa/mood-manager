@@ -149,8 +149,9 @@ export function getMockMoodStream() {
         artist: "Mood Manager",
         duration: duration,
         startOffset: currentOffset,
-        fadeIn: 2000, // 2초 페이드인
-        fadeOut: 2000, // 2초 페이드아웃
+        fadeIn: 750, // 0.75초 페이드인
+        fadeOut: 750, // 0.75초 페이드아웃
+        fileUrl: `/music/newage/${mood.song.title}(Mood Manager)_newage.mp3`, // Mock 파일 URL
       };
       currentOffset += duration;
       return track;
@@ -209,61 +210,54 @@ export function getMockMoodStream() {
 }
 
 /**
- * 초기 콜드스타트용 1개 세그먼트 즉시 반환
+ * 초기 콜드스타트용 1개 세그먼트 즉시 반환 (동기 버전 - 하위 호환성)
  * 
- * 2초 이내 반환 보장, 3곡 포함
+ * @deprecated getInitialColdStartSegments()를 사용하세요
  */
 export function getInitialColdStartSegment() {
   const now = Date.now();
   
-  // 랜덤 또는 첫 번째 무드 선택
-  const moodIndex = Math.floor(Math.random() * MOODS.length);
-  const mood = MOODS[moodIndex];
-  
-  // 3곡 생성
-  const trackDurations = [
-    (mood.song.duration || 180) * 1000,
-    ((mood.song.duration || 180) + Math.floor(Math.random() * 40 - 20)) * 1000,
-    ((mood.song.duration || 180) + Math.floor(Math.random() * 40 - 20)) * 1000,
-  ];
-  
-  let currentOffset = 0;
-  const musicTracks = trackDurations.map((duration, trackIndex) => {
-    const track = {
-      title: `${mood.song.title} ${trackIndex === 0 ? '' : `Part ${trackIndex + 1}`}`,
-      artist: "Mood Manager",
-      duration: duration,
-      startOffset: currentOffset,
-      fadeIn: 2000,
-      fadeOut: 2000,
-    };
-    currentOffset += duration;
-    return track;
-  });
-  
-  const segmentDuration = currentOffset;
+  // Fallback: 기본 캐롤 세그먼트 1개 반환
+  const fallbackTrack = {
+    title: "All I want for christmas",
+    artist: "Mariah Carey",
+    fileUrl: "/musics/Carol/All I want for christmas(Mariah Carey).mp3",
+    albumImageUrl: "/musics_img/Carol/All I want for christmas.png",
+  };
+
+  const duration = 180 * 1000; // 3분
+  const musicTracks = [{
+    title: fallbackTrack.title,
+    artist: fallbackTrack.artist,
+    duration,
+    startOffset: 0,
+    fadeIn: 750,
+    fadeOut: 750,
+    fileUrl: fallbackTrack.fileUrl,
+    albumImageUrl: fallbackTrack.albumImageUrl,
+  }];
   
   return {
     timestamp: now,
-    duration: segmentDuration,
+    duration,
     mood: {
-      id: mood.id,
-      name: mood.name,
-      color: mood.color,
+      id: "carol-segment-0",
+      name: "Christmas Joy",
+      color: "#C41E3A", // 크리스마스 레드
       music: {
-        genre: "newage",
+        genre: "Carol",
         title: musicTracks[0].title,
       },
       scent: {
-        type: mood.scent.type,
-        name: mood.scent.name,
+        type: "Woody",
+        name: "Pine",
       },
       lighting: {
-        color: mood.color,
-        rgb: hexToRgb(mood.color),
+        color: "#C41E3A",
+        rgb: hexToRgb("#C41E3A"),
       },
     },
-    musicTracks: musicTracks,
+    musicTracks,
   };
 }
 

@@ -6,7 +6,8 @@
 
 "use client";
 
-import { createContext, useContext, ReactNode } from "react";
+import { createContext, useContext, ReactNode, useMemo } from "react";
+import { usePathname } from "next/navigation";
 import { useMoodStream } from "@/hooks/useMoodStream";
 import type { MoodStream, MoodStreamSegment } from "@/hooks/useMoodStream/types";
 
@@ -24,7 +25,22 @@ interface MoodStreamContextValue {
 
 const MoodStreamContext = createContext<MoodStreamContextValue | undefined>(undefined);
 
+// 빈 값 (로그인 페이지 등에서 사용)
+const emptyMoodStreamValue: MoodStreamContextValue = {
+  moodStream: null,
+  currentSegment: null,
+  currentSegmentIndex: 0,
+  isLoading: false,
+  refreshMoodStream: () => {},
+  setCurrentSegmentIndex: () => {},
+  switchToNextStream: () => {},
+  nextStreamAvailable: false,
+  isGeneratingNextStream: false,
+};
+
 export function MoodStreamProvider({ children }: { children: ReactNode }) {
+  // 항상 useMoodStream 호출 (훅 규칙 준수)
+  // useMoodStream 내부에서 인증 페이지일 때는 API 호출하지 않음
   const moodStreamValue = useMoodStream();
 
   return (

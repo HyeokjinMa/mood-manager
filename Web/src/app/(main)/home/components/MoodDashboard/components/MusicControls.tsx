@@ -19,6 +19,7 @@ interface MusicControlsProps {
   onPlayToggle: () => void;
   onPrevious: () => void;
   onNext: () => void;
+  onSeek?: (time: number) => void; // seek 함수 (선택적)
 }
 
 export default function MusicControls({
@@ -33,6 +34,7 @@ export default function MusicControls({
   onPlayToggle,
   onPrevious,
   onNext,
+  onSeek,
 }: MusicControlsProps) {
   // 현재 트랙의 길이 (밀리초 → 초)
   const currentTrackDuration = currentTrack?.duration || mood.song.duration * 1000;
@@ -56,7 +58,18 @@ export default function MusicControls({
         <span className="text-xs mr-2 text-gray-800">
           {formatTime(Math.floor(totalProgress / 1000))}
         </span>
-        <div className="flex-1 h-1 bg-white/50 rounded">
+        <div 
+          className="flex-1 h-1 bg-white/50 rounded cursor-pointer"
+          onClick={(e) => {
+            if (!onSeek) return;
+            e.stopPropagation();
+            const progressBar = e.currentTarget;
+            const clickX = e.clientX - progressBar.getBoundingClientRect().left;
+            const width = progressBar.offsetWidth;
+            const seekTime = (clickX / width) * segmentDuration;
+            onSeek(seekTime);
+          }}
+        >
           <div
             className="h-1 bg-black rounded transition-all"
             style={{ width: `${segmentProgressPercent}%` }}

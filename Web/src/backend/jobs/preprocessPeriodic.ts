@@ -53,12 +53,9 @@ export async function handleNewPeriodicDocument(
     let weather;
     try {
       weather = await fetchWeather();
-      console.log("[preprocessPeriodic] 날씨 데이터 조회 성공:", weather);
+      // 날씨 데이터 로그 제거 (너무 많은 로그 방지)
     } catch (weatherError) {
-      console.warn(
-        "[preprocessPeriodic] 날씨 데이터 조회 실패, 전처리는 계속 진행:",
-        weatherError
-      );
+      // 날씨 조회 실패 로그도 제거 (너무 많은 로그 방지)
       // weather는 undefined로 유지되어 optional 처리됨
     }
 
@@ -68,14 +65,8 @@ export async function handleNewPeriodicDocument(
     // 2) 최신 전처리 결과를 캐시에 저장
     setProcessedMetrics(metrics.sleep_score ?? 0, metrics.stress_score);
 
-    // (디버깅/로그용)
-    console.log(
-      "[preprocessPeriodic] 전처리 완료:",
-      metrics,
-      " (docId:",
-      doc.id,
-      ")"
-    );
+    // 로그 간소화: 에러나 중요한 경우만 로깅
+    // (디버깅/로그용 - 제거 또는 조건부 로깅)
   } catch (error) {
     console.error("[preprocessPeriodic] 전처리 중 오류 발생:", error);
   }

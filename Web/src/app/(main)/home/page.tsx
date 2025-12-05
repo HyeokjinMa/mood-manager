@@ -13,7 +13,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import TopNav from "@/components/navigation/TopNav";
@@ -32,16 +32,38 @@ import type { BackgroundParams } from "@/hooks/useBackgroundParams";
 export default function HomePage() {
   const router = useRouter();
   const { status } = useSession();
+  const redirectingRef = useRef(false); // 리다이렉트 중복 방지
+  const lastStatusRef = useRef<string | null>(null); // 이전 상태 추적
 
   // 세션 체크: 로그인되지 않은 경우 로그인 페이지로 리다이렉트
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.replace("/login");
+    // 상태가 변하지 않았으면 무시 (불필요한 리렌더링 방지)
+    if (lastStatusRef.current === status) {
       return;
     }
-    // 로딩 중이거나 인증되지 않은 경우 렌더링하지 않음
+    lastStatusRef.current = status;
+
+    // loading 상태에서는 리다이렉트하지 않음 (시크릿 모드 세션 불안정 대응)
     if (status === "loading") {
+      redirectingRef.current = false;
       return;
+    }
+
+    if (status === "unauthenticated" && !redirectingRef.current) {
+      redirectingRef.current = true;
+      // 약간의 딜레이를 추가하여 세션 상태가 안정화될 시간을 줌
+      const timer = setTimeout(() => {
+        router.replace("/login");
+      }, 300);
+      
+      return () => {
+        clearTimeout(timer);
+      };
+    }
+    
+    // authenticated 상태로 돌아오면 플래그 리셋
+    if (status === "authenticated") {
+      redirectingRef.current = false;
     }
   }, [status, router]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -49,13 +71,14 @@ export default function HomePage() {
   const [deviceToDelete, setDeviceToDelete] = useState<Device | null>(null);
   const [backgroundParams, setBackgroundParams] = useState<BackgroundParams | null>(null);
 
-  // 초기 무드 설정
-  const initialMood = MOODS[0];
+  // 초기 무드 설정 - 실제 moodStream에서 가져오므로 null로 시작
+  // HomeContent에서 moodStream이 로드되면 첫 번째 세그먼트로 초기화됨
+  const initialMood = null;
 
   // 커스텀 훅 사용
-  const { devices, setDevices, addDevice, isLoading } = useDevices(initialMood);
+  const { devices, setDevices, addDevice, isLoading } = useDevices(null);
   const { currentMood, setCurrentMood, handleScentChange, handleSongChange } =
-    useMood(initialMood, setDevices);
+    useMood(null, setDevices);
   const { showSurvey, handleSurveyComplete, handleSurveySkip } = useSurvey();
 
   // 로딩 중이거나 인증되지 않은 경우 로딩 화면 표시

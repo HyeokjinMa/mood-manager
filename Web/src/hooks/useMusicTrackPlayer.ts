@@ -1,12 +1,14 @@
 /**
  * 음악 트랙 재생 관리 훅
  * 
- * 세그먼트 내 3개 노래를 순차적으로 재생하고,
- * 크로스페이드 전환을 처리합니다.
+ * 세그먼트 내 1개 노래를 재생합니다.
+ * 
+ * 실제 HTML5 Audio를 사용한 오디오 재생
  */
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import type { MusicTrack, MoodStreamSegment } from "./useMoodStream/types";
+import { MusicPlayer } from "@/lib/audio/musicPlayer";
 
 interface UseMusicTrackPlayerProps {
   segment: MoodStreamSegment | null;
@@ -15,9 +17,7 @@ interface UseMusicTrackPlayerProps {
 }
 
 interface TrackProgress {
-  currentTrackIndex: number; // 현재 재생 중인 트랙 인덱스 (0-2)
   progress: number; // 현재 트랙의 진행 시간 (밀리초)
-  totalProgress: number; // 세그먼트 전체 진행 시간 (밀리초)
 }
 
 export function useMusicTrackPlayer({
@@ -25,72 +25,106 @@ export function useMusicTrackPlayer({
   playing,
   onSegmentEnd,
 }: UseMusicTrackPlayerProps) {
-  // 세그먼트 내 음악 트랙 배열을 안전하게 래핑
-  const segmentTracks: MusicTrack[] = segment?.musicTracks ?? [];
+  // 세그먼트 내 음악 트랙 (1개만)
+  const currentTrack: MusicTrack | null = useMemo(() => {
+    if (!segment?.musicTracks || segment.musicTracks.length === 0) return null;
+    return segment.musicTracks[0]; // 첫 번째 트랙만 사용
+  }, [segment?.musicTracks]);
 
   const [trackProgress, setTrackProgress] = useState<TrackProgress>({
-    currentTrackIndex: 0,
     progress: 0,
-    totalProgress: 0,
   });
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const startTimeRef = useRef<number>(0);
-  const pausedProgressRef = useRef<number>(0);
+  const musicPlayerRef = useRef<MusicPlayer | null>(null);
+  const currentTrackSrcRef = useRef<string | null>(null);
+  const isInitializedRef = useRef(false);
 
   /**
-   * 현재 재생 중인 트랙 가져오기
+   * MusicPlayer 인스턴스 초기화 (한 번만)
    */
-  const currentTrack =
-    segmentTracks[trackProgress.currentTrackIndex] || null;
+  useEffect(() => {
+    if (typeof window === "undefined" || isInitializedRef.current) return;
+
+    musicPlayerRef.current = new MusicPlayer();
+    musicPlayerRef.current.init({
+      volume: 0.7,
+      fadeInDuration: 750, // 0.75초
+      fadeOutDuration: 750, // 0.75초
+    });
+    isInitializedRef.current = true;
+
+    return () => {
+      musicPlayerRef.current?.dispose();
+      musicPlayerRef.current = null;
+      isInitializedRef.current = false;
+    };
+  }, []);
 
   /**
-   * 세그먼트 전체 길이 계산
+   * 세그먼트 전체 길이 계산 (1곡의 길이) - 실제 MP3 길이 사용
    */
-  const segmentDuration = segmentTracks.length
-    ? segmentTracks.reduce((sum, track) => sum + track.duration, 0)
-    : 0;
+  const segmentDuration = useMemo(() => {
+    return currentTrack?.duration || 0;
+  }, [currentTrack?.duration]);
 
   /**
-   * 재생 시작
+   * 트랙의 실제 파일 URL 가져오기
    */
-  const startPlayback = useCallback(() => {
-    // 세그먼트가 없거나 트랙이 없으면 재생하지 않음
-    if (!segment || !playing || segmentTracks.length === 0) return;
+  const getTrackUrl = useCallback((track: MusicTrack): string => {
+    return track.fileUrl;
+  }, []);
 
-    const now = Date.now();
-    startTimeRef.current = now - pausedProgressRef.current;
+  /**
+   * 현재 트랙 재생
+   * pause 후 재개 시 현재 위치에서 이어서 재생
+   */
+  const playCurrentTrack = useCallback(async () => {
+    if (!currentTrack || !musicPlayerRef.current) return;
 
-    intervalRef.current = setInterval(() => {
-      const elapsed = Date.now() - startTimeRef.current;
-      
-      // 현재 트랙의 진행 시간 계산
-      let currentTrackProgress = 0;
-      let currentTrackIndex = 0;
-      let accumulatedTime = 0;
+    const trackUrl = getTrackUrl(currentTrack);
 
-      for (let i = 0; i < segmentTracks.length; i++) {
-        const track = segmentTracks[i];
-        const trackEndTime = accumulatedTime + track.duration;
-
-        if (elapsed < trackEndTime) {
-          currentTrackIndex = i;
-          currentTrackProgress = elapsed - accumulatedTime;
-          break;
-        }
-
-        accumulatedTime = trackEndTime;
+    try {
+      // 첫 번째 트랙이거나 이전 트랙과 다르면 새로 재생
+      if (currentTrackSrcRef.current === null || currentTrackSrcRef.current !== trackUrl) {
+        await musicPlayerRef.current.play(trackUrl, true);
+        currentTrackSrcRef.current = trackUrl;
+      } else {
+        // 같은 트랙이면 재개만 수행 (현재 위치에서 이어서 재생)
+        await musicPlayerRef.current.play(undefined, true);
       }
+    } catch (error) {
+      // 자동재생 실패는 조용히 처리 (사용자가 클릭하면 재생됨)
+      if (error instanceof Error && error.name === "NotAllowedError") {
+        return;
+      }
+      // 다른 에러는 조용히 처리
+    }
+  }, [currentTrack, getTrackUrl]);
 
-      // 세그먼트 종료 확인
-      if (elapsed >= segmentDuration) {
+  /**
+   * 재생 시작 및 진행 시간 추적
+   */
+  const startPlayback = useCallback(async () => {
+    // 세그먼트가 없거나 트랙이 없으면 재생하지 않음
+    if (!segment || !currentTrack || !musicPlayerRef.current) return;
+
+    // 이미 재생 중이면 중복 실행 방지
+    if (intervalRef.current) return;
+
+    // 재생 시도
+    await playCurrentTrack();
+
+    // 진행 시간 추적 시작
+    intervalRef.current = setInterval(() => {
+      if (!musicPlayerRef.current) return;
+
+      const currentTime = musicPlayerRef.current.getCurrentTime() * 1000; // 밀리초로 변환
+      
+      // 세그먼트 종료 확인 (실제 MP3 길이 사용)
+      if (segmentDuration > 0 && currentTime >= segmentDuration) {
         setTrackProgress({
-          currentTrackIndex: Math.max(segmentTracks.length - 1, 0),
-          progress:
-            segmentTracks.length > 0
-              ? segmentTracks[segmentTracks.length - 1].duration
-              : 0,
-          totalProgress: segmentDuration,
+          progress: segmentDuration,
         });
         
         if (intervalRef.current) {
@@ -98,17 +132,19 @@ export function useMusicTrackPlayer({
           intervalRef.current = null;
         }
         
+        // 오디오 중지
+        musicPlayerRef.current?.stop();
+        currentTrackSrcRef.current = null;
+        
         onSegmentEnd?.();
         return;
       }
 
       setTrackProgress({
-        currentTrackIndex,
-        progress: currentTrackProgress,
-        totalProgress: elapsed,
+        progress: currentTime,
       });
     }, 100); // 100ms마다 업데이트
-  }, [segment, playing, segmentDuration, onSegmentEnd]);
+  }, [segment, currentTrack, segmentDuration, onSegmentEnd, playCurrentTrack]);
 
   /**
    * 재생 일시정지
@@ -118,13 +154,55 @@ export function useMusicTrackPlayer({
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
-    pausedProgressRef.current = trackProgress.totalProgress;
-  }, [trackProgress.totalProgress]);
+    musicPlayerRef.current?.pause();
+  }, []);
 
   /**
-   * 재생 상태 변경 처리
+   * 세그먼트 변경 시 진행 상태 리셋 및 새 트랙 준비
    */
   useEffect(() => {
+    if (!segment || !currentTrack) return;
+    
+    // 진행 시간 추적 중지
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    
+    const trackUrl = getTrackUrl(currentTrack);
+    const isNewTrack = currentTrackSrcRef.current !== trackUrl;
+
+    // 새로운 트랙이면 이전 트랙 정리
+    if (isNewTrack) {
+      if (musicPlayerRef.current) {
+        musicPlayerRef.current.stop();
+      }
+      currentTrackSrcRef.current = null;
+      setTrackProgress({ progress: 0 });
+    }
+
+    // 재생 중이고 새로운 트랙이면 자동 재생 시도
+    if (playing && isNewTrack) {
+      const timeoutId = setTimeout(() => {
+        startPlayback();
+      }, 100);
+
+      return () => {
+        clearTimeout(timeoutId);
+      };
+    } else if (playing && !isNewTrack && !intervalRef.current) {
+      // 같은 트랙이고 재생 중이면 재개
+      startPlayback();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [segment?.timestamp, currentTrack?.fileUrl, playing]);
+
+  /**
+   * 재생 상태 변경 처리 (play/pause)
+   */
+  useEffect(() => {
+    if (!segment || !currentTrack) return;
+    
     if (playing) {
       startPlayback();
     } else {
@@ -137,81 +215,22 @@ export function useMusicTrackPlayer({
         intervalRef.current = null;
       }
     };
-  }, [playing, startPlayback, pausePlayback]);
+  }, [playing, segment, currentTrack, startPlayback, pausePlayback]);
 
   /**
-   * 세그먼트 변경 시 진행 상태 리셋
+   * 재생 위치 설정 (seek)
    */
-  useEffect(() => {
+  const seek = useCallback((time: number) => {
+    if (!musicPlayerRef.current || !currentTrack) return;
+
+    // 밀리초를 초로 변환
+    const timeInSeconds = Math.min(time / 1000, segmentDuration / 1000);
+    musicPlayerRef.current.seek(timeInSeconds);
+
     setTrackProgress({
-      currentTrackIndex: 0,
-      progress: 0,
-      totalProgress: 0,
+      progress: time,
     });
-    pausedProgressRef.current = 0;
-    startTimeRef.current = 0;
-  }, [segment?.timestamp]);
-
-  /**
-   * 다음 트랙으로 이동
-   */
-  const goToNextTrack = useCallback(() => {
-    if (!segment || segmentTracks.length === 0) return;
-
-    const nextIndex = trackProgress.currentTrackIndex + 1;
-    if (nextIndex < segmentTracks.length) {
-      // 다음 트랙의 시작 시점으로 이동
-      const newProgress = segmentTracks
-        .slice(0, nextIndex)
-        .reduce((sum, track) => sum + track.duration, 0);
-      
-      pausedProgressRef.current = newProgress;
-      startTimeRef.current = Date.now() - newProgress;
-      
-      setTrackProgress({
-        currentTrackIndex: nextIndex,
-        progress: 0,
-        totalProgress: newProgress,
-      });
-    } else {
-      // 마지막 트랙이면 세그먼트 종료
-      onSegmentEnd?.();
-    }
-  }, [segment, trackProgress.currentTrackIndex, onSegmentEnd]);
-
-  /**
-   * 이전 트랙으로 이동
-   */
-  const goToPreviousTrack = useCallback(() => {
-    if (!segment || segmentTracks.length === 0) return;
-
-    const prevIndex = trackProgress.currentTrackIndex - 1;
-    if (prevIndex >= 0) {
-      // 이전 트랙의 시작 시점으로 이동
-      const newProgress = segmentTracks
-        .slice(0, prevIndex)
-        .reduce((sum, track) => sum + track.duration, 0);
-      
-      pausedProgressRef.current = newProgress;
-      startTimeRef.current = Date.now() - newProgress;
-      
-      setTrackProgress({
-        currentTrackIndex: prevIndex,
-        progress: 0,
-        totalProgress: newProgress,
-      });
-    } else {
-      // 첫 번째 트랙이면 세그먼트 시작으로 이동
-      pausedProgressRef.current = 0;
-      startTimeRef.current = Date.now();
-      
-      setTrackProgress({
-        currentTrackIndex: 0,
-        progress: 0,
-        totalProgress: 0,
-      });
-    }
-  }, [segment, trackProgress.currentTrackIndex]);
+  }, [currentTrack, segmentDuration]);
 
   /**
    * 현재 트랙의 남은 시간 계산
@@ -222,31 +241,24 @@ export function useMusicTrackPlayer({
 
   /**
    * 크로스페이드 상태 확인
-   * 페이드아웃 시작 시점: 트랙 종료 2초 전
+   * 페이드아웃 시작 시점: 트랙 종료 0.75초 전
    */
-  const isFadingOut = currentTrack
-    ? trackProgress.progress >= currentTrack.duration - (currentTrack.fadeOut || 2000)
-    : false;
-
-  /**
-   * 다음 트랙 페이드인 시작 시점 확인
-   */
-  const isNextTrackFadingIn = currentTrack && trackProgress.currentTrackIndex < segmentTracks.length - 1
-    ? trackProgress.progress >= currentTrack.duration - (currentTrack.fadeOut || 2000)
+  const isFadingOut = currentTrack && segmentDuration > 0
+    ? trackProgress.progress >= segmentDuration - (currentTrack.fadeOut || 750)
     : false;
 
   return {
     currentTrack,
-    currentTrackIndex: trackProgress.currentTrackIndex,
+    currentTrackIndex: 0, // 항상 0 (1곡만)
     progress: trackProgress.progress,
-    totalProgress: trackProgress.totalProgress,
+    totalProgress: trackProgress.progress, // 1곡이므로 progress와 동일
     segmentDuration,
     currentTrackRemaining,
     isFadingOut,
-    isNextTrackFadingIn,
-    goToNextTrack,
-    goToPreviousTrack,
-    totalTracks: segmentTracks.length,
+    isNextTrackFadingIn: false, // 1곡만 있으므로 항상 false
+    goToNextTrack: () => {}, // 1곡만 있으므로 빈 함수
+    goToPreviousTrack: () => {}, // 1곡만 있으므로 빈 함수
+    seek,
+    totalTracks: 1, // 항상 1
   };
 }
-

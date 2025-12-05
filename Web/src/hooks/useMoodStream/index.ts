@@ -5,6 +5,8 @@
  */
 
 import { useState, useEffect, useRef } from "react";
+import { useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
 import { useColdStart } from "./hooks/useColdStart";
 import { useAutoGeneration } from "./hooks/useAutoGeneration";
 import { useStreamTransition } from "./hooks/useStreamTransition";
@@ -15,12 +17,22 @@ import type { MoodStream, MoodStreamSegment } from "./types";
  * 무드스트림 관리 훅
  */
 export function useMoodStream() {
+  const { status } = useSession();
+  const pathname = usePathname();
   const [moodStream, setMoodStream] = useState<MoodStream | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
   const [nextColdStartSegment, setNextColdStartSegment] = useState<MoodStreamSegment | null>(null);
   const isGeneratingRef = useRef(false); // 백그라운드 생성 중복 방지
   const [isGeneratingNextStream, setIsGeneratingNextStream] = useState(false); // 다음 스트림 생성 중 UI 표시용
+  
+  // 로그인 페이지나 인증되지 않은 경우 API 호출하지 않음
+  const isAuthPage = pathname?.startsWith("/login") || 
+                     pathname?.startsWith("/register") || 
+                     pathname?.startsWith("/forgot-password") ||
+                     pathname === "/";
+  // authenticated 상태일 때만 API 호출 (loading 상태에서는 대기)
+  const shouldFetch = !isAuthPage && status === "authenticated";
 
   // 콜드스타트 및 백그라운드 생성 관리
   const { fetchMoodStream, generateBackgroundSegments } = useColdStart({
@@ -30,6 +42,7 @@ export function useMoodStream() {
     setNextColdStartSegment,
     nextColdStartSegment,
     isGeneratingRef,
+    sessionStatus: status, // 세션 상태 전달
   });
 
   // 자동 스트림 생성 관리
@@ -64,14 +77,20 @@ export function useMoodStream() {
   // fetchMoodStream은 useCallback으로 감싸져 있어서
   // 의존성에 넣으면 상태 변경 때마다 재호출되는 문제가 있으므로,
   // 의도적으로 빈 배열 의존성 사용
+  // 단, 로그인 페이지나 인증되지 않은 경우 호출하지 않음
   useEffect(() => {
-    fetchMoodStream();
+    if (shouldFetch) {
+      fetchMoodStream();
+    } else {
+      setIsLoading(false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [shouldFetch]);
 
   // 8, 9, 10번째 세그먼트일 때 자동 스트림 생성
+  // 인증 페이지나 인증되지 않은 경우 호출하지 않음
   useEffect(() => {
-    if (!moodStream) return;
+    if (!moodStream || isAuthPage || status !== "authenticated") return;
     
     const clampedTotal = 10; // 항상 10개 세그먼트로 표시
     const clampedIndex = currentSegmentIndex >= clampedTotal ? clampedTotal - 1 : currentSegmentIndex;
@@ -81,7 +100,7 @@ export function useMoodStream() {
     if (remainingFromClamped > 0 && remainingFromClamped <= 3) {
       generateNextStream();
     }
-  }, [currentSegmentIndex, moodStream, generateNextStream]);
+  }, [currentSegmentIndex, moodStream, generateNextStream, isAuthPage, status]);
 
   // 다음 스트림 사용 가능 여부 계산
   const nextStreamAvailable = nextColdStartSegment !== null;

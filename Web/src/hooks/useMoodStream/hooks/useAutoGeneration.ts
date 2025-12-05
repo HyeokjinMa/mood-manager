@@ -38,6 +38,13 @@ export function useAutoGeneration({
       return;
     }
     
+    // 첫 번째 스트림만 생성 (캐롤 3개 + 새로 생성된 7개 = 총 10개)
+    // 이미 10개 이상이면 생성하지 않음 (이후 스트림 생성 보류)
+    if (moodStream.segments.length >= 10) {
+      console.log("[useAutoGeneration] 이미 첫 번째 스트림이 생성됨. 이후 스트림 생성은 보류.");
+      return;
+    }
+    
     // 10개 세그먼트 기준으로 8, 9, 10번째 세그먼트일 때 자동 생성
     // currentSegmentIndex가 7, 8, 9일 때 (remaining이 3, 2, 1일 때)
     const remaining = moodStream.segments.length - currentSegmentIndex - 1;
@@ -51,10 +58,19 @@ export function useAutoGeneration({
     }
     
     // 중복 호출 방지: 같은 스트림 ID + 같은 세그먼트 인덱스 조합 체크
+    // 하지만 생성이 완료되면 키를 제거하여 다음 세그먼트에서 다시 생성 가능하도록 함
     const generationKey = `${moodStream.streamId}_${clampedIndex}`;
-    if (generatedKeysRef.current.has(generationKey)) {
-      console.log(`[useAutoGeneration] ⏭️ 이미 생성됨: streamId=${moodStream.streamId}, segmentIndex=${clampedIndex}`);
+    
+    // 현재 생성 중이면 스킵
+    if (generatedKeysRef.current.has(generationKey) && isGeneratingRef.current) {
+      console.log(`[useAutoGeneration] ⏭️ 이미 생성 중: streamId=${moodStream.streamId}, segmentIndex=${clampedIndex}`);
       return;
+    }
+    
+    // 이전에 생성 완료된 경우 키 제거 (다음 세그먼트에서 다시 생성 가능)
+    if (generatedKeysRef.current.has(generationKey) && !isGeneratingRef.current) {
+      console.log(`[useAutoGeneration] 이전 생성 완료, 키 제거하여 재생성 가능: ${generationKey}`);
+      generatedKeysRef.current.delete(generationKey);
     }
     
     console.log(`[useAutoGeneration] Segment ${clampedIndex + 1}/10 (${remainingFromClamped} remaining). Generating next stream...`);
@@ -77,10 +93,10 @@ export function useAutoGeneration({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({
-            nextStartTime,
-            segmentCount: 10,
-          }),
+        body: JSON.stringify({
+          nextStartTime,
+          segmentCount: 7, // 첫 번째 스트림만 7개 세그먼트 생성 (0~6번)
+        }),
         });
         
         if (response.ok) {
@@ -106,15 +122,11 @@ export function useAutoGeneration({
         fullStream.streamId = moodStream.streamId;
       }
       
-      // 10개 세그먼트 중 9개만 사용, 마지막 1개는 보관 (최소 10개 필요)
-      if (fullStream.segments.length >= 10) {
-        const segmentsToUse = fullStream.segments.slice(0, 9);
-        const lastSegment = fullStream.segments[9];
+      // 첫 번째 스트림 생성: 7개 세그먼트 추가 (0~6번, 총 10개가 됨)
+      // 현재 세그먼트가 3개(캐롤)이므로 7개를 추가하면 총 10개
+      if (fullStream.segments.length >= 7) {
+        const segmentsToUse = fullStream.segments.slice(0, 7); // 7개만 사용
         
-        setNextColdStartSegment(lastSegment);
-        console.log("[useAutoGeneration] Next stream generated. Stored 1 segment for next cold start.");
-        
-        // 기존 스트림에 2개 세그먼트 추가
         setMoodStream((prev) => {
           if (!prev) return null;
           
@@ -129,8 +141,9 @@ export function useAutoGeneration({
             segments: [...prev.segments, ...adjustedSegments],
           };
         });
+        console.log("[useAutoGeneration] 첫 번째 스트림 생성 완료: 7개 세그먼트 추가 (총 10개)");
       } else {
-        // 세그먼트가 3개 미만이면 모두 사용
+        // 세그먼트가 7개 미만이면 모두 사용
         setMoodStream((prev) => {
           if (!prev) return null;
           
@@ -142,6 +155,7 @@ export function useAutoGeneration({
             segments: [...prev.segments, ...adjustedSegments],
           };
         });
+        console.log("[useAutoGeneration] 세그먼트 추가 완료 (7개 미만)");
       }
     } catch (error) {
       console.error("[useAutoGeneration] Error generating next stream:", error);
@@ -150,6 +164,12 @@ export function useAutoGeneration({
     } finally {
       isGeneratingRef.current = false;
       setIsGeneratingNextStream(false);
+      // 생성 완료 후 키 제거 (다음 세그먼트에서 다시 생성 가능하도록)
+      // 단, 성공적으로 완료된 경우에만 제거 (에러 시에는 위에서 이미 제거됨)
+      if (generatedKeysRef.current.has(generationKey)) {
+        console.log(`[useAutoGeneration] 생성 완료, 키 제거: ${generationKey}`);
+        generatedKeysRef.current.delete(generationKey);
+      }
     }
   }, [moodStream, currentSegmentIndex, setMoodStream, setNextColdStartSegment, isGeneratingRef, setIsGeneratingNextStream]);
 

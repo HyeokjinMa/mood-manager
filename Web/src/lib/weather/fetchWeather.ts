@@ -133,10 +133,16 @@ export async function fetchWeather(): Promise<WeatherData> {
     const res = await axios.get(url, { params });
 
     // 5) 응답에서 필요한 항목 추출
-    const items = res.data.response.body.items.item;
+    const items = res.data?.response?.body?.items?.item;
 
     if (!items || !Array.isArray(items)) {
-      throw new Error("[fetchWeather] API 응답 형식이 올바르지 않습니다.");
+      // 기본값 반환 (에러 발생 시 전처리 중단 방지)
+      return {
+        temperature: 20,
+        humidity: 60,
+        rainType: 0,
+        sky: 1,
+      };
     }
 
     const weather: Record<string, string> = {};

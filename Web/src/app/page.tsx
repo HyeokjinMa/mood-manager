@@ -8,23 +8,47 @@ src/app/page.tsx
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 export default function SplashPage() {
   const router = useRouter();
   const { status } = useSession(); 
+  const redirectingRef = useRef(false); // 리다이렉트 중복 방지
+  const lastStatusRef = useRef<string | null>(null); // 이전 상태 추적
   // status = "loading" | "authenticated" | "unauthenticated"
 
   useEffect(() => {
-    if (status === "loading") return; // 세션 체크 중 → 스플래시 유지
-
-    if (status === "authenticated") {
-      router.replace("/home"); // 로그인 되어있음 → 홈으로 이동
-    } else {
-      router.replace("/login"); // 로그인 안됨 → 로그인 페이지로 이동
+    // 상태가 변하지 않았으면 무시 (불필요한 리렌더링 방지)
+    if (lastStatusRef.current === status) {
+      return;
     }
+    lastStatusRef.current = status;
+
+    // loading 상태에서는 리다이렉트하지 않음 (시크릿 모드 세션 불안정 대응)
+    if (status === "loading") {
+      redirectingRef.current = false;
+      return; // 세션 체크 중 → 스플래시 유지
+    }
+
+    // 이미 리다이렉트 중이면 무시
+    if (redirectingRef.current) return;
+
+    redirectingRef.current = true;
+
+    // 약간의 딜레이를 추가하여 세션 상태가 안정화될 시간을 줌
+    const timer = setTimeout(() => {
+      if (status === "authenticated") {
+        router.replace("/home"); // 로그인 되어있음 → 홈으로 이동
+      } else {
+        router.replace("/login"); // 로그인 안됨 → 로그인 페이지로 이동
+      }
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+    };
   }, [status, router]);
 
   return (

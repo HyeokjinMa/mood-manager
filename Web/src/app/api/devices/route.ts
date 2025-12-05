@@ -258,7 +258,7 @@ function getDefaultDeviceSettings(type: string) {
         scentLevel: 7,
         scentInterval: 30,
         volume: 65,
-        nowPlaying: "Calm Breeze",
+        nowPlaying: "Unknown Song",
       };
     case "light":
       return {
@@ -278,7 +278,7 @@ function getDefaultDeviceSettings(type: string) {
       return {
         ...baseSettings,
         volume: 65,
-        nowPlaying: "Calm Breeze",
+        nowPlaying: "Unknown Song",
       };
     default:
       return baseSettings;

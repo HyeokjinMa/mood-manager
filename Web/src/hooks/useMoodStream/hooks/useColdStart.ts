@@ -3,7 +3,7 @@
  */
 
 import { useCallback } from "react";
-import { getMockMoodStream, getInitialColdStartSegment } from "@/lib/mock/mockData";
+import { getMockMoodStream } from "@/lib/mock/mockData";
 import { chainSegments, getLastSegmentEndTime } from "@/lib/utils/segmentUtils";
 import type { MoodStream, MoodStreamSegment } from "../types";
 
@@ -14,6 +14,7 @@ interface UseColdStartParams {
   setNextColdStartSegment: React.Dispatch<React.SetStateAction<MoodStreamSegment | null>>;
   nextColdStartSegment: MoodStreamSegment | null;
   isGeneratingRef: React.MutableRefObject<boolean>;
+  sessionStatus: "authenticated" | "unauthenticated" | "loading"; // 세션 상태를 파라미터로 받음
 }
 
 /**
@@ -27,6 +28,7 @@ export function useColdStart({
   setNextColdStartSegment,
   nextColdStartSegment,
   isGeneratingRef,
+  sessionStatus,
 }: UseColdStartParams) {
   /**
    * 백그라운드에서 3개 세그먼트 생성
@@ -50,7 +52,11 @@ export function useColdStart({
           credentials: "include",
         });
         
-        if (response.ok) {
+        // 401 에러 시 목업 데이터 사용 (리다이렉트하지 않음)
+        if (response.status === 401) {
+          console.warn("[useColdStart] 401 Unauthorized in background generation - using mock data");
+          fullStream = getMockMoodStream();
+        } else if (response.ok) {
           const data = await response.json();
           if (data.currentMood && data.moodStream && Array.isArray(data.moodStream)) {
             fullStream = {
@@ -116,102 +122,54 @@ export function useColdStart({
   }, [setMoodStream, setNextColdStartSegment, isGeneratingRef]);
 
   /**
-   * 무드스트림 가져오기 (초기 콜드스타트 개선)
+   * 무드스트림 가져오기 (초기 콜드스타트 - 단순화)
    * 
-   * 1. 초기: 1개 세그먼트(3곡) 즉시 표시
-   * 2. 백그라운드: 3개 세그먼트 생성 시작
-   * 3. 생성 완료 시 2개만 사용, 마지막 1개는 보관
+   * 항상 초기 3개 캐롤 세그먼트만 사용
+   * API를 통해 서버 사이드에서 Prisma 호출
    */
   const fetchMoodStream = useCallback(async () => {
-    setIsLoading(true);
-    
-    // 보관된 세그먼트가 있으면 먼저 사용
-    if (nextColdStartSegment) {
-      console.log("[useColdStart] Using stored cold start segment");
-      const initialSegment = nextColdStartSegment;
-      setNextColdStartSegment(null);
-      
-      setMoodStream({
-        streamId: `stream-${Date.now()}`,
-        currentMood: initialSegment.mood,
-        segments: [initialSegment],
-        createdAt: Date.now(),
-        userDataCount: 0,
-      });
-      setCurrentSegmentIndex(0);
+    if (sessionStatus === "unauthenticated") {
       setIsLoading(false);
-      
-      // 백그라운드에서 나머지 세그먼트 생성
-      generateBackgroundSegments();
       return;
     }
     
+    setIsLoading(true);
+    
     try {
-      // API 호출 시도
-      const response = await fetch("/api/moods/current", {
+      // API를 통해 서버 사이드에서 캐롤 세그먼트 3개 가져오기
+      const response = await fetch("/api/moods/carol-segments", {
         credentials: "include",
       });
       
-      // 401 에러 시 로그인 페이지로 리다이렉트
-      if (response.status === 401) {
-        window.location.href = "/login";
-        return;
-      }
-      
-      let initialSegment: MoodStreamSegment;
-
       if (response.ok) {
         const data = await response.json();
+        const carolSegments: MoodStreamSegment[] = data.segments || [];
         
-        // API 응답이 유효하면 첫 번째 세그먼트 사용
-        if (data.currentMood && data.moodStream && Array.isArray(data.moodStream) && data.moodStream.length > 0) {
-          initialSegment = data.moodStream[0];
+        if (carolSegments.length > 0) {
+          setMoodStream({
+            streamId: `stream-${Date.now()}`,
+            currentMood: carolSegments[0].mood,
+            segments: carolSegments, // 3개 캐롤 세그먼트
+            createdAt: Date.now(),
+            userDataCount: 0,
+          });
+          setCurrentSegmentIndex(0);
         } else {
-          // API 응답이 유효하지 않으면 목업 초기 세그먼트 사용
-          initialSegment = getInitialColdStartSegment();
+          console.error("[useColdStart] 캐롤 세그먼트를 가져올 수 없습니다");
         }
       } else {
-        // API 호출 실패 시 목업 초기 세그먼트 사용
-        initialSegment = getInitialColdStartSegment();
+        console.error("[useColdStart] API 호출 실패:", response.status);
       }
-      
-      // 1개 세그먼트 즉시 표시
-      setMoodStream({
-        streamId: `stream-${Date.now()}`,
-        currentMood: initialSegment.mood,
-        segments: [initialSegment],
-        createdAt: Date.now(),
-        userDataCount: 0,
-      });
-      setCurrentSegmentIndex(0);
-      
-      console.log("[useColdStart] Initial cold start segment displayed. Starting background generation...");
-      
     } catch (error) {
-      console.error("[useColdStart] Error in initial fetch, using cold start segment:", error);
-      // 에러 발생 시 목업 초기 세그먼트 사용
-      const initialSegment = getInitialColdStartSegment();
-      setMoodStream({
-        streamId: `stream-${Date.now()}`,
-        currentMood: initialSegment.mood,
-        segments: [initialSegment],
-        createdAt: Date.now(),
-        userDataCount: 0,
-      });
-      setCurrentSegmentIndex(0);
+      console.error("[useColdStart] 캐롤 세그먼트 로드 실패:", error);
     } finally {
       setIsLoading(false);
-      
-      // 백그라운드에서 나머지 세그먼트 생성 시작
-      generateBackgroundSegments();
     }
   }, [
-    nextColdStartSegment,
-    generateBackgroundSegments,
     setMoodStream,
     setCurrentSegmentIndex,
     setIsLoading,
-    setNextColdStartSegment,
+    sessionStatus,
   ]);
 
   return {
