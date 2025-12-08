@@ -1,14 +1,10 @@
-// ======================================================
-// File: src/app/(main)/mypage/components/ProfileSection.tsx
-// ======================================================
-
-/*
-  [ProfileSection 역할]
-  
-  - 프로필 정보 표시 및 편집 UI
-  - 프로필 이미지 업로드
-  - 이름 편집 기능
-*/
+/**
+ * ProfileSection
+ * 
+ * 프로필 정보 표시 및 편집 UI
+ * 프로필 이미지 업로드
+ * 이름 편집 기능
+ */
 
 "use client";
 
@@ -74,7 +70,9 @@ export default function ProfileSection({
 }: ProfileSectionProps) {
   const [isLoading, setIsLoading] = useState(true);
 
-  // 초기 로딩 시뮬레이션 (실제로는 API 호출 시 사용)
+  /**
+   * 초기 로딩 시뮬레이션 (실제로는 API 호출 시 사용)
+   */
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -82,7 +80,6 @@ export default function ProfileSection({
     return () => clearTimeout(timer);
   }, []);
 
-  // 로딩 중 스켈레톤 표시
   if (isLoading && !profile) {
     return (
       <div className="bg-white border-b border-gray-200 px-4 py-6">
@@ -200,15 +197,12 @@ export default function ProfileSection({
         </div>
       </div>
 
-      {/* Profile Details */}
       <div className="space-y-3">
-        {/* Email (읽기 전용) */}
         <div className="flex items-center text-sm">
           <Mail size={16} className="text-gray-400 mr-3" />
           <span className="text-gray-600">{profile?.email}</span>
         </div>
 
-        {/* Social Account (읽기 전용) */}
         {profile?.provider && (
           <div className="flex items-center text-sm">
             <User size={16} className="text-gray-400 mr-3" />
@@ -218,7 +212,6 @@ export default function ProfileSection({
           </div>
         )}
 
-        {/* Birth Date */}
         <div className="flex items-center text-sm">
           <Calendar size={16} className="text-gray-400 mr-3 flex-shrink-0" />
           {isEditingProfile ? (
@@ -241,7 +234,6 @@ export default function ProfileSection({
           )}
         </div>
 
-        {/* Gender */}
         <div className="flex items-center text-sm">
           <User size={16} className="text-gray-400 mr-3 flex-shrink-0" />
           {isEditingProfile ? (
@@ -274,7 +266,6 @@ export default function ProfileSection({
           )}
         </div>
 
-        {/* Phone 필드는 서비스 정책상 수집하지 않으므로 UI에서 숨김 (API 구조는 유지) */}
       </div>
     </div>
   );

@@ -1,606 +1,606 @@
 {
   "version": "2.0.0",
-  "lastUpdated": "2025-12-05",
+  "lastUpdated": "2025-12-07",
   "tracks": [
     {
       "musicID": 10,
       "genre": "Balad",
-      "title": "Balad 1",
-      "mp3Url": "/musics/Balad/Balad_1.mp3",
-      "imageUrl": "/musics_img/Balad/Balad_1.png",
-      "artist": "Unknown",
-      "description": "Balad 1 by Unknown - balad music",
-      "duration": 180
+      "title": "A glass of soju",
+      "mp3Url": "/album/Balad/Balad_01.mp3",
+      "imageUrl": "/album/Balad/A glass of soju.png",
+      "artist": "Lim Changjung",
+      "description": "A heartfelt ballad capturing the pain of love poured out like a glass of soju.",
+      "duration": 291
     },
     {
       "musicID": 11,
       "genre": "Balad",
-      "title": "Balad 10",
-      "mp3Url": "/musics/Balad/Balad_10.mp3",
-      "imageUrl": "/musics_img/Balad/Balad_10.png",
-      "artist": "Unknown",
-      "description": "Balad 10 by Unknown - balad music",
-      "duration": 180
+      "title": "Because I Don't Love You",
+      "mp3Url": "/album/Balad/Balad_02.mp3",
+      "imageUrl": "/album/Balad/Because I Don't Love You.png",
+      "artist": "Onestar",
+      "description": "A sorrowful confession of drifting feelings and the heartbreak of letting go.",
+      "duration": 224
     },
     {
       "musicID": 12,
       "genre": "Balad",
-      "title": "Balad 2",
-      "mp3Url": "/musics/Balad/Balad_2.mp3",
-      "imageUrl": "/musics_img/Balad/Balad_2.png",
-      "artist": "Unknown",
-      "description": "Balad 2 by Unknown - balad music",
-      "duration": 180
+      "title": "How can I love the heartbreak, you're the one I love",
+      "mp3Url": "/album/Balad/Balad_03.mp3",
+      "imageUrl": "/album/Balad/How can I love the heartbreak, you're the one I love.png",
+      "artist": "AKMU",
+      "description": "A tender song about loving someone so deeply that even heartbreak feels like love.",
+      "duration": 290
     },
     {
       "musicID": 13,
       "genre": "Balad",
-      "title": "Balad 3",
-      "mp3Url": "/musics/Balad/Balad_3.mp3",
-      "imageUrl": "/musics_img/Balad/Balad_3.png",
-      "artist": "Unknown",
-      "description": "Balad 3 by Unknown - balad music",
-      "duration": 180
+      "title": "If",
+      "mp3Url": "/album/Balad/Balad_04.mp3",
+      "imageUrl": "/album/Balad/If.png",
+      "artist": "Taeyeon",
+      "description": "A soft and emotional reflection on unspoken feelings and fragile longing.",
+      "duration": 260
     },
     {
       "musicID": 14,
       "genre": "Balad",
-      "title": "Balad 4",
-      "mp3Url": "/musics/Balad/Balad_4.mp3",
-      "imageUrl": "/musics_img/Balad/Balad_4.png",
-      "artist": "Unknown",
-      "description": "Balad 4 by Unknown - balad music",
-      "duration": 180
+      "title": "If I Love You Again",
+      "mp3Url": "/album/Balad/Balad_05.mp3",
+      "imageUrl": "/album/Balad/If I Love You Again.png",
+      "artist": "Kim Pil",
+      "description": "A soulful plea wondering whether love could bloom again if given another chance.",
+      "duration": 242
     },
     {
       "musicID": 15,
       "genre": "Balad",
-      "title": "Balad 5",
-      "mp3Url": "/musics/Balad/Balad_5.mp3",
-      "imageUrl": "/musics_img/Balad/Balad_5.png",
-      "artist": "Unknown",
-      "description": "Balad 5 by Unknown - balad music",
-      "duration": 180
+      "title": "In my dream",
+      "mp3Url": "/album/Balad/Balad_06.mp3",
+      "imageUrl": "/album/Balad/In my dream.png",
+      "artist": "Park Jeonghyun",
+      "description": "A dreamy, powerful ballad about holding onto love that lives only in memories.",
+      "duration": 337
     },
     {
       "musicID": 16,
       "genre": "Balad",
-      "title": "Balad 6",
-      "mp3Url": "/musics/Balad/Balad_6.mp3",
-      "imageUrl": "/musics_img/Balad/Balad_6.png",
-      "artist": "Unknown",
-      "description": "Balad 6 by Unknown - balad music",
-      "duration": 180
+      "title": "Memories of the Wind",
+      "mp3Url": "/album/Balad/Balad_07.mp3",
+      "imageUrl": "/album/Balad/Memories of the Wind.png",
+      "artist": "Naul",
+      "description": "A nostalgic song that drifts through past love like wind carrying old memories.",
+      "duration": 308
     },
     {
       "musicID": 17,
       "genre": "Balad",
-      "title": "Balad 7",
-      "mp3Url": "/musics/Balad/Balad_7.mp3",
-      "imageUrl": "/musics_img/Balad/Balad_7.png",
-      "artist": "Unknown",
-      "description": "Balad 7 by Unknown - balad music",
-      "duration": 180
+      "title": "The Way to Me",
+      "mp3Url": "/album/Balad/Balad_08.mp3",
+      "imageUrl": "/album/Balad/The Way to Me.png",
+      "artist": "Seong Sikyung",
+      "description": "A warm, comforting ballad about finding the path back to someone's heart.",
+      "duration": 240
     },
     {
       "musicID": 18,
       "genre": "Balad",
-      "title": "Balad 8",
-      "mp3Url": "/musics/Balad/Balad_8.mp3",
-      "imageUrl": "/musics_img/Balad/Balad_8.png",
-      "artist": "Unknown",
-      "description": "Balad 8 by Unknown - balad music",
-      "duration": 180
+      "title": "White",
+      "mp3Url": "/album/Balad/Balad_09.mp3",
+      "imageUrl": "/album/Balad/White.png",
+      "artist": "Paul Kim",
+      "description": "A gentle winter-like song that expresses pure, quiet affection.",
+      "duration": 236
     },
     {
       "musicID": 19,
       "genre": "Balad",
-      "title": "Balad 9",
-      "mp3Url": "/musics/Balad/Balad_9.mp3",
-      "imageUrl": "/musics_img/Balad/Balad_9.png",
-      "artist": "Unknown",
-      "description": "Balad 9 by Unknown - balad music",
-      "duration": 180
-    },
-    {
-      "musicID": 60,
-      "genre": "Carol",
-      "title": "Carol 1",
-      "mp3Url": "/musics/Carol/Carol_1.mp3",
-      "imageUrl": "/musics_img/Carol/Carol_1.png",
-      "artist": "Unknown",
-      "description": "Carol 1 by Unknown - carol music",
-      "duration": 180
-    },
-    {
-      "musicID": 61,
-      "genre": "Carol",
-      "title": "Carol 10",
-      "mp3Url": "/musics/Carol/Carol_10.mp3",
-      "imageUrl": "/musics_img/Carol/Carol_10.png",
-      "artist": "Unknown",
-      "description": "Carol 10 by Unknown - carol music",
-      "duration": 180
-    },
-    {
-      "musicID": 62,
-      "genre": "Carol",
-      "title": "Carol 2",
-      "mp3Url": "/musics/Carol/Carol_2.mp3",
-      "imageUrl": "/musics_img/Carol/Carol_2.png",
-      "artist": "Unknown",
-      "description": "Carol 2 by Unknown - carol music",
-      "duration": 180
-    },
-    {
-      "musicID": 63,
-      "genre": "Carol",
-      "title": "Carol 3",
-      "mp3Url": "/musics/Carol/Carol_3.mp3",
-      "imageUrl": "/musics_img/Carol/Carol_3.png",
-      "artist": "Unknown",
-      "description": "Carol 3 by Unknown - carol music",
-      "duration": 180
-    },
-    {
-      "musicID": 64,
-      "genre": "Carol",
-      "title": "Carol 4",
-      "mp3Url": "/musics/Carol/Carol_4.mp3",
-      "imageUrl": "/musics_img/Carol/Carol_4.png",
-      "artist": "Unknown",
-      "description": "Carol 4 by Unknown - carol music",
-      "duration": 180
-    },
-    {
-      "musicID": 65,
-      "genre": "Carol",
-      "title": "Carol 5",
-      "mp3Url": "/musics/Carol/Carol_5.mp3",
-      "imageUrl": "/musics_img/Carol/Carol_5.png",
-      "artist": "Unknown",
-      "description": "Carol 5 by Unknown - carol music",
-      "duration": 180
-    },
-    {
-      "musicID": 66,
-      "genre": "Carol",
-      "title": "Carol 6",
-      "mp3Url": "/musics/Carol/Carol_6.mp3",
-      "imageUrl": "/musics_img/Carol/Carol_6.png",
-      "artist": "Unknown",
-      "description": "Carol 6 by Unknown - carol music",
-      "duration": 180
-    },
-    {
-      "musicID": 67,
-      "genre": "Carol",
-      "title": "Carol 7",
-      "mp3Url": "/musics/Carol/Carol_7.mp3",
-      "imageUrl": "/musics_img/Carol/Carol_7.png",
-      "artist": "Unknown",
-      "description": "Carol 7 by Unknown - carol music",
-      "duration": 180
-    },
-    {
-      "musicID": 68,
-      "genre": "Carol",
-      "title": "Carol 8",
-      "mp3Url": "/musics/Carol/Carol_8.mp3",
-      "imageUrl": "/musics_img/Carol/Carol_8.png",
-      "artist": "Unknown",
-      "description": "Carol 8 by Unknown - carol music",
-      "duration": 180
-    },
-    {
-      "musicID": 69,
-      "genre": "Carol",
-      "title": "Carol 9",
-      "mp3Url": "/musics/Carol/Carol_9.mp3",
-      "imageUrl": "/musics_img/Carol/Carol_9.png",
-      "artist": "Unknown",
-      "description": "Carol 9 by Unknown - carol music",
-      "duration": 180
-    },
-    {
-      "musicID": 30,
-      "genre": "Classic",
-      "title": "Classic 1",
-      "mp3Url": "/musics/Classic/Classic_1.mp3",
-      "imageUrl": "/musics_img/Classic/Classic_1.png",
-      "artist": "Unknown",
-      "description": "Classic 1 by Unknown - classic music",
-      "duration": 180
-    },
-    {
-      "musicID": 31,
-      "genre": "Classic",
-      "title": "Classic 10",
-      "mp3Url": "/musics/Classic/Classic_10.mp3",
-      "imageUrl": "/musics_img/Classic/Classic_10.png",
-      "artist": "Unknown",
-      "description": "Classic 10 by Unknown - classic music",
-      "duration": 180
-    },
-    {
-      "musicID": 32,
-      "genre": "Classic",
-      "title": "Classic 2",
-      "mp3Url": "/musics/Classic/Classic_2.mp3",
-      "imageUrl": "/musics_img/Classic/Classic_2.png",
-      "artist": "Unknown",
-      "description": "Classic 2 by Unknown - classic music",
-      "duration": 180
-    },
-    {
-      "musicID": 33,
-      "genre": "Classic",
-      "title": "Classic 3",
-      "mp3Url": "/musics/Classic/Classic_3.mp3",
-      "imageUrl": "/musics_img/Classic/Classic_3.png",
-      "artist": "Unknown",
-      "description": "Classic 3 by Unknown - classic music",
-      "duration": 180
-    },
-    {
-      "musicID": 34,
-      "genre": "Classic",
-      "title": "Classic 4",
-      "mp3Url": "/musics/Classic/Classic_4.mp3",
-      "imageUrl": "/musics_img/Classic/Classic_4.png",
-      "artist": "Unknown",
-      "description": "Classic 4 by Unknown - classic music",
-      "duration": 180
-    },
-    {
-      "musicID": 35,
-      "genre": "Classic",
-      "title": "Classic 5",
-      "mp3Url": "/musics/Classic/Classic_5.mp3",
-      "imageUrl": "/musics_img/Classic/Classic_5.png",
-      "artist": "Unknown",
-      "description": "Classic 5 by Unknown - classic music",
-      "duration": 180
-    },
-    {
-      "musicID": 36,
-      "genre": "Classic",
-      "title": "Classic 6",
-      "mp3Url": "/musics/Classic/Classic_6.mp3",
-      "imageUrl": "/musics_img/Classic/Classic_6.png",
-      "artist": "Unknown",
-      "description": "Classic 6 by Unknown - classic music",
-      "duration": 180
-    },
-    {
-      "musicID": 37,
-      "genre": "Classic",
-      "title": "Classic 7",
-      "mp3Url": "/musics/Classic/Classic_7.mp3",
-      "imageUrl": "/musics_img/Classic/Classic_7.png",
-      "artist": "Unknown",
-      "description": "Classic 7 by Unknown - classic music",
-      "duration": 180
-    },
-    {
-      "musicID": 38,
-      "genre": "Classic",
-      "title": "Classic 8",
-      "mp3Url": "/musics/Classic/Classic_8.mp3",
-      "imageUrl": "/musics_img/Classic/Classic_8.png",
-      "artist": "Unknown",
-      "description": "Classic 8 by Unknown - classic music",
-      "duration": 180
-    },
-    {
-      "musicID": 39,
-      "genre": "Classic",
-      "title": "Classic 9",
-      "mp3Url": "/musics/Classic/Classic_9.mp3",
-      "imageUrl": "/musics_img/Classic/Classic_9.png",
-      "artist": "Unknown",
-      "description": "Classic 9 by Unknown - classic music",
-      "duration": 180
-    },
-    {
-      "musicID": 50,
-      "genre": "Hiphop",
-      "title": "Hiphop 1",
-      "mp3Url": "/musics/Hiphop/Hiphop_1.mp3",
-      "imageUrl": "/musics_img/Hiphop/Hiphop_1.png",
-      "artist": "Unknown",
-      "description": "Hiphop 1 by Unknown - hiphop music",
-      "duration": 180
-    },
-    {
-      "musicID": 51,
-      "genre": "Hiphop",
-      "title": "Hiphop 10",
-      "mp3Url": "/musics/Hiphop/Hiphop_10.mp3",
-      "imageUrl": "/musics_img/Hiphop/Hiphop_10.png",
-      "artist": "Unknown",
-      "description": "Hiphop 10 by Unknown - hiphop music",
-      "duration": 180
-    },
-    {
-      "musicID": 52,
-      "genre": "Hiphop",
-      "title": "Hiphop 2",
-      "mp3Url": "/musics/Hiphop/Hiphop_2.mp3",
-      "imageUrl": "/musics_img/Hiphop/Hiphop_2.png",
-      "artist": "Unknown",
-      "description": "Hiphop 2 by Unknown - hiphop music",
-      "duration": 180
-    },
-    {
-      "musicID": 53,
-      "genre": "Hiphop",
-      "title": "Hiphop 3",
-      "mp3Url": "/musics/Hiphop/Hiphop_3.mp3",
-      "imageUrl": "/musics_img/Hiphop/Hiphop_3.png",
-      "artist": "Unknown",
-      "description": "Hiphop 3 by Unknown - hiphop music",
-      "duration": 180
-    },
-    {
-      "musicID": 54,
-      "genre": "Hiphop",
-      "title": "Hiphop 4",
-      "mp3Url": "/musics/Hiphop/Hiphop_4.mp3",
-      "imageUrl": "/musics_img/Hiphop/Hiphop_4.png",
-      "artist": "Unknown",
-      "description": "Hiphop 4 by Unknown - hiphop music",
-      "duration": 180
-    },
-    {
-      "musicID": 55,
-      "genre": "Hiphop",
-      "title": "Hiphop 5",
-      "mp3Url": "/musics/Hiphop/Hiphop_5.mp3",
-      "imageUrl": "/musics_img/Hiphop/Hiphop_5.png",
-      "artist": "Unknown",
-      "description": "Hiphop 5 by Unknown - hiphop music",
-      "duration": 180
-    },
-    {
-      "musicID": 56,
-      "genre": "Hiphop",
-      "title": "Hiphop 6",
-      "mp3Url": "/musics/Hiphop/Hiphop_6.mp3",
-      "imageUrl": "/musics_img/Hiphop/Hiphop_6.png",
-      "artist": "Unknown",
-      "description": "Hiphop 6 by Unknown - hiphop music",
-      "duration": 180
-    },
-    {
-      "musicID": 57,
-      "genre": "Hiphop",
-      "title": "Hiphop 7",
-      "mp3Url": "/musics/Hiphop/Hiphop_7.mp3",
-      "imageUrl": "/musics_img/Hiphop/Hiphop_7.png",
-      "artist": "Unknown",
-      "description": "Hiphop 7 by Unknown - hiphop music",
-      "duration": 180
-    },
-    {
-      "musicID": 58,
-      "genre": "Hiphop",
-      "title": "Hiphop 8",
-      "mp3Url": "/musics/Hiphop/Hiphop_8.mp3",
-      "imageUrl": "/musics_img/Hiphop/Hiphop_8.png",
-      "artist": "Unknown",
-      "description": "Hiphop 8 by Unknown - hiphop music",
-      "duration": 180
-    },
-    {
-      "musicID": 59,
-      "genre": "Hiphop",
-      "title": "Hiphop 9",
-      "mp3Url": "/musics/Hiphop/Hiphop_9.mp3",
-      "imageUrl": "/musics_img/Hiphop/Hiphop_9.png",
-      "artist": "Unknown",
-      "description": "Hiphop 9 by Unknown - hiphop music",
-      "duration": 180
-    },
-    {
-      "musicID": 40,
-      "genre": "Jazz",
-      "title": "Jazz 1",
-      "mp3Url": "/musics/Jazz/Jazz_1.mp3",
-      "imageUrl": "/musics_img/Jazz/Jazz_1.png",
-      "artist": "Unknown",
-      "description": "Jazz 1 by Unknown - jazz music",
-      "duration": 180
-    },
-    {
-      "musicID": 41,
-      "genre": "Jazz",
-      "title": "Jazz 10",
-      "mp3Url": "/musics/Jazz/Jazz_10.mp3",
-      "imageUrl": "/musics_img/Jazz/Jazz_10.png",
-      "artist": "Unknown",
-      "description": "Jazz 10 by Unknown - jazz music",
-      "duration": 180
-    },
-    {
-      "musicID": 42,
-      "genre": "Jazz",
-      "title": "Jazz 2",
-      "mp3Url": "/musics/Jazz/Jazz_2.mp3",
-      "imageUrl": "/musics_img/Jazz/Jazz_2.png",
-      "artist": "Unknown",
-      "description": "Jazz 2 by Unknown - jazz music",
-      "duration": 180
-    },
-    {
-      "musicID": 43,
-      "genre": "Jazz",
-      "title": "Jazz 3",
-      "mp3Url": "/musics/Jazz/Jazz_3.mp3",
-      "imageUrl": "/musics_img/Jazz/Jazz_3.png",
-      "artist": "Unknown",
-      "description": "Jazz 3 by Unknown - jazz music",
-      "duration": 180
-    },
-    {
-      "musicID": 44,
-      "genre": "Jazz",
-      "title": "Jazz 4",
-      "mp3Url": "/musics/Jazz/Jazz_4.mp3",
-      "imageUrl": "/musics_img/Jazz/Jazz_4.png",
-      "artist": "Unknown",
-      "description": "Jazz 4 by Unknown - jazz music",
-      "duration": 180
-    },
-    {
-      "musicID": 45,
-      "genre": "Jazz",
-      "title": "Jazz 5",
-      "mp3Url": "/musics/Jazz/Jazz_5.mp3",
-      "imageUrl": "/musics_img/Jazz/Jazz_5.png",
-      "artist": "Unknown",
-      "description": "Jazz 5 by Unknown - jazz music",
-      "duration": 180
-    },
-    {
-      "musicID": 46,
-      "genre": "Jazz",
-      "title": "Jazz 6",
-      "mp3Url": "/musics/Jazz/Jazz_6.mp3",
-      "imageUrl": "/musics_img/Jazz/Jazz_6.png",
-      "artist": "Unknown",
-      "description": "Jazz 6 by Unknown - jazz music",
-      "duration": 180
-    },
-    {
-      "musicID": 47,
-      "genre": "Jazz",
-      "title": "Jazz 7",
-      "mp3Url": "/musics/Jazz/Jazz_7.mp3",
-      "imageUrl": "/musics_img/Jazz/Jazz_7.png",
-      "artist": "Unknown",
-      "description": "Jazz 7 by Unknown - jazz music",
-      "duration": 180
-    },
-    {
-      "musicID": 48,
-      "genre": "Jazz",
-      "title": "Jazz 8",
-      "mp3Url": "/musics/Jazz/Jazz_8.mp3",
-      "imageUrl": "/musics_img/Jazz/Jazz_8.png",
-      "artist": "Unknown",
-      "description": "Jazz 8 by Unknown - jazz music",
-      "duration": 180
-    },
-    {
-      "musicID": 49,
-      "genre": "Jazz",
-      "title": "Jazz 9",
-      "mp3Url": "/musics/Jazz/Jazz_9.mp3",
-      "imageUrl": "/musics_img/Jazz/Jazz_9.png",
-      "artist": "Unknown",
-      "description": "Jazz 9 by Unknown - jazz music",
-      "duration": 180
+      "title": "Wildflower",
+      "mp3Url": "/album/Balad/Balad_10.mp3",
+      "imageUrl": "/album/Balad/Wildflower.png",
+      "artist": "Park Hyoshin",
+      "description": "A soaring emotional ballad symbolizing resilience and love blooming through hardship.",
+      "duration": 312
     },
     {
       "musicID": 20,
       "genre": "Pop",
-      "title": "Pop 1",
-      "mp3Url": "/musics/Pop/Pop_1.mp3",
-      "imageUrl": "/musics_img/Pop/Pop_1.png",
-      "artist": "Unknown",
-      "description": "Pop 1 by Unknown - pop music",
-      "duration": 180
+      "title": "A sky full of stars",
+      "mp3Url": "/album/Pop/Pop_01.mp3",
+      "imageUrl": "/album/Pop/A sky full of stars.png",
+      "artist": "Coldplay",
+      "description": "An uplifting, cosmic love anthem bursting with brightness and emotion.",
+      "duration": 275
     },
     {
       "musicID": 21,
       "genre": "Pop",
-      "title": "Pop 10",
-      "mp3Url": "/musics/Pop/Pop_10.mp3",
-      "imageUrl": "/musics_img/Pop/Pop_10.png",
-      "artist": "Unknown",
-      "description": "Pop 10 by Unknown - pop music",
-      "duration": 180
+      "title": "Believer",
+      "mp3Url": "/album/Pop/Pop_02.mp3",
+      "imageUrl": "/album/Pop/Believer.png",
+      "artist": "Imagine Dragons",
+      "description": "A powerful, explosive track about turning pain into strength and self-belief.",
+      "duration": 204
     },
     {
       "musicID": 22,
       "genre": "Pop",
-      "title": "Pop 2",
-      "mp3Url": "/musics/Pop/Pop_2.mp3",
-      "imageUrl": "/musics_img/Pop/Pop_2.png",
-      "artist": "Unknown",
-      "description": "Pop 2 by Unknown - pop music",
-      "duration": 180
+      "title": "Chandelier",
+      "mp3Url": "/album/Pop/Pop_03.mp3",
+      "imageUrl": "/album/Pop/Chandelier.png",
+      "artist": "Sia",
+      "description": "A dramatic pop masterpiece capturing the struggle behind wild, reckless escape.",
+      "duration": 216
     },
     {
       "musicID": 23,
       "genre": "Pop",
-      "title": "Pop 3",
-      "mp3Url": "/musics/Pop/Pop_3.mp3",
-      "imageUrl": "/musics_img/Pop/Pop_3.png",
-      "artist": "Unknown",
-      "description": "Pop 3 by Unknown - pop music",
-      "duration": 180
+      "title": "Cruel Summer",
+      "mp3Url": "/album/Pop/Pop_04.mp3",
+      "imageUrl": "/album/Pop/Cruel Summer.png",
+      "artist": "Taylor Swift",
+      "description": "A passionate, fast-paced pop track about forbidden love and overwhelming desire.",
+      "duration": 179
     },
     {
       "musicID": 24,
       "genre": "Pop",
-      "title": "Pop 4",
-      "mp3Url": "/musics/Pop/Pop_4.mp3",
-      "imageUrl": "/musics_img/Pop/Pop_4.png",
-      "artist": "Unknown",
-      "description": "Pop 4 by Unknown - pop music",
-      "duration": 180
+      "title": "Die with a smile",
+      "mp3Url": "/album/Pop/Pop_05.mp3",
+      "imageUrl": "/album/Pop/Die with a smile.png",
+      "artist": "Lady Gaga, Bruno Mars",
+      "description": "A romantic duet expressing the wish to cherish love until the very last moment.",
+      "duration": 252
     },
     {
       "musicID": 25,
       "genre": "Pop",
-      "title": "Pop 5",
-      "mp3Url": "/musics/Pop/Pop_5.mp3",
-      "imageUrl": "/musics_img/Pop/Pop_5.png",
-      "artist": "Unknown",
-      "description": "Pop 5 by Unknown - pop music",
-      "duration": 180
+      "title": "Golden",
+      "mp3Url": "/album/Pop/Pop_06.mp3",
+      "imageUrl": "/album/Pop/Golden.png",
+      "artist": "HunterX",
+      "description": "A bright, energetic pop tune radiating confidence and feel-good warmth.",
+      "duration": 195
     },
     {
       "musicID": 26,
       "genre": "Pop",
-      "title": "Pop 6",
-      "mp3Url": "/musics/Pop/Pop_6.mp3",
-      "imageUrl": "/musics_img/Pop/Pop_6.png",
-      "artist": "Unknown",
-      "description": "Pop 6 by Unknown - pop music",
-      "duration": 180
+      "title": "Peaches",
+      "mp3Url": "/album/Pop/Pop_07.mp3",
+      "imageUrl": "/album/Pop/Peaches.png",
+      "artist": "Justin Bieber",
+      "description": "A smooth, catchy groove celebrating love, good vibes, and carefree moments.",
+      "duration": 198
     },
     {
       "musicID": 27,
       "genre": "Pop",
-      "title": "Pop 7",
-      "mp3Url": "/musics/Pop/Pop_7.mp3",
-      "imageUrl": "/musics_img/Pop/Pop_7.png",
-      "artist": "Unknown",
-      "description": "Pop 7 by Unknown - pop music",
-      "duration": 180
+      "title": "Stay",
+      "mp3Url": "/album/Pop/Pop_08.mp3",
+      "imageUrl": "/album/Pop/Stay.png",
+      "artist": "The Kid LAROI, Justin Bieber",
+      "description": "An emotional, high-energy pop track pleading for a love that feels impossible to let go.",
+      "duration": 140
     },
     {
       "musicID": 28,
       "genre": "Pop",
-      "title": "Pop 8",
-      "mp3Url": "/musics/Pop/Pop_8.mp3",
-      "imageUrl": "/musics_img/Pop/Pop_8.png",
-      "artist": "Unknown",
-      "description": "Pop 8 by Unknown - pop music",
-      "duration": 180
+      "title": "Sugar",
+      "mp3Url": "/album/Pop/Pop_09.mp3",
+      "imageUrl": "/album/Pop/Sugar.png",
+      "artist": "Maroon5",
+      "description": "A sweet, feel-good pop hit overflowing with charm and lighthearted romance.",
+      "duration": 264
     },
     {
       "musicID": 29,
       "genre": "Pop",
-      "title": "Pop 9",
-      "mp3Url": "/musics/Pop/Pop_9.mp3",
-      "imageUrl": "/musics_img/Pop/Pop_9.png",
-      "artist": "Unknown",
-      "description": "Pop 9 by Unknown - pop music",
-      "duration": 180
+      "title": "Uptown Funk",
+      "mp3Url": "/album/Pop/Pop_10.mp3",
+      "imageUrl": "/album/Pop/Uptown Funk.png",
+      "artist": "Mark Ronson",
+      "description": "A funky, infectious party anthem packed with swagger and irresistible groove.",
+      "duration": 268
+    },
+    {
+      "musicID": 30,
+      "genre": "Classic",
+      "title": "All of Me",
+      "mp3Url": "/album/Classic/Classic_01.mp3",
+      "imageUrl": "/album/Classic/All of Me.png",
+      "artist": "Jon Schmidt",
+      "description": "An expressive piano piece blending passion and playfulness in a dynamic flow.",
+      "duration": 179
+    },
+    {
+      "musicID": 31,
+      "genre": "Classic",
+      "title": "Flower Dance",
+      "mp3Url": "/album/Classic/Classic_02.mp3",
+      "imageUrl": "/album/Classic/Flower Dance.png",
+      "artist": "DJ Okawari",
+      "description": "A gentle, melodic track that moves gracefully like petals dancing in the wind.",
+      "duration": 264
+    },
+    {
+      "musicID": 32,
+      "genre": "Classic",
+      "title": "Kiss the rain",
+      "mp3Url": "/album/Classic/Classic_03.mp3",
+      "imageUrl": "/album/Classic/Kiss the rain.png",
+      "artist": "Yiruma",
+      "description": "A soft, emotional piano piece evoking quiet longing and peaceful reflection.",
+      "duration": 300
+    },
+    {
+      "musicID": 33,
+      "genre": "Classic",
+      "title": "La Campanella",
+      "mp3Url": "/album/Classic/Classic_04.mp3",
+      "imageUrl": "/album/Classic/La Campanella.png",
+      "artist": "Liszts",
+      "description": "A dazzling virtuoso showpiece known for its sparkling, bell-like brilliance.",
+      "duration": 275
+    },
+    {
+      "musicID": 34,
+      "genre": "Classic",
+      "title": "May Be",
+      "mp3Url": "/album/Classic/Classic_05.mp3",
+      "imageUrl": "/album/Classic/May Be.png",
+      "artist": "Yiruma",
+      "description": "A warm and delicate melody capturing innocence, hope, and simple beauty.",
+      "duration": 241
+    },
+    {
+      "musicID": 35,
+      "genre": "Classic",
+      "title": "Moonlight Sonata 3rdmovement",
+      "mp3Url": "/album/Classic/Classic_06.mp3",
+      "imageUrl": "/album/Classic/Moonlight Sonata 3rdmovement.png",
+      "artist": "Beethoven",
+      "description": "A stormy, intense movement filled with driving energy and dramatic passion.",
+      "duration": 387
+    },
+    {
+      "musicID": 36,
+      "genre": "Classic",
+      "title": "Revolutionary",
+      "mp3Url": "/album/Classic/Classic_07.mp3",
+      "imageUrl": "/album/Classic/Revolutionary.png",
+      "artist": "Chopin",
+      "description": "A fierce, powerful étude showcasing rapid left-hand runs and emotional urgency.",
+      "duration": 154
+    },
+    {
+      "musicID": 37,
+      "genre": "Classic",
+      "title": "River flows in you",
+      "mp3Url": "/album/Classic/Classic_08.mp3",
+      "imageUrl": "/album/Classic/River flows in you.png",
+      "artist": "Yiruma",
+      "description": "A soothing, flowing piano melody that feels intimate, warm, and timeless.",
+      "duration": 189
+    },
+    {
+      "musicID": 38,
+      "genre": "Classic",
+      "title": "Torrent",
+      "mp3Url": "/album/Classic/Classic_09.mp3",
+      "imageUrl": "/album/Classic/Torrent.png",
+      "artist": "Chopin",
+      "description": "A fast, cascading étude bursting with momentum and virtuosic intensity.",
+      "duration": 114
+    },
+    {
+      "musicID": 39,
+      "genre": "Classic",
+      "title": "Waterfall",
+      "mp3Url": "/album/Classic/Classic_10.mp3",
+      "imageUrl": "/album/Classic/Waterfall.png",
+      "artist": "Jon Schmidt",
+      "description": "A vibrant piano composition rushing forward with rhythmic power and clarity.",
+      "duration": 181
+    },
+    {
+      "musicID": 40,
+      "genre": "Jazz",
+      "title": "Autumn Leaves",
+      "mp3Url": "/album/Jazz/Jazz_01.mp3",
+      "imageUrl": "/album/Jazz/Autumn Leaves.png",
+      "artist": "Chet Baker",
+      "description": "A melancholic jazz classic drifting through memories like falling autumn leaves.",
+      "duration": 422
+    },
+    {
+      "musicID": 41,
+      "genre": "Jazz",
+      "title": "Blue in green",
+      "mp3Url": "/album/Jazz/Jazz_02.mp3",
+      "imageUrl": "/album/Jazz/Blue in green.png",
+      "artist": "Miles Davis",
+      "description": "A beautifully haunting, atmospheric ballad filled with deep introspection.",
+      "duration": 339
+    },
+    {
+      "musicID": 42,
+      "genre": "Jazz",
+      "title": "Don't worry be happy",
+      "mp3Url": "/album/Jazz/Jazz_03.mp3",
+      "imageUrl": "/album/Jazz/Don't worry be happy.png",
+      "artist": "Bobby McFerrin",
+      "description": "A lighthearted vocal jazz tune reminding you to let go and embrace simple joy.",
+      "duration": 232
+    },
+    {
+      "musicID": 43,
+      "genre": "Jazz",
+      "title": "Fly me to the moon",
+      "mp3Url": "/album/Jazz/Jazz_04.mp3",
+      "imageUrl": "/album/Jazz/Fly me to the moon.png",
+      "artist": "Frank Sinatra",
+      "description": "A timeless swing standard radiating charm, romance, and effortless smoothness.",
+      "duration": 156
+    },
+    {
+      "musicID": 44,
+      "genre": "Jazz",
+      "title": "Goodbye Pork Pie Hat",
+      "mp3Url": "/album/Jazz/Jazz_05.mp3",
+      "imageUrl": "/album/Jazz/Goodbye Pork Pie Hat.png",
+      "artist": "Charles Mingus",
+      "description": "A soulful jazz elegy blending bluesy emotion with expressive improvisation.",
+      "duration": 583
+    },
+    {
+      "musicID": 45,
+      "genre": "Jazz",
+      "title": "I Fall in Love Too Easily",
+      "mp3Url": "/album/Jazz/Jazz_06.mp3",
+      "imageUrl": "/album/Jazz/I Fall in Love Too Easily.png",
+      "artist": "Chet Baker",
+      "description": "A tender and vulnerable ballad capturing the fragility of falling in love.",
+      "duration": 197
+    },
+    {
+      "musicID": 46,
+      "genre": "Jazz",
+      "title": "My baby just cares for me",
+      "mp3Url": "/album/Jazz/Jazz_07.mp3",
+      "imageUrl": "/album/Jazz/My baby just cares for me.png",
+      "artist": "Nina Simone",
+      "description": "A playful, groovy jazz number showcasing Nina Simone's timeless charm.",
+      "duration": 220
+    },
+    {
+      "musicID": 47,
+      "genre": "Jazz",
+      "title": "Round Midnight",
+      "mp3Url": "/album/Jazz/Jazz_08.mp3",
+      "imageUrl": "/album/Jazz/Round Midnight.png",
+      "artist": "Thelonious Monk",
+      "description": "A moody, introspective piece echoing the quiet loneliness of late-night hours.",
+      "duration": 229
+    },
+    {
+      "musicID": 48,
+      "genre": "Jazz",
+      "title": "Sing Sing Sing",
+      "mp3Url": "/album/Jazz/Jazz_09.mp3",
+      "imageUrl": "/album/Jazz/Sing Sing Sing.png",
+      "artist": "Benny Goodman",
+      "description": "An explosive big band classic full of infectious rhythm and exhilarating energy.",
+      "duration": 323
+    },
+    {
+      "musicID": 49,
+      "genre": "Jazz",
+      "title": "What a wonderful world",
+      "mp3Url": "/album/Jazz/Jazz_10.mp3",
+      "imageUrl": "/album/Jazz/What a wonderful world.png",
+      "artist": "Louis Amstrong",
+      "description": "A warm, hopeful jazz ballad celebrating the simple beauty found in everyday life.",
+      "duration": 149
+    },
+    {
+      "musicID": 50,
+      "genre": "Hiphop",
+      "title": "FE!N",
+      "mp3Url": "/album/Hiphop/Hiphop_01.mp3",
+      "imageUrl": "/album/Hiphop/FE!N.png",
+      "artist": "Travis Scott",
+      "description": "A hard-hitting, hypnotic track driven by relentless energy and attitude.",
+      "duration": 194
+    },
+    {
+      "musicID": 51,
+      "genre": "Hiphop",
+      "title": "God's Plan",
+      "mp3Url": "/album/Hiphop/Hiphop_02.mp3",
+      "imageUrl": "/album/Hiphop/God's Plan.png",
+      "artist": "Drake",
+      "description": "An uplifting rap anthem about gratitude, success, and staying true to purpose.",
+      "duration": 199
+    },
+    {
+      "musicID": 52,
+      "genre": "Hiphop",
+      "title": "Lose Yourself",
+      "mp3Url": "/album/Hiphop/Hiphop_03.mp3",
+      "imageUrl": "/album/Hiphop/Lose Yourself.png",
+      "artist": "Eminem",
+      "description": "A powerful motivational track urging you to seize every moment without hesitation.",
+      "duration": 320
+    },
+    {
+      "musicID": 53,
+      "genre": "Hiphop",
+      "title": "Not like us",
+      "mp3Url": "/album/Hiphop/Hiphop_04.mp3",
+      "imageUrl": "/album/Hiphop/Not like us.png",
+      "artist": "Kendrick Lamar",
+      "description": "A sharp, confident diss anthem showcasing Kendrick's lyrical dominance.",
+      "duration": 273
+    },
+    {
+      "musicID": 54,
+      "genre": "Hiphop",
+      "title": "Runaway",
+      "mp3Url": "/album/Hiphop/Hiphop_05.mp3",
+      "imageUrl": "/album/Hiphop/Runaway.png",
+      "artist": "Kanye West",
+      "description": "A reflective, emotional rap piece exploring regret, vulnerability, and self-awareness.",
+      "duration": 338
+    },
+    {
+      "musicID": 55,
+      "genre": "Hiphop",
+      "title": "SICKO MODE",
+      "mp3Url": "/album/Hiphop/Hiphop_06.mp3",
+      "imageUrl": "/album/Hiphop/SICKO MODE.png",
+      "artist": "Travis Scott",
+      "description": "A dynamic, multi-section banger packed with shifting beats and explosive energy.",
+      "duration": 313
+    },
+    {
+      "musicID": 56,
+      "genre": "Hiphop",
+      "title": "Still D.R.E.",
+      "mp3Url": "/album/Hiphop/Hiphop_07.mp3",
+      "imageUrl": "/album/Hiphop/Still D.R.E..png",
+      "artist": "Dr.dre",
+      "description": "A timeless West Coast classic marked by its iconic piano riff and smooth swagger.",
+      "duration": 271
+    },
+    {
+      "musicID": 57,
+      "genre": "Hiphop",
+      "title": "Stronger",
+      "mp3Url": "/album/Hiphop/Hiphop_08.mp3",
+      "imageUrl": "/album/Hiphop/Stronger.png",
+      "artist": "Kanye West",
+      "description": "A bold fusion of hip-hop and electronic sound proclaiming resilience and growth.",
+      "duration": 312
+    },
+    {
+      "musicID": 58,
+      "genre": "Hiphop",
+      "title": "The next episode",
+      "mp3Url": "/album/Hiphop/Hiphop_09.mp3",
+      "imageUrl": "/album/Hiphop/The next episode.png",
+      "artist": "Dr.dre, Snoop Dogg",
+      "description": "A smooth, laid-back West Coast anthem powered by unmistakable G-funk vibes.",
+      "duration": 162
+    },
+    {
+      "musicID": 59,
+      "genre": "Hiphop",
+      "title": "Touch the sky",
+      "mp3Url": "/album/Hiphop/Hiphop_10.mp3",
+      "imageUrl": "/album/Hiphop/Touch the sky.png",
+      "artist": "Kanye West",
+      "description": "An inspirational track about rising above challenges and chasing greatness.",
+      "duration": 237
+    },
+    {
+      "musicID": 60,
+      "genre": "Carol",
+      "title": "All I want for christmas",
+      "mp3Url": "/album/Carol/Carol_01.mp3",
+      "imageUrl": "/album/Carol/All I want for christmas.png",
+      "artist": "Mariah Carey",
+      "description": "A joyful classic celebrating the simple wish to be with the one you love for Christmas.",
+      "duration": 242
+    },
+    {
+      "musicID": 61,
+      "genre": "Carol",
+      "title": "Because it's Christmas",
+      "mp3Url": "/album/Carol/Carol_02.mp3",
+      "imageUrl": "/album/Carol/Because it's Christmas.png",
+      "artist": "Sung Sikyung and others",
+      "description": "A warm, uplifting song that captures the gentle togetherness of the holiday season.",
+      "duration": 226
+    },
+    {
+      "musicID": 62,
+      "genre": "Carol",
+      "title": "Jingle bell rock",
+      "mp3Url": "/album/Carol/Carol_03.mp3",
+      "imageUrl": "/album/Carol/Jingle bell rock.png",
+      "artist": "Bobby Helms",
+      "description": "A fun, upbeat Christmas tune that brings rock-and-roll cheer to the holidays.",
+      "duration": 130
+    },
+    {
+      "musicID": 63,
+      "genre": "Carol",
+      "title": "Last Christmas",
+      "mp3Url": "/album/Carol/Carol_04.mp3",
+      "imageUrl": "/album/Carol/Last Christmas.png",
+      "artist": "Wham!",
+      "description": "A bittersweet holiday hit about heartbreak, reflection, and the hope for new love.",
+      "duration": 263
+    },
+    {
+      "musicID": 64,
+      "genre": "Carol",
+      "title": "Merry Christmas in advance",
+      "mp3Url": "/album/Carol/Carol_05.mp3",
+      "imageUrl": "/album/Carol/Merry Christmas in advance.png",
+      "artist": "IU",
+      "description": "A sweet and heartfelt carol expressing shy affection and early holiday wishes.",
+      "duration": 270
+    },
+    {
+      "musicID": 65,
+      "genre": "Carol",
+      "title": "Must have love",
+      "mp3Url": "/album/Carol/Carol_06.mp3",
+      "imageUrl": "/album/Carol/Must have love.png",
+      "artist": "SG Wanna Be, Brown Eyed Girls",
+      "description": "A bright winter duet filled with cheerful melodies and the excitement of seasonal romance.",
+      "duration": 260
+    },
+    {
+      "musicID": 66,
+      "genre": "Carol",
+      "title": "Santa Claus Is Comin' to Town",
+      "mp3Url": "/album/Carol/Carol_07.mp3",
+      "imageUrl": "/album/Carol/Santa Claus Is Comin' to Town.png",
+      "artist": "Mariah Carey",
+      "description": "A festive, energetic rendition reminding everyone that Santa is on his way.",
+      "duration": 205
+    },
+    {
+      "musicID": 67,
+      "genre": "Carol",
+      "title": "Santa tell me",
+      "mp3Url": "/album/Carol/Carol_08.mp3",
+      "imageUrl": "/album/Carol/Santa tell me.png",
+      "artist": "Ariana Grande",
+      "description": "A playful pop carol asking Santa for a love that lasts beyond the holidays.",
+      "duration": 204
+    },
+    {
+      "musicID": 68,
+      "genre": "Carol",
+      "title": "Text Me Merry Christmas",
+      "mp3Url": "/album/Carol/Carol_09.mp3",
+      "imageUrl": "/album/Carol/Text Me Merry Christmas.png",
+      "artist": "Straight No Chaser",
+      "description": "A humorous and charming a cappella song about digital-age holiday romance.",
+      "duration": 161
+    },
+    {
+      "musicID": 69,
+      "genre": "Carol",
+      "title": "Underneath the Tree",
+      "mp3Url": "/album/Carol/Carol_10.mp3",
+      "imageUrl": "/album/Carol/Underneath the Tree.png",
+      "artist": "Kelly Clarkson",
+      "description": "A powerful, cheerful anthem celebrating finding love at the heart of Christmas.",
+      "duration": 227
     }
   ]
 }

@@ -35,6 +35,17 @@ export function useMusicTrackPlayer({
     progress: 0,
   });
   
+  // 음량 상태 관리 (0-1 범위, 기본값: 0.7)
+  const [volume, setVolumeState] = useState<number>(() => {
+    if (typeof window === "undefined") return 0.7;
+    try {
+      const saved = localStorage.getItem("mood-manager:music-volume");
+      return saved ? Math.max(0, Math.min(1, parseFloat(saved))) : 0.7;
+    } catch {
+      return 0.7;
+    }
+  });
+  
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const musicPlayerRef = useRef<MusicPlayer | null>(null);
   const currentTrackSrcRef = useRef<string | null>(null);
@@ -48,7 +59,7 @@ export function useMusicTrackPlayer({
 
     musicPlayerRef.current = new MusicPlayer();
     musicPlayerRef.current.init({
-      volume: 0.7,
+      volume: volume, // 저장된 음량 사용
       fadeInDuration: 750, // 0.75초
       fadeOutDuration: 750, // 0.75초
     });
@@ -60,6 +71,35 @@ export function useMusicTrackPlayer({
       isInitializedRef.current = false;
     };
   }, []);
+
+  /**
+   * 음량 설정 함수
+   */
+  const setVolume = useCallback((newVolume: number) => {
+    const clampedVolume = Math.max(0, Math.min(1, newVolume));
+    setVolumeState(clampedVolume);
+    
+    // MusicPlayer에 즉시 반영
+    if (musicPlayerRef.current) {
+      musicPlayerRef.current.setVolume(clampedVolume);
+    }
+    
+    // localStorage에 저장
+    try {
+      localStorage.setItem("mood-manager:music-volume", clampedVolume.toString());
+    } catch (error) {
+      console.warn("[useMusicTrackPlayer] Failed to save volume to localStorage:", error);
+    }
+  }, []);
+
+  /**
+   * 음량 변경 시 MusicPlayer에 반영
+   */
+  useEffect(() => {
+    if (musicPlayerRef.current) {
+      musicPlayerRef.current.setVolume(volume);
+    }
+  }, [volume]);
 
   /**
    * 세그먼트 전체 길이 계산 (1곡의 길이) - 실제 MP3 길이 사용
@@ -112,16 +152,31 @@ export function useMusicTrackPlayer({
     // 이미 재생 중이면 중복 실행 방지
     if (intervalRef.current) return;
 
+    // 오디오 종료 이벤트 리스너 설정
+    musicPlayerRef.current.setOnEnded(() => {
+      console.log("[useMusicTrackPlayer] Audio ended, triggering segment end");
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      setTrackProgress({
+        progress: segmentDuration,
+      });
+      currentTrackSrcRef.current = null;
+      onSegmentEnd?.();
+    });
+
     // 재생 시도
     await playCurrentTrack();
 
-    // 진행 시간 추적 시작
+    // 진행 시간 추적 시작 (백업용, ended 이벤트가 실패할 경우 대비)
     intervalRef.current = setInterval(() => {
       if (!musicPlayerRef.current) return;
 
       const currentTime = musicPlayerRef.current.getCurrentTime() * 1000; // 밀리초로 변환
       
       // 세그먼트 종료 확인 (실제 MP3 길이 사용)
+      // ended 이벤트가 먼저 발생하지만, 백업으로 체크
       if (segmentDuration > 0 && currentTime >= segmentDuration) {
         setTrackProgress({
           progress: segmentDuration,
@@ -172,24 +227,36 @@ export function useMusicTrackPlayer({
     const trackUrl = getTrackUrl(currentTrack);
     const isNewTrack = currentTrackSrcRef.current !== trackUrl;
 
-    // 새로운 트랙이면 이전 트랙 정리
+    // 새로운 트랙이면 크로스페이드로 전환
     if (isNewTrack) {
-      if (musicPlayerRef.current) {
-        musicPlayerRef.current.stop();
-      }
+      const previousSrc = currentTrackSrcRef.current;
       currentTrackSrcRef.current = null;
       setTrackProgress({ progress: 0 });
-    }
-
-    // 재생 중이고 새로운 트랙이면 자동 재생 시도
-    if (playing && isNewTrack) {
-      const timeoutId = setTimeout(() => {
-        startPlayback();
-      }, 100);
-
-      return () => {
-        clearTimeout(timeoutId);
-      };
+      
+      // 재생 중이고 새로운 트랙이면 크로스페이드로 전환
+      if (playing && previousSrc && musicPlayerRef.current) {
+        // 크로스페이드로 부드럽게 전환
+        musicPlayerRef.current.crossfade(trackUrl).catch((error) => {
+          console.error("[useMusicTrackPlayer] Crossfade 실패, 일반 재생으로 fallback:", error);
+          // 크로스페이드 실패 시 일반 재생으로 fallback
+          if (musicPlayerRef.current) {
+            musicPlayerRef.current.stop();
+            setTimeout(() => {
+              startPlayback();
+            }, 100);
+          }
+        });
+        currentTrackSrcRef.current = trackUrl;
+        return;
+      } else if (playing) {
+        // 이전 트랙이 없으면 일반 재생
+        const timeoutId = setTimeout(() => {
+          startPlayback();
+        }, 100);
+        return () => {
+          clearTimeout(timeoutId);
+        };
+      }
     } else if (playing && !isNewTrack && !intervalRef.current) {
       // 같은 트랙이고 재생 중이면 재개
       startPlayback();
@@ -260,5 +327,7 @@ export function useMusicTrackPlayer({
     goToPreviousTrack: () => {}, // 1곡만 있으므로 빈 함수
     seek,
     totalTracks: 1, // 항상 1
+    volume, // 0-1 범위
+    setVolume, // 0-1 범위
   };
 }

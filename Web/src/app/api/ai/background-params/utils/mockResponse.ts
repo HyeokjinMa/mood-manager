@@ -28,10 +28,6 @@ export function getMockResponse(): BackgroundParamsResponse {
     },
     animationSpeed: 4,
     iconOpacity: 0.7,
-    iconCount: 8,
-    iconSize: 50,
-    particleEffect: false,
-    gradientColors: ["#6B8E9F", "#87CEEB"],
   };
 }
 

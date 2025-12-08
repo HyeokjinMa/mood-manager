@@ -56,3 +56,63 @@ export function hexToRgba(hex: string, alpha: number): string {
   const [r, g, b] = hexToRgb(hex);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
+
+/**
+ * RGB 값을 HEX 문자열로 변환하는 함수
+ * @param r - Red 값 (0-255)
+ * @param g - Green 값 (0-255)
+ * @param b - Blue 값 (0-255)
+ * @returns HEX 색상 문자열 (예: "#FFD700")
+ */
+export function rgbToHex(r: number, g: number, b: number): string {
+  const toHex = (n: number) => {
+    const hex = Math.round(Math.max(0, Math.min(255, n))).toString(16);
+    return hex.length === 1 ? "0" + hex : hex;
+  };
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+/**
+ * 흰색 비율이 80% 이상인 컬러를 자동으로 조정
+ * 흰색 비율을 20% 정도 감소시켜 더 진한 색상으로 만듦
+ * 
+ * @param color - HEX 컬러 문자열 (#RRGGBB)
+ * @param whiteThreshold - 흰색 비율 임계값 (기본값: 0.8)
+ * @param reductionAmount - 흰색 감소량 (기본값: 0.2)
+ * @returns 조정된 HEX 컬러 문자열
+ */
+export function reduceWhiteTint(
+  color: string,
+  whiteThreshold: number = 0.8,
+  reductionAmount: number = 0.2
+): string {
+  const rgb = hexToRgb(color);
+  if (!rgb) return color;
+  
+  const [r, g, b] = rgb;
+  
+  // RGB 값을 0-1 범위로 정규화
+  const normalizedR = r / 255;
+  const normalizedG = g / 255;
+  const normalizedB = b / 255;
+  
+  // 흰색 비율 계산 (최대값 기반 - 가장 정확)
+  const maxComponent = Math.max(normalizedR, normalizedG, normalizedB);
+  const whiteRatio = maxComponent;
+  
+  // 흰색 비율이 임계값 이상이면 조정
+  if (whiteRatio >= whiteThreshold) {
+    // 흰색 비율을 reductionAmount만큼 감소
+    const targetWhiteRatio = whiteRatio - reductionAmount;
+    const scale = targetWhiteRatio / whiteRatio;
+    
+    // RGB 값을 비율에 맞게 조정
+    const adjustedR = Math.round(normalizedR * scale * 255);
+    const adjustedG = Math.round(normalizedG * scale * 255);
+    const adjustedB = Math.round(normalizedB * scale * 255);
+    
+    return rgbToHex(adjustedR, adjustedG, adjustedB);
+  }
+  
+  return color;
+}

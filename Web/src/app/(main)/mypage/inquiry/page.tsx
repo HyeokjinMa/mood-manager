@@ -1,13 +1,9 @@
-// ======================================================
-// File: src/app/(main)/mypage/inquiry/page.tsx
-// ======================================================
-
-/*
-  [1:1 Inquiry Page 역할]
-
-  - 사용자가 1:1 문의를 작성하고 제출
-  - 제출된 문의는 백엔드로 전송
-*/
+/**
+ * 1:1 Inquiry Page
+ * 
+ * 사용자가 1:1 문의를 작성하고 제출
+ * 제출된 문의는 백엔드로 전송
+ */
 
 "use client";
 
@@ -27,7 +23,6 @@ export default function InquiryPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
     if (!subject.trim()) {
       toast.error("Subject is required.");
       return;
@@ -56,31 +51,17 @@ export default function InquiryPage() {
     setIsSubmitting(true);
 
     try {
-      // [MOCK] 1:1 문의 제출 (로컬 상태만 업데이트)
-      // TODO: 백엔드 API로 교체 필요
-      // API 명세:
-      // POST /api/inquiry
-      // - 인증: NextAuth session (쿠키 기반)
-      // - 요청: { subject: string, message: string }
-      // - 응답: { success: boolean, inquiryId: string }
-      // - 설명: 1:1 문의 제출 및 저장
-
-      // Mock: Simulate API call
+      /**
+       * [MOCK] 1:1 문의 제출 (로컬 상태만 업데이트)
+       * TODO: 백엔드 API로 교체 필요
+       * API 명세:
+       * POST /api/inquiry
+       * - 인증: NextAuth session (쿠키 기반)
+       * - 요청: { subject: string, message: string }
+       * - 응답: { success: boolean, inquiryId: string }
+       * - 설명: 1:1 문의 제출 및 저장
+       */
       await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // const response = await fetch("/api/inquiry", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   credentials: "include",
-      //   body: JSON.stringify({ subject, message }),
-      // });
-
-      // if (!response.ok) {
-      //   const error = await response.json();
-      //   throw new Error(error.message || "Failed to submit inquiry");
-      // }
 
       toast.success("Inquiry submitted successfully. We'll get back to you soon.");
       setIsSubmitted(true);
@@ -123,7 +104,6 @@ export default function InquiryPage() {
     <div className="flex flex-col h-screen overflow-hidden relative bg-white">
       <div className="flex-1 overflow-y-auto pb-20">
         <div className="max-w-[375px] mx-auto">
-        {/* Header */}
         <div className="bg-white border-b border-gray-200 px-4 py-4 flex items-center">
           <Link href="/mypage" className="mr-3">
             <ArrowLeft size={20} className="text-gray-600" />
@@ -131,7 +111,6 @@ export default function InquiryPage() {
           <h1 className="text-xl font-semibold">1:1 Inquiry</h1>
         </div>
 
-        {/* Form */}
         <div className="bg-white mt-4 px-4 py-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

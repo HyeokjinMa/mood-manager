@@ -1,6 +1,6 @@
-// ======================================================
-// File: src/app/(auth)/register/components/EmailSection.tsx
-// ======================================================
+/**
+ * EmailSection
+ */
 
 import { Mail } from "lucide-react";
 

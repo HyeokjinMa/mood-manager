@@ -7,14 +7,16 @@
 import type { MoodStreamSegment } from "@/hooks/useMoodStream/types";
 import { hexToRgb } from "@/lib/utils";
 import { getMusicTracksByGenre } from "@/lib/music/getMusicTrackByID";
+import { SCENT_DEFINITIONS } from "@/types/mood";
 
 /**
  * 새로운 JSON 구조에서 캐롤 장르 음악 가져오기 (musicID 60-69)
  */
-function getCarolSongs() {
+async function getCarolSongs() {
   try {
     // 새로운 JSON 구조에서 Carol 장르 트랙 가져오기 (musicID 60-69)
-    const carolTracks = getMusicTracksByGenre("Carol");
+    const { getMusicTracksByGenre } = await import("@/lib/music/getMusicTrackByID");
+    const carolTracks = await getMusicTracksByGenre("Carol");
     
     if (carolTracks.length === 0) {
       console.warn("[getInitialColdStartSegments] Carol tracks not found");
@@ -34,7 +36,7 @@ function getCarolSongs() {
  */
 export async function getInitialColdStartSegments(): Promise<MoodStreamSegment[]> {
   const now = Date.now();
-  const carolSongs = getCarolSongs();
+  const carolSongs = await getCarolSongs();
 
   if (carolSongs.length === 0) {
     console.warn("[getInitialColdStartSegments] 캐롤 음악이 없어 기본 세그먼트 반환");
@@ -71,7 +73,7 @@ export async function getInitialColdStartSegments(): Promise<MoodStreamSegment[]
         moodAlias: "Christmas Red",
         scent: {
           type: "Woody" as const,
-          name: "Pine",
+          name: "Wood", // SCENT_DEFINITIONS.Woody[0]의 name
         },
       },
       {
@@ -89,7 +91,7 @@ export async function getInitialColdStartSegments(): Promise<MoodStreamSegment[]
         moodAlias: "Christmas Gold",
         scent: {
           type: "Floral" as const,
-          name: "Rose",
+          name: SCENT_DEFINITIONS.Floral[0].name,
         },
       },
     ];
@@ -189,7 +191,7 @@ function getFallbackSegments(now: number): MoodStreamSegment[] {
         moodAlias: "Christmas Red",
         scent: {
           type: "Woody" as const,
-          name: "Pine",
+          name: "Wood", // SCENT_DEFINITIONS.Woody[0]의 name
         },
       },
       {
@@ -207,7 +209,7 @@ function getFallbackSegments(now: number): MoodStreamSegment[] {
         moodAlias: "Christmas Gold",
         scent: {
           type: "Floral" as const,
-          name: "Rose",
+          name: SCENT_DEFINITIONS.Floral[0].name,
         },
       },
     ];

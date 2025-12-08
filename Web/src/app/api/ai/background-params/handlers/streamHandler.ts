@@ -133,7 +133,7 @@ export async function handleStreamMode({
         pythonResponse = null;
       }
     }
-  } catch (pythonError) {
+  } catch {
     pythonResponse = null;
   }
 
@@ -336,7 +336,6 @@ Use music.musicID (not musicSelection). Use background.icons (not backgroundIcon
       // 10개 세그먼트 응답
       for (let i = 0; i < validatedResponse.segments.length; i++) {
         const segment = validatedResponse.segments[i];
-        const originalSegment = segments?.[i];
         
         try {
           // musicSelection이 musicID (숫자)로 전달됨
@@ -385,7 +384,6 @@ Use music.musicID (not musicSelection). Use background.icons (not backgroundIcon
     } else {
       // 단일 세그먼트 응답
       const segment = validatedResponse as BackgroundParamsResponse;
-      const originalSegment = segments?.[0];
       
       try {
         // musicSelection이 musicID (숫자)로 전달됨
@@ -634,7 +632,7 @@ Use music.musicID (not musicSelection). Use background.icons (not backgroundIcon
     });
 
     // JSON Schema를 사용하면 응답이 이미 검증되었지만, 여전히 문자열로 반환됨
-    let rawResponse: any;
+    let rawResponse: { segments?: unknown[] } | unknown;
     try {
       const content = completion.choices[0].message.content || "{}";
       rawResponse = typeof content === 'string' ? JSON.parse(content) : content;
@@ -659,13 +657,12 @@ Use music.musicID (not musicSelection). Use background.icons (not backgroundIcon
       return NextResponse.json(mockResponse);
     }
     
-    const validatedResponse = validateAndNormalizeResponse(rawResponse);
+    const validatedResponse = validateAndNormalizeResponse(rawResponse as Parameters<typeof validateAndNormalizeResponse>[0]);
     
     // ===== musicSelection을 musicTracks로 변환 (Fallback) =====
     if ('segments' in validatedResponse && Array.isArray(validatedResponse.segments)) {
       for (let i = 0; i < validatedResponse.segments.length; i++) {
         const segment = validatedResponse.segments[i];
-        const originalSegment = segments?.[i];
         
         try {
           // musicSelection이 musicID (숫자)로 전달됨

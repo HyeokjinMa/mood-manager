@@ -249,6 +249,10 @@ model UserPreferences {
   musicLiked    String?
   musicDisliked String?
 
+  // 디바이스 설정 저장 (별표 버튼으로 저장한 마지막 설정)
+  // 예시: { volume: 70, brightness: 80, color: "#E6F3FF", scentType: "Floral", scentLevel: 5 }
+  deviceSettings Json?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

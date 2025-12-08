@@ -15,11 +15,9 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
 import DeviceCardSmall from "./DeviceCardSmall";
 import DeviceCardExpanded from "./DeviceCardExpanded";
 import AddDeviceCard from "./AddDeviceCard";
-import { DeviceCardSkeleton } from "@/components/ui/Skeleton";
 import { createDeviceHandlers } from "./hooks/useDeviceHandlers";
 import type { Device } from "@/types/device";
 import type { Mood } from "@/types/mood";
@@ -32,6 +30,9 @@ export default function DeviceGrid({
   openAddModal,
   currentMood,
   onDeleteRequest,
+  isLoading = false,
+  volume,
+  onUpdateVolume,
 }: {
   devices: Device[];
   expandedId: string | null;
@@ -40,17 +41,10 @@ export default function DeviceGrid({
   openAddModal: () => void;
   currentMood?: Mood; // 현재 무드 (AddDeviceCard에 전달)
   onDeleteRequest: (device: Device) => void; // 삭제 요청 콜백
+  isLoading?: boolean; // 디바이스 데이터 로딩 상태
+  volume?: number; // 0-100 범위
+  onUpdateVolume?: (volume: number) => void; // 0-100 범위
 }) {
-  const [isLoading, setIsLoading] = useState(true);
-
-  // 초기 로딩 시뮬레이션 (실제로는 API 호출 시 사용)
-  useEffect(() => {
-    // 목업: 초기 로딩 시뮬레이션
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
 
   // 확장 카드가 있으면 그 카드를 먼저 앞으로 정렬
   const sortedDevices =
@@ -60,17 +54,6 @@ export default function DeviceGrid({
           ...devices.filter((d) => d.id === expandedId),
           ...devices.filter((d) => d.id !== expandedId),
         ];
-
-  // 로딩 중 스켈레톤 표시
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-2 gap-3 mt-4">
-        {[1, 2].map((i) => (
-          <DeviceCardSkeleton key={i} />
-        ))}
-      </div>
-    );
-  }
 
   return (
     <div className="grid grid-cols-2 gap-3 mt-4">
@@ -92,6 +75,11 @@ export default function DeviceGrid({
                 onUpdateLightColor={handlers.handleUpdateLightColor}
                 onUpdateLightBrightness={handlers.handleUpdateLightBrightness}
                 onUpdateScentLevel={handlers.handleUpdateScentLevel}
+                volume={volume}
+                onUpdateVolume={(newVolume) => {
+                  // 0-100 범위를 0-1로 변환하여 MusicPlayer에 전달
+                  onUpdateVolume?.(newVolume);
+                }}
               />
             </div>
           );
@@ -102,6 +90,7 @@ export default function DeviceGrid({
             key={device.id}
             device={device}
             currentMood={currentMood}
+            isLoading={isLoading}
             onClick={() => {
               if (expandedId === device.id) setExpandedId(null);
               else setExpandedId(device.id);

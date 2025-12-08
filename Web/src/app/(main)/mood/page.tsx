@@ -1,6 +1,6 @@
-// ======================================================
-// File: src/app/(main)/mood/page.tsx
-// ======================================================
+/**
+ * Mood Page
+ */
 
 "use client";
 
@@ -20,7 +20,8 @@ const MOODS_PER_PAGE = 6;
 export default function MoodSetPage() {
   const router = useRouter();
   const { data: session } = useSession();
-  const isAdminMode = false; // V2: 관리자 샘플 목업 제거 - 항상 실제 저장 데이터만 사용
+  // V2: 관리자 샘플 목업 제거 - 항상 실제 저장 데이터만 사용
+  const isAdminMode = false;
   
   const [savedMoods, setSavedMoods] = useState<SavedMoodType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -69,7 +70,7 @@ export default function MoodSetPage() {
         if (currentPage > newTotalPages && newTotalPages > 0) {
           setCurrentPage(newTotalPages);
         }
-        return; // Skip API call (mock mode optimization)
+        return;
       }
       
       // Normal mode: API call
@@ -149,7 +150,6 @@ export default function MoodSetPage() {
             </div>
           ) : (
             <>
-              {/* Mood cards - 2 x 3 grid layout */}
               <div className="flex-1">
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   {currentMoods.map((savedMood) => {
@@ -167,7 +167,6 @@ export default function MoodSetPage() {
                         onDoubleClick={() => handleApply(savedMood)}
                         onClick={() => {}}
                       >
-                        {/* Delete button */}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -179,7 +178,6 @@ export default function MoodSetPage() {
                           ×
                         </button>
 
-                        {/* Mood information - single segment card */}
                         <div className="flex-1 flex flex-col gap-1">
                           <p className="text-xs font-semibold text-gray-700 truncate">
                             {savedMood.moodName}
@@ -205,7 +203,6 @@ export default function MoodSetPage() {
                 </div>
               </div>
 
-              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between mt-4 pb-4">
                   <button
@@ -242,7 +239,6 @@ export default function MoodSetPage() {
       
       <BottomNav />
 
-      {/* Delete confirmation modal */}
       {moodToDelete && (
         <MoodDeleteModal
           savedMood={moodToDelete}
@@ -254,7 +250,6 @@ export default function MoodSetPage() {
         />
       )}
 
-      {/* Replace segment confirmation modal */}
       {moodToReplace && (
         <MoodReplaceModal
           savedMood={moodToReplace}

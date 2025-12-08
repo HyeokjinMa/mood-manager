@@ -2,7 +2,6 @@
 // File: src/app/(main)/home/components/Device/components/DeviceControls.tsx
 // ======================================================
 
-import { ChevronRight } from "lucide-react";
 import type { Device } from "@/types/device";
 import type { Mood } from "@/types/mood";
 
@@ -12,9 +11,11 @@ interface DeviceControlsProps {
   lightColor: string;
   lightBrightness: number;
   scentLevel: number;
+  volume?: number; // 0-100 범위
   onUpdateLightColor?: (color: string) => void;
   onUpdateLightBrightness?: (brightness: number) => void;
   onUpdateScentLevel?: (level: number) => void;
+  onUpdateVolume?: (volume: number) => void; // 0-100 범위
 }
 
 export default function DeviceControls({
@@ -23,9 +24,11 @@ export default function DeviceControls({
   lightColor,
   lightBrightness,
   scentLevel,
+  volume,
   onUpdateLightColor,
   onUpdateLightBrightness,
   onUpdateScentLevel,
+  onUpdateVolume,
 }: DeviceControlsProps) {
   if (!device.power) return null;
 
@@ -77,22 +80,38 @@ export default function DeviceControls({
       );
 
     case "speaker":
-      // 음악은 대시보드에서만 통제, 디바이스 카드에서는 정보만 표시
+      // 음량 조절 추가
       return (
-        <div className="text-xs text-gray-600">
-          <div>Current: {device.output.nowPlaying || "-"}</div>
-          <div className="mt-1 flex items-center gap-1 text-gray-500">
-            <span>Next song</span>
-            <ChevronRight size={12} />
+        <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+          <div className="text-xs text-gray-600 mb-2">
+            <div>Now Playing: {device.output.nowPlaying || "-"}</div>
+          </div>
+          <div>
+            <label className="text-xs text-gray-600 mb-1 block">
+              Volume: {volume !== undefined ? `${Math.round(volume)}%` : (device.output.volume ? `${device.output.volume}%` : "70%")}
+            </label>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={volume !== undefined ? volume : (device.output.volume || 70)}
+              onChange={(e) => {
+                const newVolume = Number(e.target.value);
+                onUpdateVolume?.(newVolume);
+              }}
+              className="w-full"
+              style={{ accentColor: currentMood?.color || "#3B82F6" }}
+            />
           </div>
         </div>
       );
 
     case "manager":
       // Manager는 모든 기능 통합 표시
+      // 순서: 컬러 조정 → 음량 조정 → 밝기 조정 → 센트 레벨 조정
       return (
         <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
-          {/* 조명 컨트롤 */}
+          {/* 1. 컬러 조정 */}
           <div>
             <label className="text-xs text-gray-600 mb-1 block">Light Color</label>
             <input
@@ -105,9 +124,28 @@ export default function DeviceControls({
               className="w-full h-8 rounded cursor-pointer"
             />
           </div>
+          {/* 2. 음량 조정 */}
           <div>
             <label className="text-xs text-gray-600 mb-1 block">
-              Light Brightness: {lightBrightness}%
+              Volume: {volume !== undefined ? `${Math.round(volume)}%` : (device.output.volume ? `${device.output.volume}%` : "70%")}
+            </label>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={volume !== undefined ? volume : (device.output.volume || 70)}
+              onChange={(e) => {
+                const newVolume = Number(e.target.value);
+                onUpdateVolume?.(newVolume);
+              }}
+              className="w-full"
+              style={{ accentColor: currentMood?.color || "#3B82F6" }}
+            />
+          </div>
+          {/* 3. 밝기 조정 */}
+          <div>
+            <label className="text-xs text-gray-600 mb-1 block">
+              Brightness: {lightBrightness}%
             </label>
             <input
               type="range"
@@ -122,7 +160,7 @@ export default function DeviceControls({
               style={{ accentColor: lightColor }}
             />
           </div>
-          {/* 향 컨트롤 */}
+          {/* 4. 센트 레벨 조정 */}
           <div>
             <label className="text-xs text-gray-600 mb-1 block">
               Scent Level: {scentLevel}/10
@@ -139,14 +177,6 @@ export default function DeviceControls({
               className="w-full"
               style={{ accentColor: currentMood?.color || "#9CAF88" }}
             />
-          </div>
-          {/* 음악 정보 */}
-          <div className="text-xs text-gray-600 pt-2 border-t border-gray-200">
-            <div>Current: {device.output.nowPlaying || "-"}</div>
-            <div className="mt-1 flex items-center gap-1 text-gray-500">
-              <span>Next song</span>
-              <ChevronRight size={12} />
-            </div>
           </div>
         </div>
       );

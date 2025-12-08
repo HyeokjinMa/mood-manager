@@ -1,13 +1,9 @@
-// ======================================================
-// File: src/app/(auth)/register/components/RegisterForm.tsx
-// ======================================================
-
-/*
-  [RegisterForm 역할]
-  
-  - 회원가입 폼 UI 컴포넌트
-  - 모든 입력 필드와 검증 UI 포함
-*/
+/**
+ * RegisterForm
+ * 
+ * 회원가입 폼 UI 컴포넌트
+ * 모든 입력 필드와 검증 UI 포함
+ */
 
 "use client";
 
@@ -135,7 +131,6 @@ export default function RegisterForm({ form }: RegisterFormProps) {
         validateEmail={validateEmail}
       />
 
-      {/* 소셜 가입이 아닐 때만 비밀번호 입력 */}
       {!isSocialSignup && (
         <>
           <PasswordSection
@@ -183,10 +178,8 @@ export default function RegisterForm({ form }: RegisterFormProps) {
         </>
       )}
 
-      {/* Error Message */}
       {errorMsg && <p className="text-red-500 text-sm">{errorMsg}</p>}
 
-      {/* Sign Up */}
       <button
         onClick={handleRegister}
         disabled={!isFormValid()}
@@ -199,7 +192,6 @@ export default function RegisterForm({ form }: RegisterFormProps) {
         Sign Up
       </button>
 
-      {/* Sign In Link */}
       <div className="text-center">
         <span className="text-sm text-gray-600">Already have an account? </span>
         <Link

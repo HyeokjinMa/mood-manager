@@ -1,19 +1,15 @@
-// ======================================================
-// File: src/app/(main)/home/components/MoodDashboard/MoodDashboard.tsx
-// ======================================================
-
-/*
-  [MoodDashboard 역할]
-
-  무드 대시보드 컴포넌트. 화면 좌측 상단에 현재 무드명 표시, 중앙에 원형 앨범 아트와 음악 플레이 UI 배치.
-  우측 상단에 새로고침 버튼과 무드셋 저장 버튼 배치. 음악 progress bar와 컨트롤(뒤로가기/재생/멈춤/앞으로) 제공.
-  아래에 스프레이 아이콘(향 변경)과 무드 지속 시간 표시(간트 차트 스타일 진행 바) 배치.
-  대시보드 전체 배경색은 moodColor에 opacity 50% 반영.
-*/
+/**
+ * MoodDashboard
+ * 
+ * 무드 대시보드 컴포넌트. 화면 좌측 상단에 현재 무드명 표시, 중앙에 원형 앨범 아트와 음악 플레이 UI 배치.
+ * 우측 상단에 새로고침 버튼과 무드셋 저장 버튼 배치. 음악 progress bar와 컨트롤(뒤로가기/재생/멈춤/앞으로) 제공.
+ * 아래에 스프레이 아이콘(향 변경)과 무드 지속 시간 표시(간트 차트 스타일 진행 바) 배치.
+ * 대시보드 전체 배경색은 moodColor에 opacity 50% 반영.
+ */
 
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 import { MoodDashboardSkeleton } from "@/components/ui/Skeleton";
 import type { Mood } from "@/types/mood";
 import { useMoodDashboard } from "./hooks/useMoodDashboard";
@@ -24,12 +20,15 @@ import { useHeartAnimation } from "./hooks/useHeartAnimation";
 import { useSegmentSelector } from "./hooks/useSegmentSelector";
 import type { BackgroundParams } from "@/hooks/useBackgroundParams";
 import { hexToRgba } from "@/lib/utils";
+import { convertSegmentMoodToMood } from "./utils/moodStreamConverter";
 import MoodHeader from "./components/MoodHeader";
 import ScentControl from "./components/ScentControl";
 import AlbumSection from "./components/AlbumSection";
 import MusicControls from "./components/MusicControls";
 import MoodDuration from "./components/MoodDuration";
 import HeartAnimation from "./components/HeartAnimation";
+import AlbumInfoModal from "./components/AlbumInfoModal";
+import ScentInfoModal from "./components/ScentInfoModal";
 
 interface MoodDashboardProps {
   mood: Mood;
@@ -41,6 +40,8 @@ interface MoodDashboardProps {
   allSegmentsParams?: BackgroundParams[] | null;
   setBackgroundParams?: (params: BackgroundParams | null) => void;
   isLLMLoading?: boolean;
+  onVolumeChange?: (volume: number) => void; // 0-100 범위
+  externalVolume?: number; // 0-100 범위, 외부에서 전달받은 volume
 }
 
 export default function MoodDashboard({
@@ -53,7 +54,13 @@ export default function MoodDashboard({
   allSegmentsParams,
   setBackgroundParams,
   isLLMLoading,
+  onVolumeChange,
+  externalVolume,
 }: MoodDashboardProps) {
+  // 모달 상태 관리
+  const [isAlbumModalOpen, setIsAlbumModalOpen] = useState(false);
+  const [isScentModalOpen, setIsScentModalOpen] = useState(false);
+
   // 무드스트림 관리 (전역 Context에서 가져오기)
   const {
     moodStream,
@@ -118,23 +125,55 @@ export default function MoodDashboard({
     segmentDuration,
     totalTracks,
     seek,
+    volume,
+    setVolume,
   } = useMusicTrackPlayer({
     segment: currentSegment,
     playing,
     onSegmentEnd: () => {
       // 세그먼트 종료 시 다음 세그먼트로 전환
       if (moodStream && currentSegmentIndex < moodStream.segments.length - 1) {
-        const nextIndex = currentSegmentIndex + 1;
-        handleSegmentSelect(nextIndex);
+        const clampedTotal = 10; // 항상 10개 세그먼트로 표시
+        const clampedIndex = currentSegmentIndex >= clampedTotal ? clampedTotal - 1 : currentSegmentIndex;
+        
+        // 10번 세그먼트(인덱스 9)가 끝나면 다음 스트림으로 전환 (인덱스 0으로 리셋)
+        if (clampedIndex === 9 && moodStream.segments.length >= 10) {
+          console.log("[MoodDashboard] 10번 세그먼트 종료, 다음 스트림으로 전환");
+          // 다음 스트림이 생성되었는지 확인하고, 생성되었으면 인덱스 0으로 전환
+          // useAutoGeneration에서 이미 다음 스트림을 생성했으므로 인덱스만 리셋
+          handleSegmentSelect(0);
+        } else {
+          // 일반적인 경우: 다음 세그먼트로 전환
+          const nextIndex = currentSegmentIndex + 1;
+          handleSegmentSelect(nextIndex);
+        }
       }
     },
   });
 
-  // 새로고침 버튼 스피너 상태 관리
-  // - 스트림 다시 불러오는 동안(isLoadingStream)
-  // - LLM 배경 파라미터 다시 만드는 동안(isLLMLoading)
-  // - 다음 스트림 백그라운드 생성 중(isGeneratingNextStream)
-  // 위 세 경우 중 하나라도 true면 스피너 표시
+  // 외부에서 volume 변경 시 MusicPlayer에 반영 (0-100 → 0-1 변환)
+  useEffect(() => {
+    if (externalVolume !== undefined) {
+      const volumeNormalized = externalVolume / 100; // 0-100 → 0-1
+      setVolume(volumeNormalized);
+    }
+  }, [externalVolume, setVolume]);
+
+  // 음량 변경 시 상위 컴포넌트에 전달 (0-1 → 0-100 변환)
+  useEffect(() => {
+    if (onVolumeChange) {
+      const volumePercent = Math.round(volume * 100);
+      onVolumeChange(volumePercent);
+    }
+  }, [volume, onVolumeChange]);
+
+  /**
+   * 새로고침 버튼 스피너 상태 관리
+   * - 스트림 다시 불러오는 동안(isLoadingStream)
+   * - LLM 배경 파라미터 다시 만드는 동안(isLLMLoading)
+   * - 다음 스트림 백그라운드 생성 중(isGeneratingNextStream)
+   * 위 세 경우 중 하나라도 true면 스피너 표시
+   */
   const isRefreshing =
     Boolean(isLLMLoading) ||
     Boolean(isGeneratingNextStream) ||
@@ -147,9 +186,11 @@ export default function MoodDashboard({
     onRefreshRequest?.(); // HomeContent에 LLM 호출 요청
   }, [refreshMoodStream, handleRefreshClick, onRefreshRequest]);
 
-  // 로딩 중 스켈레톤 표시
-  // - 초기 콜드스타트 단계에서만 스켈레톤 표시
-  // - 이후 새로고침/다음 스트림 생성 중에는 직전 무드 유지
+  /**
+   * 로딩 중 스켈레톤 표시
+   * - 초기 콜드스타트 단계에서만 스켈레톤 표시
+   * - 이후 새로고침/다음 스트림 생성 중에는 직전 무드 유지
+   */
   if (isLoading || (isLoadingStream && !moodStream)) {
     return <MoodDashboardSkeleton />;
   }
@@ -184,28 +225,40 @@ export default function MoodDashboard({
           name: displayAlias, // LLM 추천 별명 사용
         }}
         isSaved={isSaved}
-        // 저장/삭제 토글 핸들러 호출 (인자 없이)
         onSaveToggle={setIsSaved}
-        onRefresh={handleRefreshWithStream} // 무드스트림 재생성 포함
-        // 새로고침/스트림 생성 관련 작업 진행 중 스피너 표시
+        onRefresh={handleRefreshWithStream}
         isRefreshing={isRefreshing}
         onPreferenceClick={handlePreferenceClick}
         preferenceCount={preferenceCount}
         maxReached={maxReached}
       />
 
-      {/* V1: 향/앨범 개별 새로고침 기능 제거, UI만 유지 (클릭 시 동작 없음) */}
+      {/* 향/앨범 정보 모달 */}
       <ScentControl 
-        mood={currentSegment?.mood || mood} 
-        onScentClick={() => {}} 
+        mood={currentSegment ? convertSegmentMoodToMood(currentSegment.mood, mood, currentSegment) : mood} 
+        onScentClick={() => setIsScentModalOpen(true)} 
         moodColor={baseColor} 
       />
 
       <AlbumSection 
         mood={mood}
-        onAlbumClick={() => {}}
+        onAlbumClick={() => setIsAlbumModalOpen(true)}
         musicSelection={currentTrack?.title || backgroundParams?.musicSelection}
         albumImageUrl={currentTrack?.albumImageUrl}
+      />
+
+      {/* 모달 컴포넌트 */}
+      <AlbumInfoModal
+        isOpen={isAlbumModalOpen}
+        onClose={() => setIsAlbumModalOpen(false)}
+        track={currentTrack}
+      />
+
+      <ScentInfoModal
+        isOpen={isScentModalOpen}
+        onClose={() => setIsScentModalOpen(false)}
+        scentType={mood.scent.type}
+        scentName={mood.scent.name}
       />
 
       <MusicControls
@@ -240,8 +293,10 @@ export default function MoodDashboard({
       <MoodDuration
         mood={mood}
         currentIndex={currentSegmentIndex}
-        // V1: 1 스트림 = 항상 10 세그먼트로 인식되도록 고정
-        // 실제 segments 개수가 3개뿐이어도, 사용자는 항상 10칸을 하나의 스트림으로 인식
+        /**
+         * V1: 1 스트림 = 항상 10 세그먼트로 인식되도록 고정
+         * 실제 segments 개수가 3개뿐이어도, 사용자는 항상 10칸을 하나의 스트림으로 인식
+         */
         totalSegments={10}
         onSegmentSelect={handleSegmentSelect}
         moodColorCurrent={baseColor}

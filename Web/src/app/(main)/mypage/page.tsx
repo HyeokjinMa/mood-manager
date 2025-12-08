@@ -1,13 +1,9 @@
-// ======================================================
-// File: src/app/(main)/mypage/page.tsx
-// ======================================================
-
-/*
-  [MyPage 역할]
-  
-  - 페이지 레이아웃과 상태 관리만 담당
-  - 모든 UI와 비즈니스 로직은 컴포넌트와 훅으로 분리
-*/
+/**
+ * MyPage
+ * 
+ * 페이지 레이아웃과 상태 관리만 담당
+ * 모든 UI와 비즈니스 로직은 컴포넌트와 훅으로 분리
+ */
 
 "use client";
 
@@ -114,11 +110,13 @@ export default function MyPage() {
     }
   };
 
-  const redirectingRef = useRef(false); // 리다이렉트 중복 방지
+  const redirectingRef = useRef(false);
 
-  // 인증되지 않은 경우 로그인 페이지로 리다이렉트
+  /**
+   * 인증되지 않은 경우 로그인 페이지로 리다이렉트
+   * loading 상태에서는 리다이렉트하지 않음 (시크릿 모드 세션 불안정 대응)
+   */
   useEffect(() => {
-    // loading 상태에서는 리다이렉트하지 않음 (시크릿 모드 세션 불안정 대응)
     if (status === "loading") {
       redirectingRef.current = false;
       return;
@@ -126,7 +124,9 @@ export default function MyPage() {
 
     if (status === "unauthenticated" && !redirectingRef.current) {
       redirectingRef.current = true;
-      // 약간의 딜레이를 추가하여 세션 상태가 안정화될 시간을 줌
+      /**
+       * 약간의 딜레이를 추가하여 세션 상태가 안정화될 시간을 줌
+       */
       const timer = setTimeout(() => {
         router.replace("/login");
       }, 100);
@@ -136,7 +136,6 @@ export default function MyPage() {
       };
     }
     
-    // authenticated 상태로 돌아오면 플래그 리셋
     if (status === "authenticated") {
       redirectingRef.current = false;
     }

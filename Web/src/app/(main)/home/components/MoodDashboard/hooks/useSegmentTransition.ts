@@ -1,6 +1,6 @@
-// ======================================================
-// File: src/app/(main)/home/components/MoodDashboard/hooks/useSegmentTransition.ts
-// ======================================================
+/**
+ * useSegmentTransition
+ */
 
 /**
  * 세그먼트 전환 애니메이션 관리 훅

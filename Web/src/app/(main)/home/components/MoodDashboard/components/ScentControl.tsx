@@ -1,6 +1,6 @@
-// ======================================================
-// File: src/app/(main)/home/components/MoodDashboard/components/ScentControl.tsx
-// ======================================================
+/**
+ * ScentControl
+ */
 
 import type { Mood } from "@/types/mood";
 import { hexToRgba } from "@/lib/utils";

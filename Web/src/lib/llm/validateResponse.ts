@@ -46,6 +46,8 @@ export interface BackgroundParamsResponse {
   // transitionDuration?: number;
   // DB에서 매핑된 실제 음악 트랙 (선택적, streamHandler에서 추가)
   musicTracks?: MusicTrack[];
+  // 세그먼트 duration (밀리초, streamHandler에서 추가)
+  duration?: number;
 }
 
 /**
@@ -108,6 +110,69 @@ const ICON_CATEGORY_MAP: Record<
   wave_brain: { name: "FaBrain", category: "abstract" },
   meditation_pose: { name: "FaOm", category: "abstract" },
 
+  // 크리스마스 아이콘 (iconCatalog에서)
+  tree: { name: "FaTree", category: "nature" },
+  snowflake: { name: "FaSnowflake", category: "weather" },
+  star: { name: "FaStar", category: "nature" },
+  gift: { name: "FaGift", category: "object" },
+  bell: { name: "FaBell", category: "object" },
+  candle: { name: "FaCandle", category: "object" },
+  snowman: { name: "FaSnowman", category: "nature" },
+  santa: { name: "FaSanta", category: "object" },
+
+  // 신년 아이콘
+  fire: { name: "FaFire", category: "abstract" },
+  rocket: { name: "FaRocket", category: "abstract" },
+  sparkles: { name: "FaStar", category: "abstract" },
+  confetti: { name: "FaConfetti", category: "abstract" },
+  starOfLife: { name: "FaStarOfLife", category: "abstract" },
+  magic: { name: "FaMagic", category: "abstract" },
+  balloon: { name: "FaBalloon", category: "object" },
+
+  // 발렌타인 아이콘
+  heart: { name: "FaHeart", category: "abstract" },
+  heartBroken: { name: "FaHeartBroken", category: "abstract" },
+  heartbeat: { name: "FaHeartbeat", category: "abstract" },
+  rose: { name: "FaRose", category: "nature" },
+  flower: { name: "FaFlower", category: "nature" },
+  gem: { name: "FaGem", category: "object" },
+  ribbon: { name: "FaRibbon", category: "object" },
+  envelope: { name: "FaEnvelope", category: "object" },
+
+  // 할로윈 아이콘
+  pumpkin: { name: "FaPumpkin", category: "nature" },
+  ghost: { name: "FaGhost", category: "abstract" },
+  spider: { name: "FaSpider", category: "nature" },
+  spiderWeb: { name: "FaSpiderWeb", category: "nature" },
+  hatWizard: { name: "FaHatWizard", category: "object" },
+  skull: { name: "FaSkull", category: "abstract" },
+  moon: { name: "FaMoon", category: "weather" },
+  cloudMoon: { name: "FaCloudMoon", category: "weather" },
+
+  // 계절/일반 아이콘
+  sun: { name: "FaSun", category: "weather" },
+  umbrellaBeach: { name: "FaUmbrellaBeach", category: "nature" },
+  palmTree: { name: "FaPalmTree", category: "nature" },
+  water: { name: "FaWater", category: "nature" },
+  iceCream: { name: "FaIceCream", category: "object" },
+  sunPlantWilt: { name: "FaSunPlantWilt", category: "nature" },
+  butterfly: { name: "FaButterfly", category: "nature" },
+  leaf: { name: "FaLeaf", category: "nature" },
+  mountain: { name: "FaMountain", category: "nature" },
+  mountainSun: { name: "FaMountainSun", category: "nature" },
+  treePine: { name: "FaTreePine", category: "nature" },
+  flowerTulip: { name: "FaFlowerTulip", category: "nature" },
+  wheatAwn: { name: "FaWheatAwn", category: "nature" },
+  apple: { name: "FaApple", category: "nature" },
+  chestnut: { name: "FaChestnut", category: "nature" },
+  grapes: { name: "FaGrapes", category: "nature" },
+
+  // 기본 (향 타입별)
+  petal: { name: "FaPetal", category: "nature" },
+  waterDrop: { name: "FaWaterDrop", category: "nature" },
+  circle: { name: "FaCircle", category: "abstract" },
+  cloud: { name: "FaCloud", category: "weather" },
+
   // 기본값
   default: { name: "FaCircle", category: "abstract" },
 };
@@ -133,9 +198,12 @@ interface RawLLMResponse {
     musicSelection?: unknown;
     moodColor?: unknown;
     lighting?: {
+      rgb?: unknown;
       brightness?: unknown;
       temperature?: unknown;
     };
+    scent?: unknown;
+    music?: unknown;
     backgroundIcon?: {
       category?: unknown;
       categories?: unknown;
@@ -309,21 +377,63 @@ export function validateAndNormalizeResponse(
 ): BackgroundParamsResponse | { segments: BackgroundParamsResponse[] } {
   // 10개 세그먼트 배열 응답 처리
   if (rawResponse.segments && Array.isArray(rawResponse.segments)) {
+    const segments = rawResponse.segments; // 타입 가드로 안전하게 사용
     // 새로운 구조인지 확인 (lighting.rgb, scent, music 객체 존재 여부)
-    const firstSegment = rawResponse.segments[0];
+    const firstSegment = segments[0];
     const isNewStructure = !!(firstSegment?.lighting?.rgb || firstSegment?.scent || firstSegment?.music);
     
-    console.log(`\n✅ [LLM Response] ${rawResponse.segments.length} segments, ${isNewStructure ? "NEW structure" : "OLD structure"}`);
+    console.log(`\n✅ [LLM Response] ${segments.length} segments, ${isNewStructure ? "NEW structure" : "OLD structure"}`);
     
-    const validatedSegments = rawResponse.segments.map((segment, index) => {
+    // 아이콘 다양성 검증 (검증 전에 원본 세그먼트에서 아이콘 정보 추출)
+    if (isNewStructure) {
+      const iconDiversityCheck = (rawSegments: unknown[]) => {
+        const allIcons: string[] = [];
+        rawSegments.forEach((seg: unknown) => {
+          const segment = seg as Record<string, unknown>;
+          if (segment?.background && typeof segment.background === 'object' && 'icons' in segment.background) {
+            const icons = segment.background.icons;
+            if (Array.isArray(icons)) {
+              allIcons.push(...icons.filter((icon): icon is string => typeof icon === 'string'));
+            }
+          }
+        });
+        
+        if (allIcons.length === 0) return;
+        
+        const uniqueIcons = new Set(allIcons);
+        const iconFrequency = new Map<string, number>();
+        
+        allIcons.forEach(icon => {
+          iconFrequency.set(icon, (iconFrequency.get(icon) || 0) + 1);
+        });
+        
+        // 중복도가 높은 아이콘 식별 (3회 이상 사용)
+        const overusedIcons = Array.from(iconFrequency.entries())
+          .filter(([_, count]) => count > 3)
+          .map(([icon, _]) => icon);
+        
+        const diversityScore = uniqueIcons.size / allIcons.length;
+        
+        if (diversityScore < 0.5 || overusedIcons.length > 0) {
+          console.warn(`  ⚠️  [Icon Diversity] 낮은 아이콘 다양성: ${diversityScore.toFixed(2)}`);
+          if (overusedIcons.length > 0) {
+            console.warn(`  ⚠️  [Icon Diversity] 과다 사용된 아이콘: ${overusedIcons.join(', ')}`);
+          }
+        } else {
+          console.log(`  ✅ [Icon Diversity] 아이콘 다양성: ${diversityScore.toFixed(2)} (고유: ${uniqueIcons.size}/${allIcons.length})`);
+        }
+      };
+      
+      iconDiversityCheck(segments);
+    }
+    
+    const validatedSegments = segments.map((segment, index) => {
       try {
         if (isNewStructure) {
           // 새로운 구조: CompleteSegmentOutput 검증 후 BackgroundParamsResponse로 변환
-          const completeOutput = validateCompleteSegmentOutput(segment);
-          // 로그 간소화: 에러만 표시
-          if (index < 3 || index === rawResponse.segments.length - 1) {
-            console.log(`  Segment ${index}: ${completeOutput.moodAlias} | musicID ${completeOutput.music.musicID} | ${completeOutput.background.icons.length} icons`);
-          }
+          const completeOutput = validateCompleteSegmentOutput(segment as Parameters<typeof validateCompleteSegmentOutput>[0]);
+          // 모든 세그먼트 로그 출력
+          console.log(`  Segment ${index}: ${completeOutput.moodAlias} | musicID ${completeOutput.music.musicID} | ${completeOutput.background.icons.length} icons`);
           return convertToBackgroundParamsResponse(completeOutput);
         } else {
           // 기존 구조: 기존 검증 로직 사용

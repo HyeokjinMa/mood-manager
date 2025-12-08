@@ -1,14 +1,10 @@
-// ======================================================
-// File: src/app/(main)/mood/components/MoodDeleteModal.tsx
-// ======================================================
-
-/*
-  [MoodDeleteModal Role]
-  
-  - Mood set deletion confirmation popup
-  - Same style as DeviceDeleteModal
-  - Delete confirmation and cancel functionality
-*/
+/**
+ * MoodDeleteModal
+ * 
+ * Mood set deletion confirmation popup
+ * Same style as DeviceDeleteModal
+ * Delete confirmation and cancel functionality
+ */
 
 "use client";
 
@@ -47,7 +43,6 @@ export default function MoodDeleteModal({
           Delete Mood
         </h2>
 
-        {/* Mood information */}
         <div 
           className="flex items-center gap-3 mb-6 p-3 rounded-lg"
           style={{
@@ -66,12 +61,10 @@ export default function MoodDeleteModal({
           </div>
         </div>
 
-        {/* Confirmation message */}
         <p className="text-center text-gray-600 mb-6 text-sm">
           Are you sure you want to delete this mood? This action cannot be undone.
         </p>
 
-        {/* Buttons */}
         <div className="flex gap-3">
           <button
             onClick={onCancel}

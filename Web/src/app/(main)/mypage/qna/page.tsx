@@ -1,13 +1,9 @@
-// ======================================================
-// File: src/app/(main)/mypage/qna/page.tsx
-// ======================================================
-
-/*
-  [Q&A Page 역할]
-
-  - 자주 묻는 질문 목록 표시
-  - 질문 클릭 시 답변 표시/숨김
-*/
+/**
+ * Q&A Page
+ * 
+ * 자주 묻는 질문 목록 표시
+ * 질문 클릭 시 답변 표시/숨김
+ */
 
 "use client";
 
@@ -79,7 +75,6 @@ export default function QNAPage() {
     <div className="flex flex-col h-screen overflow-hidden relative bg-white">
       <div className="flex-1 overflow-y-auto pb-20">
         <div className="max-w-[375px] mx-auto">
-        {/* Header */}
         <div className="bg-white border-b border-gray-200 px-4 py-4 flex items-center">
           <Link href="/mypage" className="mr-3">
             <ArrowLeft size={20} className="text-gray-600" />
@@ -87,7 +82,6 @@ export default function QNAPage() {
           <h1 className="text-xl font-semibold">Q&A</h1>
         </div>
 
-        {/* FAQ List */}
         <div className="bg-white mt-4">
           {faqs.map((faq) => (
             <div key={faq.id} className="border-b border-gray-200 last:border-b-0">

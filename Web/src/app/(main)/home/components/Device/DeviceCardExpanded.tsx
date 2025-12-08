@@ -39,6 +39,8 @@ export default function DeviceCardExpanded({
   onUpdateLightColor,
   onUpdateLightBrightness,
   onUpdateScentLevel,
+  volume,
+  onUpdateVolume,
 }: {
   device: Device;
   currentMood?: Mood;
@@ -49,6 +51,8 @@ export default function DeviceCardExpanded({
   onUpdateLightColor?: (color: string) => void;
   onUpdateLightBrightness?: (brightness: number) => void;
   onUpdateScentLevel?: (level: number) => void;
+  volume?: number; // 0-100 범위
+  onUpdateVolume?: (volume: number) => void; // 0-100 범위
 }) {
   const {
     lightColor,
@@ -110,6 +114,7 @@ export default function DeviceCardExpanded({
           lightColor={lightColor}
           lightBrightness={lightBrightness}
           scentLevel={scentLevel}
+          volume={volume}
           onUpdateLightColor={device.type === "light" ? (color) => {
             setLightColor(color);
             onUpdateLightColor?.(color);
@@ -122,13 +127,18 @@ export default function DeviceCardExpanded({
             setScentLevel(level);
             onUpdateScentLevel?.(level);
           }}
+          onUpdateVolume={(newVolume) => {
+            onUpdateVolume?.(newVolume);
+          }}
         />
       </div>
 
-      {/* 타입별 상태 설명 */}
-      <div className="mt-4 pb-8 text-sm text-gray-600 leading-relaxed">
-        {getDeviceStatusDescription(device)}
-      </div>
+      {/* 타입별 상태 설명 (컨트롤이 있는 경우 표시하지 않음) */}
+      {!device.power && (
+        <div className="mt-4 pb-8 text-sm text-gray-600 leading-relaxed">
+          {getDeviceStatusDescription(device)}
+        </div>
+      )}
 
       {/* Delete 버튼 */}
       <div

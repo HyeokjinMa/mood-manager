@@ -1,10 +1,10 @@
-// src/app/api/preprocessing/route.ts
 /**
- * [파일 역할]
- * - 오늘 날짜의 생체 데이터(raw_periodic)를 기반으로
- *   스트레스/수면/날씨/감정 카운트 데이터를 종합하여 반환하는 API
- *
- * [구성 요소]
+ * API Route: /api/preprocessing
+ * 
+ * 오늘 날짜의 생체 데이터(raw_periodic)를 기반으로
+ * 스트레스/수면/날씨/감정 카운트 데이터를 종합하여 반환하는 API
+ * 
+ * 구성 요소:
  * 1) 평균 스트레스 지수
  * 2) 최근 스트레스 지수
  * 3) 가장 최근 수면 점수 (수면 세션 기반)
@@ -21,16 +21,15 @@ import { fetchWeather } from "@/lib/weather/fetchWeather";
 import { requireAuth, checkMockMode } from "@/lib/auth/session";
 import { getEmotionCounts, getAccumulationDuration } from "@/lib/emotionCounts/EmotionCountStore";
 
-// Stress
 import { calculateStressIndex } from "@/lib/stress/calculateStressIndex";
 
 if (typeof window === "undefined") {
   startPeriodicListener();
 }
 
-// ------------------------------------------------------------
-// GET /api/preprocessing
-// ------------------------------------------------------------
+/**
+ * GET /api/preprocessing
+ */
 export async function GET() {
   startPeriodicListener();
 
@@ -54,9 +53,7 @@ export async function GET() {
   const USER_ID = session.user.id;
 
   try {
-    // ------------------------------------------------------------
     // 1) 오늘 날짜 raw_periodic 데이터 조회
-    // ------------------------------------------------------------
     let todayRawData;
     
     try {
@@ -83,9 +80,7 @@ export async function GET() {
       return NextResponse.json(getMockPreprocessingData());
     }
 
-    // ------------------------------------------------------------
     // 2) 스트레스 계산
-    // ------------------------------------------------------------
     const stressScores = todayRawData.map((raw) => calculateStressIndex(raw));
 
     const averageStressIndex = Math.round(
@@ -95,9 +90,7 @@ export async function GET() {
     const latestRaw = todayRawData[0];
     const recentStressIndex = calculateStressIndex(latestRaw);
 
-    // ------------------------------------------------------------
     // 3) 날씨 정보
-    // ------------------------------------------------------------
     let weather = undefined;
     try {
       weather = await fetchWeather();
@@ -106,9 +99,7 @@ export async function GET() {
       console.warn("[preprocessing] ⚠️ Weather query failed, 기본 날씨 값으로 대체:", err);
     }
 
-    // ------------------------------------------------------------
     // 4) 수면 점수 (수면 세션 기반)
-    // ------------------------------------------------------------
     const sleepResult = await calcTodaySleepScore(USER_ID);
 
     let latestSleepScore: number;
@@ -126,15 +117,11 @@ export async function GET() {
       latestSleepDuration = 480; // 8시간
     }
 
-    // ------------------------------------------------------------
     // 5) 감정 카운트 (누적 카운터 방식)
-    // ------------------------------------------------------------
     const emotionCounts = getEmotionCounts(USER_ID);
     const accumulationDurationSeconds = getAccumulationDuration(USER_ID);
 
-    // ------------------------------------------------------------
     // 6) 최종 JSON 응답 (Python + LLM 입력 스펙에 맞춤)
-    // ------------------------------------------------------------
     console.log("[preprocessing] ✅ 실제 전처리 결과(JSON)를 반환합니다. (mock 아님)");
     return NextResponse.json(
       {

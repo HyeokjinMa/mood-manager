@@ -1,6 +1,6 @@
-// ======================================================
-// File: src/app/api/moods/saved/[savedMoodId]/route.ts
-// ======================================================
+/**
+ * API Route: /api/moods/saved/[savedMoodId]
+ */
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, checkMockMode } from "@/lib/auth/session";

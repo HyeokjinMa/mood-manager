@@ -13,7 +13,8 @@ import type { BackgroundParams } from "@/hooks/useBackgroundParams";
 interface UseDeviceSyncProps {
   setDevices: React.Dispatch<React.SetStateAction<Device[]>>;
   backgroundParams: BackgroundParams | null;
-  currentMood: Mood;
+  currentMood: Mood | null;
+  volume?: number; // 0-100 범위
 }
 
 /**
@@ -23,13 +24,19 @@ export function useDeviceSync({
   setDevices,
   backgroundParams,
   currentMood,
+  volume,
 }: UseDeviceSyncProps) {
   useEffect(() => {
+    // backgroundParams나 currentMood가 없으면 동기화하지 않음 (초기 더미 데이터 유지)
+    if (!backgroundParams && !currentMood) {
+      return;
+    }
+    
     setDevices((prev) =>
       prev.map((d) => {
         if (d.type === "manager") {
           // Manager: 무드 색상, 향, 음악, 브라이트니스, 색온도 반영
-          const moodColor = backgroundParams?.moodColor || currentMood.color;
+          const moodColor = backgroundParams?.moodColor || currentMood?.color || "#E6F3FF";
           const brightness = backgroundParams?.lighting.brightness || d.output.brightness || 80;
           const temperature = backgroundParams?.lighting.temperature; // LLM 생성 색온도
           
@@ -40,14 +47,14 @@ export function useDeviceSync({
               color: moodColor,
               brightness: brightness,
               temperature: temperature, // 조명 디바이스 색온도 (목업이지만 유의미한 연결)
-              scentType: currentMood.scent.name,
-              nowPlaying: currentMood.song.title,
+              scentType: currentMood?.scent.name || currentMood?.scent.type || "Floral",
+              nowPlaying: currentMood?.song.title || "Unknown",
             },
           };
         }
         if (d.type === "light") {
-          // Light: 브라이트니스, 색온도 반영 (컬러 변경 제거)
-          const brightness = backgroundParams?.lighting.brightness || d.output.brightness || 70;
+          // Light: 브라이트니스, 색온도 반영 (manager와 동일한 brightness 사용)
+          const brightness = backgroundParams?.lighting.brightness || d.output.brightness || 80;
           const temperature = backgroundParams?.lighting.temperature; // LLM 생성 색온도
           
           return {
@@ -66,7 +73,7 @@ export function useDeviceSync({
             ...d,
             output: {
               ...d.output,
-              scentType: currentMood.scent.name,
+              scentType: currentMood?.scent.name || currentMood?.scent.type || "Floral",
               scentLevel: d.output.scentLevel || 7,
               scentInterval: d.output.scentInterval || 30,
             },
@@ -78,8 +85,8 @@ export function useDeviceSync({
             ...d,
             output: {
               ...d.output,
-              nowPlaying: currentMood.song.title,
-              volume: d.output.volume || 60,
+              nowPlaying: currentMood?.song.title || "Unknown",
+              volume: volume !== undefined ? volume : (d.output.volume || 70),
             },
           };
         }

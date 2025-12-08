@@ -1,10 +1,8 @@
-// ======================================================
-// File: src/app/(main)/home/components/Device/hooks/useDeviceHandlers.ts
-// ======================================================
+/**
+ * useDeviceHandlers
+ */
 
 import type { Device } from "@/types/device";
-import { useSession } from "next-auth/react";
-import { ADMIN_EMAIL } from "@/lib/auth/mockMode";
 
 interface UseDeviceHandlersProps {
   device: Device;
@@ -24,19 +22,6 @@ export function createDeviceHandlers({
   device,
   setDevices,
 }: UseDeviceHandlersProps) {
-  // Mock Mode 확인을 위한 세션 체크 (클라이언트 컴포넌트에서만 동작)
-  const getIsAdminMode = () => {
-    if (typeof window === 'undefined') return false;
-    try {
-      // 세션 스토리지나 쿠키에서 확인 (간단한 방법)
-      // 실제로는 useSession 훅을 사용해야 하지만, 이 함수는 훅이 아니므로
-      // 세션 정보를 props로 받거나, 전역 상태를 확인해야 합니다.
-      // 임시로 API 호출 후 에러 처리로 Mock Mode 감지
-      return false; // 기본값, 실제로는 API 호출 후 에러 처리로 판단
-    } catch {
-      return false;
-    }
-  };
 
   // 디바이스 삭제 (DB 연동)
   const handleDelete = async () => {

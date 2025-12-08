@@ -1,6 +1,6 @@
-// ======================================================
-// File: src/app/api/moods/saved/route.ts
-// ======================================================
+/**
+ * API Route: /api/moods/saved
+ */
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, checkMockMode } from "@/lib/auth/session";
@@ -365,185 +365,18 @@ export async function GET() {
     }
 
     // TODO: 실제 DB 연동 시 Firestore에서 조회
-    // [MOCK] 목업 응답 (일반 모드) - 샘플 11개 무드셋
-    const savedMoods = [
-      {
-        id: "saved-1",
-        moodId: "calm-1",
-        moodName: "Unknown Mood",
-        moodColor: "#E6F3FF",
-        music: {
-          genre: "newage",
-          title: "Unknown Song",
-        },
-        scent: {
-          type: "Marine",
-          name: "Wave",
-        },
-        preferenceCount: 0,
-        savedAt: Date.now() - 86400000 * 11,
-      },
-      {
-        id: "saved-2",
-        moodId: "focus-1",
-        moodName: "Deep Focus",
-        moodColor: "#F5F5DC",
-        music: {
-          genre: "classical",
-          title: "Concentration",
-        },
-        scent: {
-          type: "Musk",
-          name: "Cloud",
-        },
-        preferenceCount: 0,
-        savedAt: Date.now() - 86400000 * 10,
-      },
-      {
-        id: "saved-3",
-        moodId: "energy-1",
-        moodName: "Morning Energy",
-        moodColor: "#FFD700",
-        music: {
-          genre: "ambient",
-          title: "Sunrise",
-        },
-        scent: {
-          type: "Citrus",
-          name: "Orange",
-        },
-        preferenceCount: 0,
-        savedAt: Date.now() - 86400000 * 9,
-      },
-      {
-        id: "saved-4",
-        moodId: "relax-1",
-        moodName: "Evening Relax",
-        moodColor: "#9CAF88",
-        music: {
-          genre: "jazz",
-          title: "Soft Evening",
-        },
-        scent: {
-          type: "Aromatic",
-          name: "Herb",
-        },
-        preferenceCount: 0,
-        savedAt: Date.now() - 86400000 * 8,
-      },
-      {
-        id: "saved-5",
-        moodId: "romantic-1",
-        moodName: "Romantic Night",
-        moodColor: "#FF69B4",
-        music: {
-          genre: "piano",
-          title: "Love Song",
-        },
-        scent: {
-          type: "Floral",
-          name: "Rose",
-        },
-        preferenceCount: 0,
-        savedAt: Date.now() - 86400000 * 7,
-      },
-      {
-        id: "saved-6",
-        moodId: "calm-2",
-        moodName: "Unknown Mood",
-        moodColor: "#D4E6F1",
-        music: {
-          genre: "nature",
-          title: "Ocean Waves",
-        },
-        scent: {
-          type: "Marine",
-          name: "Shell",
-        },
-        preferenceCount: 0,
-        savedAt: Date.now() - 86400000 * 6,
-      },
-      {
-        id: "saved-7",
-        moodId: "focus-2",
-        moodName: "Deep Focus",
-        moodColor: "#FFFDD0",
-        music: {
-          genre: "classical",
-          title: "Concentration",
-        },
-        scent: {
-          type: "Musk",
-          name: "Cloud",
-        },
-        preferenceCount: 0,
-        savedAt: Date.now() - 86400000 * 5,
-      },
-      {
-        id: "saved-8",
-        moodId: "energy-2",
-        moodName: "Morning Energy",
-        moodColor: "#FFA500",
-        music: {
-          genre: "electronic",
-          title: "Vitality",
-        },
-        scent: {
-          type: "Citrus",
-          name: "Lemon",
-        },
-        preferenceCount: 0,
-        savedAt: Date.now() - 86400000 * 4,
-      },
-      {
-        id: "saved-9",
-        moodId: "relax-2",
-        moodName: "Evening Relax",
-        moodColor: "#B19CD9",
-        music: {
-          genre: "meditation",
-          title: "Peaceful Night",
-        },
-        scent: {
-          type: "Aromatic",
-          name: "Lavender",
-        },
-        preferenceCount: 0,
-        savedAt: Date.now() - 86400000 * 3,
-      },
-      {
-        id: "saved-10",
-        moodId: "romantic-2",
-        moodName: "Romantic Night",
-        moodColor: "#FF7F50",
-        music: {
-          genre: "piano",
-          title: "Intimate",
-        },
-        scent: {
-          type: "Floral",
-          name: "Rose",
-        },
-        preferenceCount: 0,
-        savedAt: Date.now() - 86400000 * 2,
-      },
-      {
-        id: "saved-11",
-        moodId: "calm-3",
-        moodName: "Unknown Mood",
-        moodColor: "#AED6F1",
-        music: {
-          genre: "nature",
-          title: "Gentle Rain",
-        },
-        scent: {
-          type: "Green",
-          name: "Sprout",
-        },
-        preferenceCount: 0,
-        savedAt: Date.now() - 86400000,
-      },
-    ];
+    // 일반 모드에서는 실제 DB에서 조회해야 하므로 빈 배열 반환
+    // [MOCK] 목업 응답은 관리자 모드에서만 사용
+    const savedMoods: Array<{
+      id: string;
+      moodId: string;
+      moodName: string;
+      moodColor: string;
+      music: { genre: string; title: string };
+      scent: { type: string; name: string };
+      preferenceCount: number;
+      savedAt: number;
+    }> = [];
 
     return NextResponse.json({
       savedMoods,

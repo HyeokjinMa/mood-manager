@@ -1,16 +1,12 @@
-// ======================================================
-// File: src/app/(main)/home/components/Device/DeviceCardSmall.tsx
-// ======================================================
-
-/*
-  [DeviceCardSmall 역할 정리]
-
-  - 2×N 그리드에서 기본적으로 보이는 작은 디바이스 카드
-  - icon + battery icon + name + 상태 설명문 표시
-  - 클릭 시 onClick 호출 → DeviceGrid에서 expandedId 설정
-  - 전원이 꺼져 있으면 회색/반투명 UI 적용
-  - 카드 높이 통일 (h-[100px])
-*/
+/**
+ * DeviceCardSmall
+ * 
+ * 2×N 그리드에서 기본적으로 보이는 작은 디바이스 카드
+ * icon + battery icon + name + 상태 설명문 표시
+ * 클릭 시 onClick 호출 → DeviceGrid에서 expandedId 설정
+ * 전원이 꺼져 있으면 회색/반투명 UI 적용
+ * 카드 높이 통일 (h-[100px])
+ */
 
 "use client";
 
@@ -22,37 +18,44 @@ import {
   FaBatteryEmpty,
   FaPalette,
   FaCog,
+  FaLightbulb,
+  FaSprayCan,
+  FaVolumeUp,
 } from "react-icons/fa";
 import {
-  HiOutlineLightBulb,
-  HiOutlineSparkles,
-  HiOutlineSpeakerWave,
   HiOutlineMusicalNote,
   HiOutlineAdjustmentsHorizontal,
   HiOutlineSun,
   HiOutlineBeaker,
 } from "react-icons/hi2";
 import { ReactNode } from "react";
-import { blendWithWhite } from "@/lib/utils";
+import { blendWithWhite, reduceWhiteTint } from "@/lib/utils";
 
 export default function DeviceCardSmall({
   device,
   currentMood,
   onClick,
+  isLoading = false,
 }: {
   device: Device;
   currentMood?: Mood;
   onClick: () => void;
+  isLoading?: boolean;
 }) {
-  // 무드 컬러를 흰색에 가깝게 블렌딩 (90% 흰색 + 10% 무드 컬러)
-  // 전원이 켜져 있을 때만 무드 컬러 사용, 꺼져 있으면 회색
+  /**
+   * 무드 컬러를 흰색에 가깝게 블렌딩 (90% 흰색 + 10% 무드 컬러)
+   * 전원이 켜져 있을 때만 무드 컬러 사용, 꺼져 있으면 회색
+   */
   const getBackgroundColor = () => {
     if (!device.power) {
       return "rgba(200, 200, 200, 0.8)";
     }
-    return currentMood
-      ? blendWithWhite(currentMood.color, 0.9)
-      : "rgb(255, 255, 255)";
+    if (currentMood) {
+      // 흰색 과다 처리 후 블렌딩
+      const adjustedColor = reduceWhiteTint(currentMood.color);
+      return blendWithWhite(adjustedColor, 0.9);
+    }
+    return "rgb(255, 255, 255)";
   };
 
   const backgroundColor = getBackgroundColor();
@@ -72,26 +75,23 @@ export default function DeviceCardSmall({
       }}
       key={`device-small-${device.id}-${device.power}`} // 전원 상태 변경 시 리렌더링 강제
     >
-      {/* 상단: 아이콘 - 이름 - 배터리 일렬 배치 */}
       <div className="flex items-center gap-2">
-        {/* 메인 타입 아이콘: 항상 중립 색상 */}
-        <div className="text-base text-gray-600">{getIcon(device.type)}</div>
+        <div className="text-base">{getIcon(device.type)}</div>
         <div className="text-xs font-medium flex-1 truncate">{device.name}</div>
         <div className="text-sm">{getBatteryIcon(device.battery, device.power)}</div>
       </div>
 
-      {/* 하단: 상태 설명문 - 디바이스 타입별로 다른 레이아웃 */}
-      <div className="text-[10px] text-gray-600">{getStatusDescription(device)}</div>
+      <div className="text-[10px] text-gray-600">{getStatusDescription(device, isLoading)}</div>
     </div>
   );
 }
 
 function getIcon(type: Device["type"]) {
-  if (type === "manager") return <FaPalette />;
-  if (type === "light") return <HiOutlineLightBulb />;
-  if (type === "scent") return <HiOutlineSparkles />;
-  if (type === "speaker") return <HiOutlineSpeakerWave />;
-  return <FaCog />;
+  if (type === "manager") return <FaPalette className="text-purple-500" />;
+  if (type === "light") return <FaLightbulb className="text-yellow-500" />;
+  if (type === "scent") return <FaSprayCan className="text-green-500" />;
+  if (type === "speaker") return <FaVolumeUp className="text-blue-500" />;
+  return <FaCog className="text-gray-500" />;
 }
 
 function getBatteryIcon(battery: number, power: boolean) {
@@ -103,12 +103,21 @@ function getBatteryIcon(battery: number, power: boolean) {
   return <FaBatteryEmpty className="text-red-500" />;
 }
 
-function getStatusDescription(device: Device): ReactNode {
+function getStatusDescription(device: Device, isLoading: boolean): ReactNode {
   if (!device.power) {
     return (
       <div className="flex items-center gap-1 text-gray-500">
         <HiOutlineAdjustmentsHorizontal className="text-[11px]" />
         <span>Off</span>
+      </div>
+    );
+  }
+
+  // 로딩 중이면 "..." 표시
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-1 text-gray-400">
+        <span className="animate-pulse">...</span>
       </div>
     );
   }
@@ -121,21 +130,21 @@ function getStatusDescription(device: Device): ReactNode {
           <div className="flex items-center gap-1">
             <HiOutlineSun className="text-[11px]" />
             <span className="truncate">
-              {device.output.brightness ? `${device.output.brightness}%` : "-"}
+              {device.output.brightness ? `${device.output.brightness}%` : "..."}
             </span>
           </div>
           {/* Scent Status */}
           <div className="flex items-center gap-1">
             <HiOutlineBeaker className="text-[11px]" />
             <span className="truncate">
-              {device.output.scentType || "-"}
+              {device.output.scentType || "..."}
             </span>
           </div>
           {/* Music Status */}
           <div className="flex items-center gap-1">
             <HiOutlineMusicalNote className="text-[11px]" />
             <span className="truncate">
-              {device.output.nowPlaying || "-"}
+              {device.output.nowPlaying || "..."}
             </span>
           </div>
         </div>
@@ -145,7 +154,7 @@ function getStatusDescription(device: Device): ReactNode {
         <div className="flex items-center gap-1">
           <HiOutlineSun className="text-[11px]" />
           <span>
-            {device.output.brightness ? `${device.output.brightness}%` : "-"}
+            {device.output.brightness ? `${device.output.brightness}%` : "..."}
           </span>
         </div>
       );
@@ -156,7 +165,7 @@ function getStatusDescription(device: Device): ReactNode {
           <span className="truncate">
             {device.output.scentType 
               ? `${device.output.scentType} ${device.output.scentLevel ? `Lv${device.output.scentLevel}` : ""}`.trim()
-              : "-"}
+              : "..."}
           </span>
         </div>
       );
@@ -165,7 +174,7 @@ function getStatusDescription(device: Device): ReactNode {
         <div className="flex items-center gap-1">
           <HiOutlineMusicalNote className="text-[11px]" />
           <span className="truncate">
-            {device.output.nowPlaying || "-"}
+            {device.output.nowPlaying || "..."}
           </span>
         </div>
       );

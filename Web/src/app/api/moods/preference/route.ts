@@ -1,6 +1,6 @@
-// ======================================================
-// File: src/app/api/moods/preference/route.ts
-// ======================================================
+/**
+ * API Route: /api/moods/preference
+ */
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth/session";

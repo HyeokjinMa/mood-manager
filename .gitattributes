@@ -1,2 +1,26 @@
 *.onnx filter=lfs diff=lfs merge=lfs -text
 *.safetensors filter=lfs diff=lfs merge=lfs -text
+
+# 큰 바이너리 파일들
+*.node filter=lfs diff=lfs merge=lfs -text
+*.dylib filter=lfs diff=lfs merge=lfs -text
+*.so filter=lfs diff=lfs merge=lfs -text
+*.dll filter=lfs diff=lfs merge=lfs -text
+
+# 미디어 파일들 (선택사항 - 이미 .gitignore에 있지만 히스토리 정리용)
+*.mp3 filter=lfs diff=lfs merge=lfs -text
+*.mp4 filter=lfs diff=lfs merge=lfs -text
+*.pdf filter=lfs diff=lfs merge=lfs -text
+
+# 텍스트 파일 줄바꿈 정규화 (CRLF → LF)
+* text=auto
+*.md text eol=lf
+*.json text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf

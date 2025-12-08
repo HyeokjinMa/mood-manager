@@ -16,7 +16,8 @@ import { chainSegments } from "@/lib/utils/segmentUtils";
 import type { MoodStreamSegment } from "@/hooks/useMoodStream/types";
 import { getMockMoodStream } from "@/lib/mock/mockData";
 import type { BackgroundParamsResponse } from "@/lib/llm/validateResponse";
-import type { ScentType } from "@/types/mood";
+import type { ScentType, Scent } from "@/types/mood";
+import { SCENT_DEFINITIONS } from "@/types/mood";
 
 /**
  * POST /api/moods/current/generate
@@ -147,8 +148,22 @@ export async function POST(request: NextRequest) {
                 title: musicTracks[0]?.title || "",
               },
               scent: {
-                type: (seg.scent?.type || "Floral") as ScentType,
-                name: seg.scent?.name || "Rose",
+                type: (() => {
+                  const rawType = seg.scent?.type || "Floral";
+                  // completeOutput의 ScentType을 mood의 ScentType으로 변환
+                  const validTypes: ScentType[] = ["Musk", "Aromatic", "Woody", "Citrus", "Honey", "Green", "Dry", "Leathery", "Marine", "Spicy", "Floral", "Powdery"];
+                  const convertedType = validTypes.includes(rawType as ScentType) ? (rawType as ScentType) : "Floral";
+                  return convertedType;
+                })(),
+                name: (() => {
+                  if (seg.scent?.name) return seg.scent.name;
+                  const rawType = seg.scent?.type || "Floral";
+                  const validTypes: ScentType[] = ["Musk", "Aromatic", "Woody", "Citrus", "Honey", "Green", "Dry", "Leathery", "Marine", "Spicy", "Floral", "Powdery"];
+                  const convertedType = validTypes.includes(rawType as ScentType) ? (rawType as ScentType) : "Floral";
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  const definitions = (SCENT_DEFINITIONS as Record<string, Scent[]>)[convertedType] as Scent[] | undefined;
+                  return definitions && definitions.length > 0 ? definitions[0].name : "Default";
+                })(),
               },
               lighting: {
                 color: seg.moodColor || "#E6F3FF",
@@ -205,8 +220,22 @@ export async function POST(request: NextRequest) {
             title: musicTracks[0]?.title || "",
           },
           scent: {
-            type: (singleSegment.scent?.type || "Floral") as ScentType,
-            name: singleSegment.scent?.name || "Rose",
+            type: (() => {
+              const rawType = singleSegment.scent?.type || "Floral";
+              const validTypes: ScentType[] = ["Musk", "Aromatic", "Woody", "Citrus", "Honey", "Green", "Dry", "Leathery", "Marine", "Spicy", "Floral", "Powdery"];
+              const convertedType = validTypes.includes(rawType as ScentType) ? (rawType as ScentType) : "Floral";
+              return convertedType;
+            })(),
+            name: (() => {
+              if (singleSegment.scent?.name) return singleSegment.scent.name;
+              const rawType = singleSegment.scent?.type || "Floral";
+              const validTypes: ScentType[] = ["Musk", "Aromatic", "Woody", "Citrus", "Honey", "Green", "Dry", "Leathery", "Marine", "Spicy", "Floral", "Powdery"];
+              const convertedType = validTypes.includes(rawType as ScentType) ? (rawType as ScentType) : "Floral";
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  const definitions = (SCENT_DEFINITIONS as Record<string, Scent[]>)[convertedType] as Scent[] | undefined;
+              return definitions && definitions.length > 0 ? definitions[0].name : "Default";
+            })(),
           },
           lighting: {
             color: singleSegment.moodColor || "#E6F3FF",

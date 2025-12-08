@@ -117,11 +117,11 @@ export async function POST(request: NextRequest) {
 
     // 2. 요청 본문 파싱
     const body = await request.json();
+    const { type, name, currentMood } = body;
     
     // 3. 목업 모드 확인 (관리자 계정)
     if (await checkMockMode(session)) {
       console.log("[POST /api/devices] 목업 모드: 관리자 계정");
-      const { type, name } = body;
       
       // 디바이스 타입 검증
       const validTypes = ["manager", "light", "scent", "speaker"];
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
       }
       
       // 목업 디바이스 생성 (임시 ID 생성)
-      const mockDevice = createMockDevice(type, name);
+      const mockDevice = createMockDevice(type, name, currentMood);
       return NextResponse.json({ device: mockDevice });
     }
     // 4. 필수 필드 검증
@@ -150,8 +150,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    const { type, name } = body;
 
     // 5. 디바이스 타입 검증
     const validTypes = ["manager", "light", "scent", "speaker"];
@@ -184,8 +182,8 @@ export async function POST(request: NextRequest) {
       deviceName = `${typeNames[type]} ${existingDevices + 1}`;
     }
 
-    // 7. 디바이스 기본 설정값
-    const defaultSettings = getDefaultDeviceSettings(type);
+    // 7. 디바이스 기본 설정값 (현재 무드 정보가 있으면 반영)
+    const defaultSettings = getDefaultDeviceSettings(type, currentMood);
 
     // 8. 디바이스 생성
     const device = await prisma.device.create({
@@ -232,8 +230,17 @@ export async function POST(request: NextRequest) {
 
 /**
  * 디바이스 타입별 기본 설정값 반환
+ * @param currentMood - 현재 무드 정보 (선택적, 있으면 반영)
  */
-function getDefaultDeviceSettings(type: string) {
+function getDefaultDeviceSettings(
+  type: string,
+  currentMood?: {
+    color?: string;
+    scentType?: string;
+    scentName?: string;
+    songTitle?: string;
+  } | null
+) {
   const baseSettings = {
     battery: 100,
     power: true,
@@ -252,25 +259,25 @@ function getDefaultDeviceSettings(type: string) {
       return {
         ...baseSettings,
         brightness: 85,
-        color: "#FFD966",
+        color: currentMood?.color || "#FFD966",
         temperature: 4000, // 색온도 추가
-        scentType: "Lavender",
+        scentType: currentMood?.scentName || currentMood?.scentType || "Lavender",
         scentLevel: 7,
         scentInterval: 30,
         volume: 65,
-        nowPlaying: "Unknown Song",
+        nowPlaying: currentMood?.songTitle || "Unknown Song",
       };
     case "light":
       return {
         ...baseSettings,
         brightness: 75,
-        color: "#FFD966",
+        color: currentMood?.color || "#FFD966",
         temperature: 4000, // 색온도 추가
       };
     case "scent":
       return {
         ...baseSettings,
-        scentType: "Lavender",
+        scentType: currentMood?.scentName || currentMood?.scentType || "Lavender",
         scentLevel: 7,
         scentInterval: 30,
       };
@@ -278,7 +285,7 @@ function getDefaultDeviceSettings(type: string) {
       return {
         ...baseSettings,
         volume: 65,
-        nowPlaying: "Unknown Song",
+        nowPlaying: currentMood?.songTitle || "Unknown Song",
       };
     default:
       return baseSettings;
@@ -326,7 +333,16 @@ function formatDeviceOutput(device: {
 /**
  * 목업 디바이스 생성 (관리자 모드용)
  */
-function createMockDevice(type: Device["type"], name?: string): Device {
+function createMockDevice(
+  type: Device["type"],
+  name?: string,
+  currentMood?: {
+    color?: string;
+    scentType?: string;
+    scentName?: string;
+    songTitle?: string;
+  } | null
+): Device {
   const defaultMood = MOODS[0];
   const timestamp = Date.now();
   
@@ -347,13 +363,13 @@ function createMockDevice(type: Device["type"], name?: string): Device {
         name: name || "Mood Manager",
         output: {
           brightness: 80,
-          color: defaultMood.color,
+          color: currentMood?.color || defaultMood.color,
           temperature: 4000,
-          scentType: defaultMood.scent.name,
+          scentType: currentMood?.scentName || currentMood?.scentType || defaultMood.scent.name,
           scentLevel: 7,
           scentInterval: 30,
           volume: 65,
-          nowPlaying: defaultMood.song.title,
+          nowPlaying: currentMood?.songTitle || defaultMood.song.title,
         },
       } as Device;
     case "light":
@@ -363,7 +379,7 @@ function createMockDevice(type: Device["type"], name?: string): Device {
         name: name || `Smart Light ${Math.floor(Math.random() * 1000)}`,
         output: {
           brightness: 70,
-          color: defaultMood.color,
+          color: currentMood?.color || defaultMood.color,
           temperature: 4000,
         },
       } as Device;
@@ -373,7 +389,7 @@ function createMockDevice(type: Device["type"], name?: string): Device {
         type: "scent",
         name: name || `Smart Diffuser ${Math.floor(Math.random() * 1000)}`,
         output: {
-          scentType: defaultMood.scent.name,
+          scentType: currentMood?.scentName || currentMood?.scentType || defaultMood.scent.name,
           scentLevel: 5,
           scentInterval: 30,
         },
@@ -385,7 +401,7 @@ function createMockDevice(type: Device["type"], name?: string): Device {
         name: name || `Smart Speaker ${Math.floor(Math.random() * 1000)}`,
         output: {
           volume: 60,
-          nowPlaying: defaultMood.song.title,
+          nowPlaying: currentMood?.songTitle || defaultMood.song.title,
         },
       } as Device;
     default:

@@ -208,8 +208,12 @@ export function useBackgroundParams(
   }, [moodStream?.streamId, shouldFetch]);
 
   // 세그먼트 인덱스가 변경될 때 올바른 세그먼트 파라미터 사용
+  // 초기 세그먼트(0-2)는 backgroundParams를 설정하지 않음
   useEffect(() => {
-    if (allSegmentsParams && allSegmentsParams.length > 0) {
+    if (currentSegmentIndex < 3) {
+      // 초기 세그먼트는 backgroundParams를 null로 설정하여 mood.name 사용
+      setBackgroundParams(null);
+    } else if (allSegmentsParams && allSegmentsParams.length > 0) {
       const currentSegmentParam = allSegmentsParams[currentSegmentIndex] || allSegmentsParams[0];
       setBackgroundParams(currentSegmentParam);
     }

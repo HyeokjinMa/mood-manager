@@ -5,7 +5,7 @@
 import { useState } from "react";
 import type { Device } from "@/types/device";
 import type { Mood } from "@/types/mood";
-import { blendWithWhite } from "@/lib/utils";
+import { blendWithWhite, reduceWhiteTint } from "@/lib/utils";
 
 interface UseDeviceCardProps {
   device: Device;
@@ -26,9 +26,12 @@ export function useDeviceCard({ device, currentMood }: UseDeviceCardProps) {
     if (!device.power) {
       return "rgba(200, 200, 200, 0.8)";
     }
-    return currentMood
-      ? blendWithWhite(currentMood.color, 0.9)
-      : "rgb(255, 255, 255)";
+    if (currentMood) {
+      // 흰색 과다 처리 후 블렌딩
+      const adjustedColor = reduceWhiteTint(currentMood.color);
+      return blendWithWhite(adjustedColor, 0.9);
+    }
+    return "rgb(255, 255, 255)";
   };
 
   const backgroundColor = getBackgroundColor();

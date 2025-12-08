@@ -9,6 +9,8 @@ import type { MoodStreamSegment } from "@/hooks/useMoodStream/types";
 import type { MusicTrack } from "@/hooks/useMoodStream/types";
 import { mapMusicIDToTrack } from "@/lib/music/mapMusicIDToTrack";
 import { mapIconCategory } from "../validateResponse";
+import { SCENT_DEFINITIONS } from "@/types/mood";
+import type { ScentType } from "@/types/mood";
 
 /**
  * CompleteSegmentOutput를 MoodStreamSegment로 변환
@@ -21,8 +23,12 @@ export async function mapCompleteOutputToMoodStreamSegment(
   completeOutput: CompleteSegmentOutput,
   timestamp: number
 ): Promise<MoodStreamSegment> {
-  // musicID로 음악 트랙 매핑
-  const musicTracks = await mapMusicIDToTrack(completeOutput.music.musicID);
+  // musicID로 음악 트랙 매핑 (LLM 응답의 fadeIn/fadeOut 전달)
+  const musicTracks = await mapMusicIDToTrack(
+    completeOutput.music.musicID,
+    completeOutput.music.fadeIn,
+    completeOutput.music.fadeOut
+  );
   
   if (musicTracks.length === 0) {
     throw new Error(`No music track found for musicID: ${completeOutput.music.musicID}`);
@@ -32,20 +38,12 @@ export async function mapCompleteOutputToMoodStreamSegment(
   
   // genre 정보 가져오기
   const { getMusicTrackByID } = await import("@/lib/music/getMusicTrackByID");
-  const trackData = getMusicTrackByID(completeOutput.music.musicID);
+  const trackData = await getMusicTrackByID(completeOutput.music.musicID);
   const genre = trackData?.genre || "Unknown";
   
   // 첫 번째 아이콘을 backgroundIcon으로 매핑
   const primaryIcon = completeOutput.background.icons[0] || "leaf_gentle";
   const mappedIcon = mapIconCategory(primaryIcon);
-  
-  // RGB를 HEX로 변환 (moodColor는 이미 HEX)
-  const rgbToHex = (r: number, g: number, b: number): string => {
-    return `#${[r, g, b].map(x => {
-      const hex = x.toString(16);
-      return hex.length === 1 ? '0' + hex : hex;
-    }).join('')}`;
-  };
   
   return {
     timestamp,
@@ -60,7 +58,13 @@ export async function mapCompleteOutputToMoodStreamSegment(
       },
       scent: {
         type: completeOutput.scent.type,
-        name: completeOutput.scent.name,
+        name: completeOutput.scent.name || (() => {
+          // scent.name이 없으면 SCENT_DEFINITIONS에서 기본값 선택
+          const scentType = completeOutput.scent.type as ScentType;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const definitions = (SCENT_DEFINITIONS as Record<string, any>)[scentType] as Array<{ name: string }> | undefined;
+          return definitions && definitions.length > 0 ? definitions[0].name : "Default";
+        })(),
       },
       lighting: {
         color: completeOutput.moodColor,
@@ -74,8 +78,8 @@ export async function mapCompleteOutputToMoodStreamSegment(
       startOffset: 0,
       fadeIn: completeOutput.music.fadeIn,
       fadeOut: completeOutput.music.fadeOut,
-      fileUrl: track.mp3Url,
-      albumImageUrl: track.imageUrl,
+      fileUrl: track.fileUrl,
+      albumImageUrl: track.albumImageUrl,
     })),
     backgroundIcon: {
       name: mappedIcon.name,

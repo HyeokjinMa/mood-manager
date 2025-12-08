@@ -1,6 +1,6 @@
-// ======================================================
-// File: src/app/(main)/home/components/MoodDashboard/components/MusicControls.tsx
-// ======================================================
+/**
+ * MusicControls
+ */
 
 import { Play, Pause, SkipBack, SkipForward } from "lucide-react";
 import type { Mood } from "@/types/mood";
@@ -38,17 +38,10 @@ export default function MusicControls({
 }: MusicControlsProps) {
   // 현재 트랙의 길이 (밀리초 → 초)
   const currentTrackDuration = currentTrack?.duration || mood.song.duration * 1000;
-  const currentTrackDurationSeconds = Math.floor(currentTrackDuration / 1000);
-  const progressSeconds = Math.floor(progress / 1000);
   
   // 세그먼트 전체 진행률
   const segmentProgressPercent = segmentDuration > 0 
     ? (totalProgress / segmentDuration) * 100 
-    : 0;
-  
-  // 현재 트랙 진행률
-  const trackProgressPercent = currentTrackDuration > 0
-    ? (progress / currentTrackDuration) * 100
     : 0;
 
   return (

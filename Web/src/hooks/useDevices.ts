@@ -49,7 +49,20 @@ export function useDevices(currentMood: Mood | null) {
 
         // devices가 배열이면 설정, 아니면 빈 배열
         if (Array.isArray(data.devices)) {
-          setDevices(data.devices);
+          // 우선순위 + ID 순 정렬
+          const sortedDevices = data.devices.sort((a: Device, b: Device) => {
+            if (PRIORITY[a.type] !== PRIORITY[b.type])
+              return PRIORITY[a.type] - PRIORITY[b.type];
+
+            // ID가 숫자 형태면 숫자로 비교, 아니면 문자열로 비교
+            const aId = Number(a.id);
+            const bId = Number(b.id);
+            if (!isNaN(aId) && !isNaN(bId)) {
+              return aId - bId;
+            }
+            return a.id.localeCompare(b.id);
+          });
+          setDevices(sortedDevices);
         } else {
           setDevices([]);
         }
@@ -98,7 +111,7 @@ export function useDevices(currentMood: Mood | null) {
   }, [currentMood]);
 
   // 디바이스 추가 (DB에 저장)
-  const addDevice = async (type: Device["type"], name?: string) => {
+  const addDevice = async (type: Device["type"], name?: string, currentMood?: Mood | null) => {
     try {
       const response = await fetch("/api/devices", {
         method: "POST",
@@ -109,6 +122,12 @@ export function useDevices(currentMood: Mood | null) {
         body: JSON.stringify({
           type,
           name: name?.trim() || undefined, // 빈 문자열이면 undefined로 전달 (백엔드에서 자동 생성)
+          currentMood: currentMood ? {
+            color: currentMood.color,
+            scentType: currentMood.scent.type,
+            scentName: currentMood.scent.name,
+            songTitle: currentMood.song.title,
+          } : undefined,
         }),
       });
 

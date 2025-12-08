@@ -1,6 +1,6 @@
-// ======================================================
-// File: src/app/(main)/home/components/MoodDashboard/components/AlbumSection.tsx
-// ======================================================
+/**
+ * AlbumSection
+ */
 
 import type { Mood } from "@/types/mood";
 import Image from "next/image";

@@ -1,6 +1,6 @@
-// ======================================================
-// File: src/app/(main)/home/components/MoodDashboard/components/MoodHeader.tsx
-// ======================================================
+/**
+ * MoodHeader
+ */
 
 "use client";
 

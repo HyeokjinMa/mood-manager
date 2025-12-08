@@ -87,20 +87,35 @@ export function useMoodStream() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shouldFetch]);
 
-  // 8, 9, 10번째 세그먼트일 때 자동 스트림 생성
-  // 인증 페이지나 인증되지 않은 경우 호출하지 않음
-  useEffect(() => {
-    if (!moodStream || isAuthPage || status !== "authenticated") return;
-    
-    const clampedTotal = 10; // 항상 10개 세그먼트로 표시
-    const clampedIndex = currentSegmentIndex >= clampedTotal ? clampedTotal - 1 : currentSegmentIndex;
-    const remainingFromClamped = clampedTotal - clampedIndex - 1;
-    
-    // 8, 9, 10번째 세그먼트일 때 (remaining이 3, 2, 1일 때) 자동 생성
-    if (remainingFromClamped > 0 && remainingFromClamped <= 3) {
-      generateNextStream();
-    }
-  }, [currentSegmentIndex, moodStream, generateNextStream, isAuthPage, status]);
+    // 초기 3개 세그먼트 이후 또는 8, 9, 10번째 세그먼트일 때 자동 스트림 생성
+    // 인증 페이지나 인증되지 않은 경우 호출하지 않음
+    useEffect(() => {
+      if (!moodStream || isAuthPage || status !== "authenticated") return;
+      
+      const clampedTotal = 10; // 항상 10개 세그먼트로 표시
+      const clampedIndex = currentSegmentIndex >= clampedTotal ? clampedTotal - 1 : currentSegmentIndex;
+      const remainingFromClamped = clampedTotal - clampedIndex - 1;
+      
+      // 초기 3개 세그먼트 이후 바로 생성 (segments.length가 3개이고 첫 번째 세그먼트 재생 중)
+      // 또는 segments.length가 3개이고 아직 생성되지 않았을 때
+      if (moodStream.segments.length === 3 && clampedIndex === 0) {
+        console.log("[useMoodStream] 초기 3개 세그먼트 이후 4-10번째 세그먼트 생성 시작");
+        generateNextStream();
+        return;
+      }
+      
+      // 8, 9, 10번째 세그먼트일 때 (remaining이 3, 2, 1일 때) 자동 생성
+      // 10번 세그먼트가 끝나면 자동으로 다음 스트림으로 전환
+      if (remainingFromClamped > 0 && remainingFromClamped <= 3 && moodStream.segments.length >= 10) {
+        generateNextStream();
+      }
+      
+      // 10번 세그먼트가 끝나면 자동으로 다음 스트림으로 전환 (인덱스 리셋)
+      if (clampedIndex === 9 && moodStream.segments.length >= 10) {
+        // 다음 세그먼트로 이동 시 인덱스를 0으로 리셋하여 새 스트림 시작
+        // generateNextStream이 완료되면 자동으로 새 스트림이 시작됨
+      }
+    }, [currentSegmentIndex, moodStream, generateNextStream, isAuthPage, status]);
 
   // 다음 스트림 사용 가능 여부 계산
   const nextStreamAvailable = nextColdStartSegment !== null;

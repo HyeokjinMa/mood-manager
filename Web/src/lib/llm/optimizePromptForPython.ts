@@ -16,7 +16,7 @@ export async function generatePromptFromPythonResponse(
   llmInput: LLMInput,
   pythonResponse: PythonPredictionResponse,
   userId: string,
-  segments?: any[],
+  segments?: unknown[],
   session?: { user?: { email?: string; id?: string } } | null
 ): Promise<string> {
   const { moodName, musicGenre, scentType, timeOfDay, season } = llmInput;
@@ -32,8 +32,8 @@ export async function generatePromptFromPythonResponse(
     .join("\n");
 
   // 선호도 가중치 (간결하게)
-  const preferenceWeights = llmInput.preferenceWeights
-    ? `\n[선호도 가중치]\n${JSON.stringify(llmInput.preferenceWeights, null, 2)}`
+  const preferenceWeights = llmInput.userPreferences
+    ? `\n[선호도 가중치]\n${JSON.stringify(llmInput.userPreferences, null, 2)}`
     : "";
 
   return `${musicListText}
@@ -96,6 +96,12 @@ ${iconCatalogText}
 2. music.musicID는 위 음악 목록에서 선택 (10-69)
 3. 각 세그먼트마다 다른 musicID 사용
 4. icons는 위 아이콘 카탈로그에서 1-4개 선택
+   - 계절, 시간대, 분위기에 맞는 다양한 아이콘을 선택하세요
+   - 겨울 관련 아이콘(snowflake, star, tree)만 반복 사용하지 마세요
+   - 자연 요소(leaf, flower, cloud, sun, moon), 추상 요소(circle, dot, line), 생활 요소(cup, book, heart) 등을 다양하게 활용하세요
+   - 10개 세그먼트에서 최대한 다양한 아이콘 조합을 사용하세요
 5. 색상은 너무 밝지 않게 (#FFFFFF, #F0FFF0 등 피하기)
+   - 흰색 비율이 80% 이상인 색상은 피하세요
 
 JSON Schema가 구조를 강제하므로 위 구조를 정확히 따라야 합니다.`;
+}

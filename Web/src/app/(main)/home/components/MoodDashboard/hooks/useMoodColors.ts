@@ -36,8 +36,9 @@ export function useMoodColors({
     // 90% 흰색 + 10% 무드 컬러로 파스텔 톤 생성
     const accentColor = blendWithWhite(baseColor, 0.9);
     
-    // displayAlias: LLM 추천 별명 또는 기본 무드 이름 사용
-    const displayAlias = backgroundParams?.moodAlias || mood.name;
+    // displayAlias: 초기 세그먼트는 mood.name 우선, LLM 생성 세그먼트는 moodAlias 우선
+    // backgroundParams가 있으면 LLM 생성 세그먼트이므로 moodAlias 사용, 없으면 초기 세그먼트이므로 mood.name 사용
+    const displayAlias = backgroundParams?.moodAlias ? backgroundParams.moodAlias : mood.name;
 
     return {
       baseColor,

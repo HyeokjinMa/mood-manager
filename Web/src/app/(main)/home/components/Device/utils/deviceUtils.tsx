@@ -29,34 +29,17 @@ export function getDeviceStatusDescription(device: Device): ReactNode {
 
   switch (device.type) {
     case "manager":
-      const lightStatus = device.output.brightness
-        ? `Light Status: ${device.output.brightness}%`
-        : "Light Status: -";
-      const scentStatus = device.output.scentType
-        ? `Scent Status: ${device.output.scentType} (Level ${device.output.scentLevel || 0})`
-        : "Scent Status: -";
-      const musicStatus = device.output.nowPlaying
-        ? `Music Status: ${device.output.nowPlaying}`
-        : "Music Status: -";
-      return (
-        <div className="flex flex-col gap-1">
-          <div>{lightStatus}</div>
-          <div>{scentStatus}</div>
-          <div>{musicStatus}</div>
-        </div>
-      );
+      // Manager는 컨트롤에서 모든 정보를 표시하므로 상태 설명은 간단하게
+      return "All device controls are available above.";
     case "light":
-      return device.output.brightness
-        ? `Light Status: ${device.output.brightness}%`
-        : "Light Status: -";
+      // Light는 밝기 조정 슬라이더가 있으므로 상태 설명 불필요
+      return "";
     case "scent":
-      return device.output.scentType
-        ? `Scent Status: ${device.output.scentType} (Level ${device.output.scentLevel || 0})`
-        : "Scent Status: -";
+      // Scent는 레벨 조정 슬라이더가 있으므로 상태 설명 불필요
+      return "";
     case "speaker":
-      return device.output.nowPlaying
-        ? `Music Status: ${device.output.nowPlaying}`
-        : "Music Status: -";
+      // Speaker는 음량 조정 슬라이더가 있으므로 상태 설명 불필요
+      return "";
     default:
       return "";
   }

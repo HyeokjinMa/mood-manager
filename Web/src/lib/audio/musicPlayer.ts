@@ -47,6 +47,15 @@ export class MusicPlayer {
     }
   }
 
+  private onEndedCallback: (() => void) | null = null;
+
+  /**
+   * 종료 콜백 설정
+   */
+  setOnEnded(callback: () => void) {
+    this.onEndedCallback = callback;
+  }
+
   /**
    * 이벤트 리스너 설정
    */
@@ -70,6 +79,14 @@ export class MusicPlayer {
     // 로드 완료
     this.audioElement.addEventListener("loadeddata", () => {
       console.log("[MusicPlayer] Audio loaded:", this.audioElement?.src);
+    });
+
+    // 재생 종료 이벤트
+    this.audioElement.addEventListener("ended", () => {
+      console.log("[MusicPlayer] Audio ended");
+      if (this.onEndedCallback) {
+        this.onEndedCallback();
+      }
     });
   }
 
@@ -350,6 +367,7 @@ export class MusicPlayer {
    */
   dispose() {
     this.stopFade();
+    this.onEndedCallback = null;
     
     if (this.audioElement) {
       this.audioElement.pause();

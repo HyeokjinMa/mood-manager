@@ -1,6 +1,6 @@
-// ======================================================
-// File: src/app/(main)/home/components/MoodDashboard/components/MoodDuration.tsx
-// ======================================================
+/**
+ * MoodDuration
+ */
 
 import type { Mood } from "@/types/mood";
 import { blendWithWhite } from "@/lib/utils";

@@ -1,15 +1,11 @@
-// ======================================================
-// File: src/app/(main)/home/page.tsx
-// ======================================================
-
-/*
-  [Home Page 역할]
-
-  - 페이지 레이아웃과 상태 관리만 담당
-  - 모든 UI와 비즈니스 로직은 컴포넌트와 훅으로 분리
-  - 레이아웃은 app/layout.tsx에서 375px 중앙정렬이 적용됨
-  - DB에서 실제 디바이스 목록을 가져와서 표시
-*/
+/**
+ * Home Page
+ * 
+ * 페이지 레이아웃과 상태 관리만 담당
+ * 모든 UI와 비즈니스 로직은 컴포넌트와 훅으로 분리
+ * 레이아웃은 app/layout.tsx에서 375px 중앙정렬이 적용됨
+ * DB에서 실제 디바이스 목록을 가져와서 표시
+ */
 
 "use client";
 
@@ -23,7 +19,6 @@ import DeviceAddModal from "./components/Device/DeviceAddModal";
 import DeviceDeleteModal from "./components/Device/DeviceDeleteModal";
 import SurveyOverlay from "./components/SurveyOverlay/SurveyOverlay";
 import type { Device } from "@/types/device";
-import { MOODS } from "@/types/mood";
 import { useDevices } from "@/hooks/useDevices";
 import { useMood } from "@/hooks/useMood";
 import { useSurvey } from "@/hooks/useSurvey";
@@ -35,15 +30,18 @@ export default function HomePage() {
   const redirectingRef = useRef(false); // 리다이렉트 중복 방지
   const lastStatusRef = useRef<string | null>(null); // 이전 상태 추적
 
-  // 세션 체크: 로그인되지 않은 경우 로그인 페이지로 리다이렉트
+  /**
+   * 세션 체크: 로그인되지 않은 경우 로그인 페이지로 리다이렉트
+   * 상태가 변하지 않았으면 무시 (불필요한 리렌더링 방지)
+   * loading 상태에서는 리다이렉트하지 않음 (시크릿 모드 세션 불안정 대응)
+   * 약간의 딜레이를 추가하여 세션 상태가 안정화될 시간을 줌
+   */
   useEffect(() => {
-    // 상태가 변하지 않았으면 무시 (불필요한 리렌더링 방지)
     if (lastStatusRef.current === status) {
       return;
     }
     lastStatusRef.current = status;
 
-    // loading 상태에서는 리다이렉트하지 않음 (시크릿 모드 세션 불안정 대응)
     if (status === "loading") {
       redirectingRef.current = false;
       return;
@@ -51,7 +49,6 @@ export default function HomePage() {
 
     if (status === "unauthenticated" && !redirectingRef.current) {
       redirectingRef.current = true;
-      // 약간의 딜레이를 추가하여 세션 상태가 안정화될 시간을 줌
       const timer = setTimeout(() => {
         router.replace("/login");
       }, 300);
@@ -61,7 +58,6 @@ export default function HomePage() {
       };
     }
     
-    // authenticated 상태로 돌아오면 플래그 리셋
     if (status === "authenticated") {
       redirectingRef.current = false;
     }
@@ -70,10 +66,6 @@ export default function HomePage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [deviceToDelete, setDeviceToDelete] = useState<Device | null>(null);
   const [backgroundParams, setBackgroundParams] = useState<BackgroundParams | null>(null);
-
-  // 초기 무드 설정 - 실제 moodStream에서 가져오므로 null로 시작
-  // HomeContent에서 moodStream이 로드되면 첫 번째 세그먼트로 초기화됨
-  const initialMood = null;
 
   // 커스텀 훅 사용
   const { devices, setDevices, addDevice, isLoading } = useDevices(null);
@@ -129,8 +121,8 @@ export default function HomePage() {
         />
       )}
 
-      <BottomNav 
-        currentMood={currentMood} 
+        <BottomNav 
+          currentMood={currentMood || undefined}
         moodColor={backgroundParams?.moodColor}
       />
 
@@ -138,7 +130,7 @@ export default function HomePage() {
         <DeviceAddModal
           onClose={() => setShowAddModal(false)}
           onConfirm={(type: Device["type"], name?: string) => {
-            addDevice(type, name);
+            addDevice(type, name, currentMood);
             setShowAddModal(false);
           }}
         />

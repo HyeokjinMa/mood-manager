@@ -1,12 +1,8 @@
-// ======================================================
-// File: src/app/(main)/mypage/components/MenuSection.tsx
-// ======================================================
-
-/*
-  [MenuSection 역할]
-  
-  - 마이페이지 메뉴 항목들 (QNA, 1:1 Inquiry, Privacy Policy, Logout, Delete Account)
-*/
+/**
+ * MenuSection
+ * 
+ * 마이페이지 메뉴 항목들 (QNA, 1:1 Inquiry, Privacy Policy, Logout, Delete Account)
+ */
 
 "use client";
 
@@ -22,7 +18,6 @@ interface MenuSectionProps {
 export default function MenuSection({ onLogout, onDeleteAccount, onChangePassword }: MenuSectionProps) {
   return (
     <div className="bg-white mt-4">
-      {/* QNA */}
       <Link
         href="/mypage/qna"
         className="flex items-center justify-between px-4 py-4 border-b border-gray-200 hover:bg-gray-50 transition"
@@ -34,7 +29,6 @@ export default function MenuSection({ onLogout, onDeleteAccount, onChangePasswor
         <span className="text-gray-400">›</span>
       </Link>
 
-      {/* 1:1 Inquiry */}
       <Link
         href="/mypage/inquiry"
         className="flex items-center justify-between px-4 py-4 border-b border-gray-200 hover:bg-gray-50 transition"
@@ -46,7 +40,6 @@ export default function MenuSection({ onLogout, onDeleteAccount, onChangePasswor
         <span className="text-gray-400">›</span>
       </Link>
 
-      {/* Privacy Policy */}
       <Link
         href="/mypage/privacy"
         className="flex items-center justify-between px-4 py-4 border-b border-gray-200 hover:bg-gray-50 transition"
@@ -58,7 +51,6 @@ export default function MenuSection({ onLogout, onDeleteAccount, onChangePasswor
         <span className="text-gray-400">›</span>
       </Link>
 
-      {/* Change Password */}
       <button
         onClick={onChangePassword}
         className="w-full flex items-center justify-between px-4 py-4 border-b border-gray-200 hover:bg-gray-50 transition text-left"
@@ -70,7 +62,6 @@ export default function MenuSection({ onLogout, onDeleteAccount, onChangePasswor
         <span className="text-gray-400">›</span>
       </button>
 
-      {/* Logout */}
       <button
         onClick={onLogout}
         className="w-full flex items-center px-4 py-4 border-b border-gray-200 hover:bg-gray-50 transition text-left"
@@ -79,7 +70,6 @@ export default function MenuSection({ onLogout, onDeleteAccount, onChangePasswor
         <span className="text-gray-700">Logout</span>
       </button>
 
-      {/* Delete Account */}
       <button
         onClick={onDeleteAccount}
         className="w-full flex items-center px-4 py-4 hover:bg-red-50 transition text-left"

@@ -4,7 +4,9 @@
 
 import type { IconKey } from "@/lib/events/iconMapping";
 
-// 향 타입별 모양 그리기 함수들
+/**
+ * 향 타입별 모양 그리기 함수들
+ */
 export const drawPetal = (ctx: CanvasRenderingContext2D, size: number, color: string) => {
   ctx.fillStyle = color;
   ctx.beginPath();
@@ -28,7 +30,8 @@ export const drawWaterDrop = (ctx: CanvasRenderingContext2D, size: number, color
   ctx.beginPath();
   ctx.arc(-size / 6, -size / 6, size / 6, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = color; // 원래 색으로 복원
+  // 원래 색으로 복원
+  ctx.fillStyle = color;
 };
 
 export const drawCircle = (ctx: CanvasRenderingContext2D, size: number, color: string) => {
@@ -111,10 +114,9 @@ export const drawPowder = (ctx: CanvasRenderingContext2D, size: number, color: s
   ctx.fill();
 };
 
-// ============================================
-// 이벤트 아이콘 그리기 함수들 (react-icons 기반)
-// ============================================
-
+/**
+ * 이벤트 아이콘 그리기 함수들 (react-icons 기반)
+ */
 export const drawTree = (ctx: CanvasRenderingContext2D, size: number, color: string) => {
   // 크리스마스 트리 (삼각형 + 직사각형)
   ctx.fillStyle = color;

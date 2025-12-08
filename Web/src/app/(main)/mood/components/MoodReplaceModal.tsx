@@ -1,14 +1,10 @@
-// ======================================================
-// File: src/app/(main)/mood/components/MoodReplaceModal.tsx
-// ======================================================
-
-/*
-  [MoodReplaceModal Role]
-  
-  - Popup to confirm replacing current segment when mood card is clicked
-  - Same style as DeviceDeleteModal
-  - Confirmation and cancel functionality
-*/
+/**
+ * MoodReplaceModal
+ * 
+ * Popup to confirm replacing current segment when mood card is clicked
+ * Same style as DeviceDeleteModal
+ * Confirmation and cancel functionality
+ */
 
 "use client";
 
@@ -47,7 +43,6 @@ export default function MoodReplaceModal({
           Replace Current Segment
         </h2>
 
-        {/* Mood information */}
         <div 
           className="flex items-center gap-3 mb-6 p-3 rounded-lg"
           style={{
@@ -66,12 +61,10 @@ export default function MoodReplaceModal({
           </div>
         </div>
 
-        {/* Confirmation message */}
         <p className="text-center text-gray-600 mb-6 text-sm">
           Replace the current mood segment with this saved mood? This will immediately switch to the selected mood.
         </p>
 
-        {/* Buttons */}
         <div className="flex gap-3">
           <button
             onClick={onCancel}
