@@ -12,6 +12,7 @@ This directory contains essential documentation for the Mood Manager project.
 2. **[DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)**: Setup guide and development guidelines
 3. **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)**: Deployment checklist and guide
 4. **[PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md)**: Project structure and organization
+5. **[TECHNOLOGY_STACK.md](./TECHNOLOGY_STACK.md)**: 기술 스택 및 실제 적용된 기술 상세 설명
 
 ---
 

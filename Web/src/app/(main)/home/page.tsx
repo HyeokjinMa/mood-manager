@@ -143,7 +143,7 @@ export default function HomePage() {
   }, [currentSegmentData?.mood?.id, setCurrentMood]);
   
   // Phase 2: 무드스트림 생성 함수
-  const generateMoodStream = async (segmentCount: number = 7, currentSegments?: MoodStreamSegment[]) => {
+  const generateMoodStream = useCallback(async (segmentCount: number = 7, currentSegments?: MoodStreamSegment[]) => {
     // 현재 segments를 파라미터로 받거나 상태에서 가져오기
     const segmentsToUse = currentSegments || moodStreamData.segments;
     
@@ -183,7 +183,14 @@ export default function HomePage() {
       console.error("[HomePage] Failed to generate mood stream:", error);
       setMoodStreamData(prev => ({ ...prev, isGeneratingNextStream: false }));
     }
-  };
+  }, [moodStreamData.segments, moodStreamData.isGeneratingNextStream]);
+  
+  // 새로고침 요청 핸들러: 현재 세그먼트부터 다시 생성
+  const handleRefreshRequest = useCallback(() => {
+    // 현재 세그먼트부터 10개 새로 생성
+    const currentSegments = moodStreamData.segments.slice(0, moodStreamData.currentIndex + 1);
+    generateMoodStream(10, currentSegments);
+  }, [moodStreamData.segments, moodStreamData.currentIndex, generateMoodStream]);
   
   // Phase 2: 콜드스타트 로직 - 초기 3세그먼트 로드 → 즉시 실행 → 값 공유 → 무드스트림 생성 호출
   useEffect(() => {
@@ -341,9 +348,11 @@ export default function HomePage() {
               };
             });
           }}
-          isLoadingMoodStream={moodStreamData.isLoading}
+          isLoadingMoodStream={moodStreamData.isLoading || moodStreamData.isGeneratingNextStream}
           // Phase 5: segments 배열 전달
           segments={moodStreamData.segments}
+          // 새로고침 요청 핸들러: 현재 세그먼트부터 다시 생성
+          onRefreshRequest={handleRefreshRequest}
         />
       )}
 

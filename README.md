@@ -10,7 +10,7 @@ Mood Manager is an AI-powered service that analyzes biometric signals and audio 
 
 Mood Manager is a multimodal AI service that analyzes users' psychological and physical states based on biometric information (heart rate, HRV, stress indicators) and audio events (laughter, sighs, anger, sadness detection) collected from WearOS devices. The system recommends personalized lighting, scent, and sound environments accordingly.
 
-The system operates based on the following pipeline: **WearOS → Firebase → ML Analysis Server → Next.js Web App → Emotion Prediction (Markov Chain) → Mood Expansion (LLM) → Output Device Control**.
+The system operates based on the following pipeline: **WearOS → Firebase → ML Analysis Server → Next.js Web App → Emotion Prediction (Discrete Markov Chain for Statistical Analysis) → Mood Expansion (LLM) → Output Device Control**.
 
 ### Key Features
 
@@ -54,7 +54,7 @@ The system operates based on the following pipeline: **WearOS → Firebase → M
 - **Data Collection**: Receives biometric data and ML-classified audio events from Firestore
 - **Preprocessing**: Preprocesses biometric/audio data into valid numerical features and combines with user preferences and external data (weather, etc.)
 - **Mood Generation**: Two-stage processing for mood generation
-  - **Stage 1 (Emotion Prediction)**: Time-series + Markov chain model
+  - **Stage 1 (Emotion Prediction)**: Discrete Markov Chain for statistical analysis (traditional method, not state-of-the-art)
   - **Stage 2 (Mood Expansion)**: Expands emotion segments into detailed mood outputs with colors, music, scents, and lighting (uses LLM, temperature: 0.7, creativity required)
 - **Dashboard**: Visualizes the final inferred mood and simulates home environment control
 - **Database**: User data management through PostgreSQL (Prisma ORM)

@@ -70,6 +70,19 @@ export interface WeatherData {
  * 5. WeatherData 객체로 변환하여 반환
  */
 export async function fetchWeather(): Promise<WeatherData> {
+  // 빌드 타임 체크: Next.js 빌드 중에는 날씨 API 호출 스킵
+  // NEXT_PHASE는 Next.js 빌드 타임에 설정됨
+  if (process.env.NEXT_PHASE === "phase-production-build" || 
+      (typeof window === "undefined" && process.env.NODE_ENV === "production" && !process.env.VERCEL)) {
+    // 빌드 타임에는 조용히 기본값 반환 (로그 없음)
+    return {
+      temperature: 20,
+      humidity: 60,
+      rainType: 0,
+      sky: 1,
+    };
+  }
+  
   // 1) 위경도를 격자 좌표로 변환
   const { x, y } = convertToGrid(LAT, LON);
 
@@ -160,8 +173,43 @@ export async function fetchWeather(): Promise<WeatherData> {
     };
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.error("[fetchWeather] API 호출 실패:", error.message);
+      // 429 에러(rate limit)는 빌드 타임에 자주 발생하므로 조용히 처리
+      if (error.response?.status === 429) {
+        // 빌드 타임이 아닐 때만 경고 로그 출력
+        if (process.env.NEXT_PHASE !== "phase-production-build") {
+          console.warn("[fetchWeather] API rate limit (429). Using default weather data.");
+        }
+        // 기본값 반환 (빌드 타임 에러 방지)
+        return {
+          temperature: 20,
+          humidity: 60,
+          rainType: 0,
+          sky: 1,
+        };
+      }
+      // 빌드 타임이 아닐 때만 에러 로그 출력
+      if (process.env.NEXT_PHASE !== "phase-production-build") {
+        console.error("[fetchWeather] API 호출 실패:", error.message);
+      }
+      // 빌드 타임이면 기본값 반환, 아니면 에러 throw
+      if (process.env.NEXT_PHASE === "phase-production-build") {
+        return {
+          temperature: 20,
+          humidity: 60,
+          rainType: 0,
+          sky: 1,
+        };
+      }
       throw new Error(`기상청 API 호출 실패: ${error.message}`);
+    }
+    // 빌드 타임이면 기본값 반환
+    if (process.env.NEXT_PHASE === "phase-production-build") {
+      return {
+        temperature: 20,
+        humidity: 60,
+        rainType: 0,
+        sky: 1,
+      };
     }
     throw error;
   }

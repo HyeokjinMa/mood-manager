@@ -56,6 +56,8 @@ interface HomeContentProps {
   isLoadingMoodStream?: boolean; // 무드스트림 로딩 상태
   // Phase 5: segments 배열 전달
   segments?: MoodStreamSegment[]; // 전체 세그먼트 배열
+  // 새로고침 요청 콜백
+  onRefreshRequest?: () => void;
 }
 
 export default function HomeContent({
@@ -68,6 +70,7 @@ export default function HomeContent({
   onUpdateCurrentSegment,
   isLoadingMoodStream = false,
   segments = [],
+  onRefreshRequest,
 }: HomeContentProps) {
   const { current: currentMood, onChange: onMoodChange, onScentChange, onSongChange } = moodState;
   const { devices, setDevices, expandedId, setExpandedId, onOpenAddModal, onDeleteRequest } = deviceState;
@@ -88,11 +91,12 @@ export default function HomeContent({
     }
   }, [backgroundParams, onBackgroundParamsChange]);
   
-  // Phase 4: 새로고침 요청 핸들러 (나중에 구현)
+  // Phase 4: 새로고침 요청 핸들러
   const handleRefreshRequest = useCallback(() => {
-    // TODO: 새로고침 로직 구현 (Phase 4 이후)
-    console.log("[HomeContent] Refresh requested");
-  }, []);
+    if (onRefreshRequest) {
+      onRefreshRequest();
+    }
+  }, [onRefreshRequest]);
   
   // 저장된 디바이스 설정 불러오기
   const { loadPreferences } = useDevicePreferences();
@@ -247,7 +251,7 @@ export default function HomeContent({
             onRefreshRequest={handleRefreshRequest}
             allSegmentsParams={null} // Phase 4: 나중에 구현
             setBackgroundParams={() => {}} // Phase 4: 나중에 구현
-            isLLMLoading={false} // Phase 4: 나중에 구현
+            isLLMLoading={isLoadingMoodStream} // 무드스트림 생성 중일 때 스피너 표시
             // Phase 5: currentSegmentData 전달
             currentSegmentData={currentSegmentData}
             onSegmentIndexChange={onSegmentIndexChange}
