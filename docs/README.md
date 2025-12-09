@@ -13,6 +13,7 @@ This directory contains essential documentation for the Mood Manager project.
 3. **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)**: Deployment checklist and guide
 4. **[PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md)**: Project structure and organization
 5. **[TECHNOLOGY_STACK.md](./TECHNOLOGY_STACK.md)**: 기술 스택 및 실제 적용된 기술 상세 설명
+6. **[LIGHT_CONNECTION_PLAN.md](./LIGHT_CONNECTION_PLAN.md)**: 전구 연결 구현 계획 및 라즈베리파이 통신 구조
 
 ---
 

@@ -79,7 +79,7 @@ export default function HomeContent({
   // Phase 4: Context 접근 제거, props로 받은 currentSegmentData 사용
   const currentSegment = currentSegmentData?.segment;
   const backgroundParams: BackgroundParams | null = currentSegmentData?.backgroundParams || null;
-  const currentSegmentIndex = currentSegmentData?.index ?? 0;
+  const segmentIndex = currentSegmentData?.index ?? 0;
 
   // Phase 4: useBackgroundParams 제거, currentSegmentData에서 backgroundParams 사용
   // backgroundParams는 이미 currentSegmentData에 포함되어 있음
@@ -178,7 +178,7 @@ export default function HomeContent({
   const deviceGridMood = useMemo(() => {
     if (currentSegmentData?.mood) {
       // backgroundParams가 있고 인덱스가 3 이상이면 backgroundParams.moodColor 사용
-      const useBackgroundColor = backgroundParams?.moodColor && currentSegmentIndex >= 3;
+      const useBackgroundColor = backgroundParams?.moodColor && segmentIndex >= 3;
       return {
         ...currentSegmentData.mood,
         color: useBackgroundColor ? backgroundParams.moodColor : currentSegmentData.mood.color,
@@ -201,13 +201,20 @@ export default function HomeContent({
       song: { title: "Unknown Song", duration: 180 },
       scent: { type: "Musk" as const, name: "Default", color: "#9CAF88" },
     };
-  }, [currentSegmentData?.mood, backgroundParams?.moodColor, currentMood, currentSegmentIndex]);
+  }, [currentSegmentData?.mood, backgroundParams?.moodColor, currentMood, segmentIndex]);
   
   /**
    * Phase 4: 무드스트림이 없거나 currentMood가 없으면 스켈레톤 UI 표시 (early return)
    * 모든 hooks 호출 후에 체크
+   * 
+   * 개선: 초기 세그먼트가 있으면 스켈레톤 숨김 (isLoadingMoodStream만 체크하지 않음)
    */
-  if (isLoadingMoodStream || !currentMood || !currentSegmentData) {
+  // 초기 로딩 중이고 세그먼트가 없을 때만 스켈레톤 표시
+  const isInitialLoading = isLoadingMoodStream && (!segments || segments.length === 0);
+  // 세그먼트가 있지만 현재 인덱스가 범위를 벗어났을 때는 스켈레톤 표시
+  const isIndexOutOfRange = segments && segments.length > 0 && segmentIndex >= segments.length;
+  
+  if (isInitialLoading || (!currentMood && !currentSegmentData) || isIndexOutOfRange) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <MoodDashboardSkeleton />
@@ -219,7 +226,7 @@ export default function HomeContent({
     <>
       {/* 향 배경 효과 - 백그라운드 레이어 */}
       <ScentBackground
-        scentType={currentMood.scent.type}
+        scentType={currentMood?.scent?.type || "Musk"}
         /**
          * 파티클 컬러는 무드 컬러(raw)를 직접 사용하여 무드 변경 시 즉시 반영
          * 백그라운드에는 무드컬러의 파스텔톤을 사용하고,
@@ -243,7 +250,7 @@ export default function HomeContent({
               setVolume(newVolume);
             }}
             externalVolume={volume}
-            mood={currentMood}
+            mood={currentMood!}
             onMoodChange={onMoodChange}
             onScentChange={onScentChange}
             onSongChange={onSongChange}

@@ -210,10 +210,16 @@ export default function MoodDashboard({
 
   /**
    * Phase 5: 로딩 중 스켈레톤 표시
-   * - 초기 콜드스타트 단계에서만 스켈레톤 표시
+   * - 초기 콜드스타트 단계에서만 스켈레톤 표시 (세그먼트가 없을 때)
    * - 이후 새로고침/다음 스트림 생성 중에는 직전 무드 유지
+   * - 세그먼트 인덱스가 범위를 벗어났을 때만 스켈레톤 표시
    */
-  if (isLoading || (isLoadingMoodStream && !currentSegment)) {
+  // 초기 로딩 중이고 세그먼트가 없을 때만 스켈레톤 표시
+  const isInitialLoading = isLoadingMoodStream && !currentSegment && !segments?.length;
+  // 세그먼트가 있지만 현재 세그먼트가 없을 때는 스켈레톤 표시 (인덱스 범위 초과)
+  const isIndexOutOfRange = segments && segments.length > 0 && !currentSegment;
+  
+  if (isLoading || isInitialLoading || isIndexOutOfRange) {
     return <MoodDashboardSkeleton />;
   }
 

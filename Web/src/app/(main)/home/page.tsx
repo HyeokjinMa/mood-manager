@@ -142,6 +142,55 @@ export default function HomePage() {
     }
   }, [currentSegmentData?.mood?.id, setCurrentMood]);
   
+  // 전구 제어: currentSegmentData 변경 시 조명 정보를 저장 (라즈베리파이가 GET으로 가져감)
+  // 라즈베리파이가 RGB/colortemp 판단을 하므로 모든 값을 함께 전달
+  useEffect(() => {
+    if (!currentSegmentData?.segment?.mood?.lighting) {
+      return;
+    }
+    
+    const lighting = currentSegmentData.segment.mood.lighting;
+    const rgb = lighting.rgb;
+    // brightness와 temperature는 backgroundParams에서 가져오기
+    const brightness = currentSegmentData.backgroundParams?.lighting?.brightness || 50; // 0-100 범위
+    const temperature = currentSegmentData.backgroundParams?.lighting?.temperature;
+    
+    // 모든 값을 함께 전달 (라즈베리파이가 판단)
+    const requestBody: {
+      r?: number;
+      g?: number;
+      b?: number;
+      colortemp?: number;
+      brightness: number;
+    } = {
+      brightness: Math.round((brightness / 100) * 255), // 0-100 → 0-255 변환
+    };
+    
+    // RGB 값이 있으면 추가
+    if (rgb && rgb.length === 3 && rgb[0] !== null && rgb[1] !== null && rgb[2] !== null) {
+      requestBody.r = Math.round(rgb[0]);
+      requestBody.g = Math.round(rgb[1]);
+      requestBody.b = Math.round(rgb[2]);
+    }
+    
+    // Color Temperature 값이 있으면 추가
+    if (temperature) {
+      requestBody.colortemp = Math.round(temperature);
+    }
+    
+    // API 호출: 상태 저장 (라즈베리파이가 GET으로 가져감)
+    fetch("/api/light/control", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify(requestBody),
+    }).catch((error) => {
+      console.error("[HomePage] Failed to update light control:", error);
+    });
+  }, [currentSegmentData]);
+  
   // Phase 2: 무드스트림 생성 함수
   const generateMoodStream = useCallback(async (segmentCount: number = 7, currentSegments?: MoodStreamSegment[]) => {
     // 현재 segments를 파라미터로 받거나 상태에서 가져오기

@@ -46,12 +46,31 @@ export async function getMusicTrackByID(musicID: number): Promise<MusicTrack | n
     const artist = components?.artist || "";
     const description = components?.description || "";
 
+    // 이미지 URL이 없거나 잘못된 경우, fileUrl에서 이미지 찾기 시도
+    let imageUrl = sound.albumImageUrl || "";
+    if (!imageUrl && sound.fileUrl) {
+      const { findImageUrlFromFileUrl } = await import("./findImageFile");
+      const foundImageUrl = findImageUrlFromFileUrl(sound.fileUrl);
+      if (foundImageUrl) {
+        imageUrl = foundImageUrl;
+      }
+    }
+    
+    // 여전히 이미지가 없으면 제목 기반으로 찾기 시도
+    if (!imageUrl && sound.name && sound.genre?.name) {
+      const { findImageFileByTitle } = await import("./findImageFile");
+      const foundFileName = findImageFileByTitle(sound.name, sound.genre.name);
+      if (foundFileName) {
+        imageUrl = `/musics_img/${sound.genre.name}/${foundFileName}`;
+      }
+    }
+    
     return {
       musicID: components?.musicID || musicID,
       genre: sound.genre?.name || components?.genre || "",
       title: sound.name,
       mp3Url: sound.fileUrl,
-      imageUrl: sound.albumImageUrl || "",
+      imageUrl: imageUrl,
       artist: artist,
       description: description,
       duration: sound.duration || 0,
