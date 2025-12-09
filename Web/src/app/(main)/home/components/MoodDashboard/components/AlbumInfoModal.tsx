@@ -8,7 +8,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import Image from "next/image";
 import type { MusicTrack } from "@/hooks/useMoodStream/types";
@@ -25,22 +25,34 @@ export default function AlbumInfoModal({
   track,
 }: AlbumInfoModalProps) {
   const [description, setDescription] = useState<string | null>(null);
+  const prevTrackTitleRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (track?.title) {
-      // API 라우트를 통해 서버 사이드에서 조회
-      fetch(`/api/music/track?title=${encodeURIComponent(track.title)}`)
-        .then((res) => res.json())
-        .then((trackData) => {
-          setDescription(trackData?.description || null);
-        })
-        .catch((error) => {
-          console.error("[AlbumInfoModal] Failed to fetch track description:", error);
-          setDescription(null);
-        });
-    } else {
-      setDescription(null);
+    // track?.title이 실제로 변경되었을 때만 호출 (무한 루프 방지)
+    if (!track?.title) {
+      if (prevTrackTitleRef.current !== null) {
+        prevTrackTitleRef.current = null;
+        setDescription(null);
+      }
+      return;
     }
+    
+    if (prevTrackTitleRef.current === track.title) {
+      return; // 이미 같은 제목이면 호출하지 않음
+    }
+    
+    prevTrackTitleRef.current = track.title;
+    
+    // API 라우트를 통해 서버 사이드에서 조회
+    fetch(`/api/music/track?title=${encodeURIComponent(track.title)}`)
+      .then((res) => res.json())
+      .then((trackData) => {
+        setDescription(trackData?.description || null);
+      })
+      .catch((error) => {
+        console.error("[AlbumInfoModal] Failed to fetch track description:", error);
+        setDescription(null);
+      });
   }, [track?.title]);
 
   if (!isOpen || !track) return null;

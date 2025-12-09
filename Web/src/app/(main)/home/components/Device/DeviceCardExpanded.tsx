@@ -43,6 +43,7 @@ export default function DeviceCardExpanded({
   volume,
   onUpdateVolume,
   onDeviceUpdate,
+  onDeviceControlChange,
 }: {
   device: Device;
   currentMood?: Mood;
@@ -56,6 +57,7 @@ export default function DeviceCardExpanded({
   volume?: number; // 0-100 범위
   onUpdateVolume?: (volume: number) => void; // 0-100 범위
   onDeviceUpdate?: (updatedDevice: Device) => void; // 디바이스 업데이트 콜백
+  onDeviceControlChange?: (changes: { color?: string; brightness?: number; scentLevel?: number; volume?: number }) => void; // 디바이스 컨트롤 변경 콜백
 }) {
   const {
     lightColor,
@@ -137,6 +139,23 @@ export default function DeviceCardExpanded({
       }
       if (onUpdateVolume && (device.type === "speaker" || device.type === "manager")) {
         onUpdateVolume(localVolume);
+      }
+      
+      // 저장 성공 시 onDeviceControlChange 호출하여 currentMood 업데이트 및 세그먼트 반영
+      // 스트림 재생성 없이 현재 세그먼트만 업데이트
+      if (onDeviceControlChange) {
+        const changes: { color?: string; brightness?: number; scentLevel?: number; volume?: number } = {};
+        if (device.type === "light" || device.type === "manager") {
+          changes.color = localLightColor;
+          changes.brightness = localLightBrightness;
+        }
+        if (device.type === "scent" || device.type === "manager") {
+          changes.scentLevel = localScentLevel;
+        }
+        if (device.type === "speaker" || device.type === "manager") {
+          changes.volume = localVolume;
+        }
+        onDeviceControlChange(changes);
       }
     } catch (error) {
       console.error("Failed to save device settings:", error);

@@ -1,6 +1,6 @@
-# Deployment Checklist
+# Deployment Guide
 
-Complete checklist for deploying Mood Manager to production.
+프로덕션 배포를 위한 체크리스트 및 가이드입니다.
 
 ---
 
@@ -60,7 +60,7 @@ Complete checklist for deploying Mood Manager to production.
 - [ ] Logging configured for production
 
 ### 8. Documentation
-- [ ] README.md updated (English only)
+- [ ] README.md updated
 - [ ] API documentation updated
 - [ ] Deployment guide updated
 - [ ] Environment variable documentation complete

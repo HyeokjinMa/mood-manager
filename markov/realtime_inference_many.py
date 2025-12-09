@@ -40,7 +40,7 @@
 from __future__ import annotations
 from typing import Dict, Any, Tuple, List
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import json
 
 import numpy as np
@@ -383,7 +383,7 @@ def infer_state_simple(
 
     return {
         "user_id": yesterday_model["user_id"],
-        "inference_time": datetime.datetime.now(datetime.UTC).isoformat(),
+        "inference_time": datetime.now(timezone.utc).isoformat(),
         "current_id": current_cluster,
         "current_title": cur_title,
         "current_description": cur_desc,
@@ -407,7 +407,7 @@ def inference():
     """
     POST http://localhost:5000/inference   
     """
-    now = datetime.datetime.now(datetime.UTC)
+    now = datetime.now(timezone.utc)
     today = now
 
     try:

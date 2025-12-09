@@ -16,6 +16,7 @@ import { chainSegments } from "@/lib/utils/segmentUtils";
 import type { MoodStreamSegment } from "@/hooks/useMoodStream/types";
 import { getMockMoodStream } from "@/lib/mock/mockData";
 import type { BackgroundParamsResponse } from "@/lib/llm/validateResponse";
+import type { BackgroundParams } from "@/hooks/useBackgroundParams";
 import type { ScentType, Scent } from "@/types/mood";
 import { SCENT_DEFINITIONS } from "@/types/mood";
 
@@ -114,7 +115,36 @@ export async function POST(request: NextRequest) {
     const llmData = await llmResponse.json();
 
     // 4. LLM 응답을 MoodStreamSegment[]로 변환
+    // Phase 1: backgroundParams를 각 세그먼트에 통합
     let generatedSegments: MoodStreamSegment[] = [];
+    
+    // BackgroundParamsResponse를 BackgroundParams로 변환하는 헬퍼 함수
+    const convertToBackgroundParams = (seg: BackgroundParamsResponse): BackgroundParams => {
+      return {
+        moodAlias: String(seg.moodAlias || ""),
+        musicSelection: String(seg.musicSelection || ""),
+        moodColor: String(seg.moodColor || "#E6F3FF"),
+        lighting: seg.lighting || { brightness: 50 },
+        backgroundIcon: seg.backgroundIcon || { name: "FaCircle", category: "abstract" },
+        iconKeys: seg.iconKeys || [],
+        backgroundWind: seg.backgroundWind || { direction: 180, speed: 5 },
+        animationSpeed: typeof seg.animationSpeed === "number" ? seg.animationSpeed : 5,
+        iconOpacity: typeof seg.iconOpacity === "number" ? seg.iconOpacity : 0.7,
+        // 선택적 필드들은 BackgroundParamsResponse에 없을 수 있음
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        iconCount: (seg as any).iconCount,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        iconSize: (seg as any).iconSize,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        particleEffect: (seg as any).particleEffect,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        gradientColors: (seg as any).gradientColors,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        transitionDuration: (seg as any).transitionDuration,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        source: (seg as any).source,
+      };
+    };
     
     if (llmData.segments && Array.isArray(llmData.segments) && llmData.segments.length > 0) {
       // 10개 세그먼트 응답
@@ -180,6 +210,9 @@ export async function POST(request: NextRequest) {
               fileUrl: track.fileUrl || "",
               albumImageUrl: track.albumImageUrl,
             })),
+            // Phase 1: backgroundParams 통합
+            backgroundParams: convertToBackgroundParams(seg),
+            // 하위 호환성을 위해 기존 필드도 유지
             backgroundIcon: seg.backgroundIcon || { name: "FaCircle", category: "abstract" },
             backgroundIcons: seg.iconKeys || [],
             backgroundWind: seg.backgroundWind || { direction: 180, speed: 5 },
@@ -252,6 +285,9 @@ export async function POST(request: NextRequest) {
           fileUrl: track.fileUrl || "",
           albumImageUrl: track.albumImageUrl,
         })),
+        // Phase 1: backgroundParams 통합
+        backgroundParams: convertToBackgroundParams(singleSegment),
+        // 하위 호환성을 위해 기존 필드도 유지
         backgroundIcon: singleSegment.backgroundIcon || { name: "FaCircle", category: "abstract" },
         backgroundIcons: singleSegment.iconKeys || [],
         backgroundWind: singleSegment.backgroundWind || { direction: 180, speed: 5 },

@@ -5,7 +5,7 @@
  * LLM 배경 파라미터와 무드 변경을 디바이스에 반영
  */
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { Device } from "@/types/device";
 import type { Mood } from "@/types/mood";
 import type { BackgroundParams } from "@/hooks/useBackgroundParams";
@@ -26,12 +26,35 @@ export function useDeviceSync({
   currentMood,
   volume,
 }: UseDeviceSyncProps) {
+  // 무한 루프 방지: 이전 값 추적
+  const prevMoodIdRef = useRef<string | null>(null);
+  const prevBackgroundParamsRef = useRef<BackgroundParams | null>(null);
+  const prevVolumeRef = useRef<number | undefined>(undefined);
+  
   useEffect(() => {
     // currentMood가 없으면 동기화하지 않음 (초기 더미 데이터 유지)
     // backgroundParams는 LLM 생성 세그먼트에만 있으므로, 초기 세그먼트는 currentMood만으로 동기화
     if (!currentMood) {
       return;
     }
+    
+    // 실제로 변경이 없으면 업데이트하지 않음 (무한 루프 방지)
+    const moodId = currentMood.id;
+    const backgroundParamsId = backgroundParams?.moodColor || null;
+    const currentVolume = volume;
+    
+    if (
+      prevMoodIdRef.current === moodId &&
+      prevBackgroundParamsRef.current === backgroundParams &&
+      prevVolumeRef.current === currentVolume
+    ) {
+      return; // 변경사항 없음
+    }
+    
+    // 이전 값 업데이트
+    prevMoodIdRef.current = moodId;
+    prevBackgroundParamsRef.current = backgroundParams;
+    prevVolumeRef.current = currentVolume;
     
     setDevices((prev) =>
       prev.map((d) => {

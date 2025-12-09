@@ -13,14 +13,14 @@ import { useCallback, useRef, useState, useEffect, useMemo } from "react";
 import { MoodDashboardSkeleton } from "@/components/ui/Skeleton";
 import type { Mood } from "@/types/mood";
 import { useMoodDashboard } from "./hooks/useMoodDashboard";
-import { useMoodStreamContext } from "@/context/MoodStreamContext";
 import { useMusicTrackPlayer } from "@/hooks/useMusicTrackPlayer";
 import { useMoodColors } from "./hooks/useMoodColors";
 import { useHeartAnimation } from "./hooks/useHeartAnimation";
 import { useSegmentSelector } from "./hooks/useSegmentSelector";
 import type { BackgroundParams } from "@/hooks/useBackgroundParams";
+import type { MoodStreamSegment } from "@/hooks/useMoodStream/types";
+import type { CurrentSegmentData } from "@/types/moodStream";
 import { hexToRgba } from "@/lib/utils";
-import { convertSegmentMoodToMood } from "./utils/moodStreamConverter";
 import MoodHeader from "./components/MoodHeader";
 import ScentControl from "./components/ScentControl";
 import AlbumSection from "./components/AlbumSection";
@@ -42,6 +42,11 @@ interface MoodDashboardProps {
   isLLMLoading?: boolean;
   onVolumeChange?: (volume: number) => void; // 0-100 범위
   externalVolume?: number; // 0-100 범위, 외부에서 전달받은 volume
+  // Phase 5: currentSegmentData를 props로 받기
+  currentSegmentData: CurrentSegmentData | null;
+  onSegmentIndexChange?: (index: number) => void; // 세그먼트 인덱스 변경 콜백
+  segments?: MoodStreamSegment[]; // 전체 세그먼트 배열 (세그먼트 선택용)
+  isLoadingMoodStream?: boolean; // 무드스트림 로딩 상태
 }
 
 export default function MoodDashboard({
@@ -56,23 +61,19 @@ export default function MoodDashboard({
   isLLMLoading,
   onVolumeChange,
   externalVolume,
+  currentSegmentData,
+  onSegmentIndexChange,
+  segments = [],
+  isLoadingMoodStream = false,
 }: MoodDashboardProps) {
   // 모달 상태 관리
   const [isAlbumModalOpen, setIsAlbumModalOpen] = useState(false);
   const [isScentModalOpen, setIsScentModalOpen] = useState(false);
 
-  // 무드스트림 관리 (전역 Context에서 가져오기)
-  const {
-    moodStream,
-    currentSegment,
-    currentSegmentIndex,
-    isLoading: isLoadingStream,
-    refreshMoodStream,
-    setCurrentSegmentIndex,
-    switchToNextStream,
-    nextStreamAvailable,
-    isGeneratingNextStream,
-  } = useMoodStreamContext();
+  // Phase 5: Context 접근 제거, props로 받은 currentSegmentData 사용
+  const currentSegment = currentSegmentData?.segment || null;
+  const currentSegmentIndex = currentSegmentData?.index ?? 0;
+  const backgroundParamsFromSegment = currentSegmentData?.backgroundParams || backgroundParams;
   
   // 사용자 인터랙션 추적 (한 번 클릭하면 이후 자동재생 가능)
   const userInteractedRef = useRef(false);
@@ -105,11 +106,21 @@ export default function MoodDashboard({
   // 하트 애니메이션 관리 (현재 세그먼트 전달)
   const { heartAnimation, handleDashboardClick, clearHeartAnimation } = useHeartAnimation();
 
-  // 세그먼트 선택
+  // Phase 5: 세그먼트 선택 - segments와 onSegmentIndexChange 사용
+  const moodStreamForSelector = segments.length > 0 ? {
+    streamId: `stream-${Date.now()}`,
+    currentMood: segments[0]?.mood || mood,
+    segments: segments,
+    createdAt: Date.now(),
+    userDataCount: 0,
+  } : null;
+  
   const { handleSegmentSelect } = useSegmentSelector({
-    moodStream,
+    moodStream: moodStreamForSelector,
     currentMood: mood,
-    setCurrentSegmentIndex,
+    setCurrentSegmentIndex: (index: number) => {
+      onSegmentIndexChange?.(index);
+    },
     onMoodChange,
     allSegmentsParams,
     setBackgroundParams,
@@ -131,16 +142,15 @@ export default function MoodDashboard({
     segment: currentSegment,
     playing,
     onSegmentEnd: () => {
-      // 세그먼트 종료 시 다음 세그먼트로 전환
-      if (moodStream && currentSegmentIndex < moodStream.segments.length - 1) {
+      // Phase 5: 세그먼트 종료 시 다음 세그먼트로 전환
+      if (segments.length > 0 && currentSegmentIndex < segments.length - 1) {
         const clampedTotal = 10; // 항상 10개 세그먼트로 표시
         const clampedIndex = currentSegmentIndex >= clampedTotal ? clampedTotal - 1 : currentSegmentIndex;
         
         // 10번 세그먼트(인덱스 9)가 끝나면 다음 스트림으로 전환 (인덱스 0으로 리셋)
-        if (clampedIndex === 9 && moodStream.segments.length >= 10) {
+        if (clampedIndex === 9 && segments.length >= 10) {
           console.log("[MoodDashboard] 10번 세그먼트 종료, 다음 스트림으로 전환");
           // 다음 스트림이 생성되었는지 확인하고, 생성되었으면 인덱스 0으로 전환
-          // useAutoGeneration에서 이미 다음 스트림을 생성했으므로 인덱스만 리셋
           handleSegmentSelect(0);
         } else {
           // 일반적인 경우: 다음 세그먼트로 전환
@@ -183,30 +193,27 @@ export default function MoodDashboard({
   }, [volume, onVolumeChange, externalVolume]);
 
   /**
-   * 새로고침 버튼 스피너 상태 관리
-   * - 스트림 다시 불러오는 동안(isLoadingStream)
+   * Phase 5: 새로고침 버튼 스피너 상태 관리
+   * - 스트림 다시 불러오는 동안(isLoadingMoodStream)
    * - LLM 배경 파라미터 다시 만드는 동안(isLLMLoading)
-   * - 다음 스트림 백그라운드 생성 중(isGeneratingNextStream)
-   * 위 세 경우 중 하나라도 true면 스피너 표시
+   * 위 두 경우 중 하나라도 true면 스피너 표시
    */
   const isRefreshing =
     Boolean(isLLMLoading) ||
-    Boolean(isGeneratingNextStream) ||
-    Boolean(isLoadingStream);
+    Boolean(isLoadingMoodStream);
 
-  // 새로고침 버튼 핸들러 래핑 (메모이제이션)
+  // Phase 5: 새로고침 버튼 핸들러 래핑 (메모이제이션)
   const handleRefreshWithStream = useCallback(() => {
-    refreshMoodStream(); // 무드스트림 재생성
     handleRefreshClick(); // 기존 로직 실행
     onRefreshRequest?.(); // HomeContent에 LLM 호출 요청
-  }, [refreshMoodStream, handleRefreshClick, onRefreshRequest]);
+  }, [handleRefreshClick, onRefreshRequest]);
 
   /**
-   * 로딩 중 스켈레톤 표시
+   * Phase 5: 로딩 중 스켈레톤 표시
    * - 초기 콜드스타트 단계에서만 스켈레톤 표시
    * - 이후 새로고침/다음 스트림 생성 중에는 직전 무드 유지
    */
-  if (isLoading || (isLoadingStream && !moodStream)) {
+  if (isLoading || (isLoadingMoodStream && !currentSegment)) {
     return <MoodDashboardSkeleton />;
   }
 
@@ -248,9 +255,9 @@ export default function MoodDashboard({
         maxReached={maxReached}
       />
 
-      {/* 향/앨범 정보 모달 */}
+      {/* Phase 5: 향/앨범 정보 모달 */}
       <ScentControl 
-        mood={currentSegment ? convertSegmentMoodToMood(currentSegment.mood, mood, currentSegment) : mood} 
+        mood={currentSegmentData?.mood || mood} 
         onScentClick={() => setIsScentModalOpen(true)} 
         moodColor={baseColor} 
       />
@@ -258,7 +265,7 @@ export default function MoodDashboard({
       <AlbumSection 
         mood={mood}
         onAlbumClick={() => setIsAlbumModalOpen(true)}
-        musicSelection={currentTrack?.title || backgroundParams?.musicSelection}
+        musicSelection={currentTrack?.title || backgroundParamsFromSegment?.musicSelection || backgroundParams?.musicSelection}
         albumImageUrl={currentTrack?.albumImageUrl}
       />
 
@@ -290,15 +297,15 @@ export default function MoodDashboard({
           setPlaying(!playing);
         }}
         onPrevious={() => {
-          // V1: 트랙 이동 대신 세그먼트 이동으로 단순화
-          if (!moodStream) return;
+          // Phase 5: 트랙 이동 대신 세그먼트 이동으로 단순화
+          if (segments.length === 0) return;
           const prevIndex = Math.max(0, currentSegmentIndex - 1);
           handleSegmentSelect(prevIndex);
         }}
         onNext={() => {
-          // V1: 트랙 이동 대신 세그먼트 이동으로 단순화
-          if (!moodStream) return;
-          const lastIndex = moodStream.segments.length - 1;
+          // Phase 5: 트랙 이동 대신 세그먼트 이동으로 단순화
+          if (segments.length === 0) return;
+          const lastIndex = segments.length - 1;
           const nextIndex = Math.min(lastIndex, currentSegmentIndex + 1);
           handleSegmentSelect(nextIndex);
         }}
@@ -316,14 +323,11 @@ export default function MoodDashboard({
         onSegmentSelect={handleSegmentSelect}
         moodColorCurrent={baseColor}
         moodColorPast={accentColor}
-        nextStreamAvailable={nextStreamAvailable || moodStream?.nextStreamAvailable}
-        onNextStreamSelect={switchToNextStream}
-        totalSegmentsIncludingNext={
-          nextStreamAvailable && moodStream
-            ? moodStream.segments.length + 10 // 현재 세그먼트 + 다음 스트림의 10개 세그먼트
-            : undefined
-        }
-        availableSegmentsCount={moodStream?.segments?.length} // 실제 사용 가능한 세그먼트 개수 전달
+        // Phase 5: nextStreamAvailable과 switchToNextStream은 나중에 구현
+        nextStreamAvailable={false}
+        onNextStreamSelect={() => {}}
+        totalSegmentsIncludingNext={undefined}
+        availableSegmentsCount={segments.length} // 실제 사용 가능한 세그먼트 개수 전달
       />
     </div>
     </>

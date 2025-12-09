@@ -11,7 +11,7 @@
 from __future__ import annotations
 from typing import List, Dict, Any, Tuple
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import json
 
 from flask import Flask, request, Response
@@ -480,7 +480,7 @@ def build_yesterday():
       "date": "2025-11-30"   # (선택) 없으면 서버 기준 어제 날짜로 처리
     }
     """
-    now = datetime.datetime.now(datetime.UTC)
+    now = datetime.now(timezone.utc)
 
     # 1) JSON 파싱
     try:

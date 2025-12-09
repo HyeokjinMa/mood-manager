@@ -6,36 +6,30 @@ This directory contains essential documentation for the Mood Manager project.
 
 ## Document List
 
-### Setup & Installation
-- **[SETUP_GUIDE.md](./SETUP_GUIDE.md)**: Complete setup guide including installation, database configuration, and migration
+### Essential Documents
 
-### Project Structure
-- **[PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md)**: Project structure and WearOS app information
-
-### API & Data
-- **[API_SPECIFICATION.md](./API_SPECIFICATION.md)**: Complete API specification
-- **[FIRESTORE_STRUCTURE.md](./FIRESTORE_STRUCTURE.md)**: Firestore data structure specification
-
-### Development Plans
-- **[V2_DEVELOPMENT_PLAN.md](./V2_DEVELOPMENT_PLAN.md)**: V2 development plan (DB integration and device control)
+1. **[API_SPECIFICATION.md](./API_SPECIFICATION.md)**: Complete API specification and Firestore data structure
+2. **[DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)**: Setup guide and development guidelines
+3. **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)**: Deployment checklist and guide
+4. **[PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md)**: Project structure and organization
 
 ---
 
 ## Quick Reference
 
 ### Frontend Developers
-1. **Project Structure**: `PROJECT_STRUCTURE.md` - Overall structure and WearOS app info
-2. **API Usage**: `API_SPECIFICATION.md` - API endpoint specifications
-3. **Setup**: `SETUP_GUIDE.md` - Installation and configuration
+1. **API Usage**: `API_SPECIFICATION.md` - API endpoint specifications
+2. **Setup**: `DEVELOPMENT_GUIDE.md` - Installation and configuration
+3. **Project Structure**: `PROJECT_STRUCTURE.md` - Overall structure
 
 ### Backend Developers
-1. **API Specification**: `API_SPECIFICATION.md` - All API endpoints
-2. **Database**: `SETUP_GUIDE.md` - Database setup and migration
-3. **Firestore**: `FIRESTORE_STRUCTURE.md` - Firestore data structure
+1. **API Specification**: `API_SPECIFICATION.md` - All API endpoints and Firestore structure
+2. **Database**: `DEVELOPMENT_GUIDE.md` - Database setup and migration
+3. **Deployment**: `DEPLOYMENT_GUIDE.md` - Deployment procedures
 
 ### Project Managers
-1. **Development Plan**: `V2_DEVELOPMENT_PLAN.md` - V2 implementation roadmap
-2. **Project Structure**: `PROJECT_STRUCTURE.md` - Overall project structure
+1. **Project Structure**: `PROJECT_STRUCTURE.md` - Overall project structure
+2. **Deployment**: `DEPLOYMENT_GUIDE.md` - Deployment checklist
 
 ---
 
@@ -46,8 +40,8 @@ This directory contains essential documentation for the Mood Manager project.
 - ✅ API Routes implemented (21 endpoints, mock mode)
 - ✅ Toast Notification, Error Boundary applied
 - ✅ Loading skeleton UI added
-- ✅ Code separation completed (all pages under 300 lines)
-- ✅ TypeScript type safety improved (no `any` types)
+- ✅ Code separation completed
+- ✅ TypeScript type safety improved
 - ✅ Admin mode fully implemented (localStorage-based mood set management)
 - ⚠️ Database integration pending (Prisma schema ready, actual data save/retrieve not implemented)
 - ⚠️ Time-series + Markov chain model implementation pending (currently using LLM 2-stage processing)
@@ -70,36 +64,35 @@ This directory contains essential documentation for the Mood Manager project.
 
 ## Document Summary
 
-### SETUP_GUIDE.md
-Complete installation and setup guide
+### API_SPECIFICATION.md
+Complete API specification and Firestore data structure
+- All API endpoints
+- Request/response formats
+- Authentication requirements
+- Firestore collection structure
+- ML processing flow
+
+### DEVELOPMENT_GUIDE.md
+Complete installation and development guide
 - Requirements (Node.js, npm, PostgreSQL)
 - Installation steps
 - Environment variable configuration
 - Database setup (local and production)
 - Database migration guide
+- Code style guide
 - Troubleshooting
+
+### DEPLOYMENT_GUIDE.md
+Deployment checklist and guide
+- Pre-deployment code review
+- Deployment steps
+- Post-deployment verification
+- Known issues and limitations
+- Rollback plan
+- Monitoring
 
 ### PROJECT_STRUCTURE.md
 Project structure and organization
 - Web app structure (Next.js)
 - WearOS app details
 - Directory organization
-
-### API_SPECIFICATION.md
-Complete API specification
-- All API endpoints
-- Request/response formats
-- Authentication requirements
-
-### FIRESTORE_STRUCTURE.md
-Firestore data structure
-- Collection structure
-- Data fields
-- ML processing flow
-
-### V2_DEVELOPMENT_PLAN.md
-V2 development roadmap
-- Current status analysis
-- Phase-by-phase implementation plan
-- Database integration
-- Device control integration

@@ -25,18 +25,20 @@ import type { Mood } from "@/types/mood";
 interface BottomNavProps {
   currentMood?: Mood;
   moodColor?: string; // LLM 추천 무드 색상 (LLM 배경 컬러)
+  onMyPageClick?: () => void; // Phase 8: 모달 열기 콜백
+  onMoodClick?: () => void; // Phase 8: 모달 열기 콜백
 }
 
-export default function BottomNav({ currentMood, moodColor }: BottomNavProps = {}) {
+export default function BottomNav({ currentMood, moodColor, onMyPageClick, onMoodClick }: BottomNavProps = {}) {
   const path = usePathname();
   const homeColor = moodColor || currentMood?.color;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 flex justify-center z-30">
       <div className="w-full max-w-[375px] backdrop-blur-sm border-t border-gray-200 flex justify-around py-2">
-        {navItem("MYPAGE", <FaUser />, "/mypage", path, homeColor)}
+        {navItem("MYPAGE", <FaUser />, "/mypage", path, homeColor, onMyPageClick)}
         {navItem("HOME", <FaHome />, "/home", path, homeColor)}
-        {navItem("MOOD", <FaPalette />, "/mood", path, homeColor)}
+        {navItem("MOOD", <FaPalette />, "/mood", path, homeColor, onMoodClick)}
       </div>
     </div>
   );
@@ -47,7 +49,8 @@ function navItem(
   icon: React.ReactNode,
   href: string,
   path: string,
-  homeColor?: string
+  homeColor?: string,
+  onClick?: () => void
 ) {
   const active = path.startsWith(href);
 
@@ -78,6 +81,29 @@ function navItem(
     }
     return {};
   };
+
+  // Phase 8: 모달이 있는 경우 버튼으로, 없으면 Link로
+  const content = (
+    <div
+      className={`flex flex-col items-center text-xs transition-colors cursor-pointer ${
+        active ? "font-semibold" : ""
+      }`}
+      onClick={onClick}
+    >
+      <div 
+        className={`text-lg ${getIconColor(label, active)}`}
+        style={label === "HOME" ? getHomeIconStyle(active) : {}}
+      >
+        {icon}
+      </div>
+      <span className={active ? "text-gray-700" : "text-gray-500"}>{label}</span>
+    </div>
+  );
+
+  // onClick이 있으면 버튼, 없으면 Link
+  if (onClick) {
+    return content;
+  }
 
   return (
     <Link

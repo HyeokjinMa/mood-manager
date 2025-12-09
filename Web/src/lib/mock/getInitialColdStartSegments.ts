@@ -5,6 +5,7 @@
  */
 
 import type { MoodStreamSegment } from "@/hooks/useMoodStream/types";
+import type { BackgroundParams } from "@/hooks/useBackgroundParams";
 import { hexToRgb } from "@/lib/utils";
 import { getMusicTracksByGenre } from "@/lib/music/getMusicTrackByID";
 import { SCENT_DEFINITIONS } from "@/types/mood";
@@ -121,6 +122,28 @@ export async function getInitialColdStartSegments(): Promise<MoodStreamSegment[]
         },
       },
       musicTracks: [musicTrack],
+      // Phase 1: backgroundParams 통합 (초기 세그먼트는 기본값 사용)
+      backgroundParams: {
+        moodAlias: config.moodAlias,
+        musicSelection: musicTrack.title,
+        moodColor: config.color,
+        lighting: {
+          brightness: 50,
+        },
+        backgroundIcon: {
+          name: "FaStar", // 첫 번째 아이콘을 기본으로
+          category: "abstract",
+        },
+        iconKeys: config.iconKeys, // 크리스마스 아이콘들
+        backgroundWind: {
+          direction: 180 + (segIndex * 30), // 각 세그먼트마다 약간씩 다른 방향
+          speed: 3 + segIndex, // 3, 4, 5
+        },
+        animationSpeed: 4 + segIndex, // 4, 5, 6
+        iconOpacity: 0.7 + (segIndex * 0.1), // 0.7, 0.8, 0.9
+        source: "initial", // 초기 세그먼트임을 표시
+      } as BackgroundParams,
+      // 하위 호환성을 위해 기존 필드도 유지
       backgroundIcon: {
         name: "FaStar", // 첫 번째 아이콘을 기본으로
         category: "abstract",
@@ -240,6 +263,28 @@ function getFallbackSegments(now: number): MoodStreamSegment[] {
         },
       },
       musicTracks: [musicTrack],
+      // Phase 1: backgroundParams 통합 (fallback 세그먼트도 기본값 사용)
+      backgroundParams: {
+        moodAlias: config.moodAlias,
+        musicSelection: musicTrack.title,
+        moodColor: config.color,
+        lighting: {
+          brightness: 50,
+        },
+        backgroundIcon: {
+          name: "FaStar", // 첫 번째 아이콘을 기본으로
+          category: "abstract",
+        },
+        iconKeys: config.iconKeys, // 크리스마스 아이콘들
+        backgroundWind: {
+          direction: 180 + (segIndex * 30), // 각 세그먼트마다 약간씩 다른 방향
+          speed: 3 + segIndex, // 3, 4, 5
+        },
+        animationSpeed: 4 + segIndex, // 4, 5, 6
+        iconOpacity: 0.7 + (segIndex * 0.1), // 0.7, 0.8, 0.9
+        source: "fallback", // fallback 세그먼트임을 표시
+      } as BackgroundParams,
+      // 하위 호환성을 위해 기존 필드도 유지
       backgroundIcon: {
         name: "FaStar",
         category: "abstract",

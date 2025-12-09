@@ -1,6 +1,6 @@
-# Setup Guide
+# Development Guide
 
-Complete guide for setting up and running the Mood Manager project.
+개발 환경 설정 및 개발 가이드입니다.
 
 ---
 
@@ -98,18 +98,9 @@ NEXT_PUBLIC_FIREBASE_APP_ID=your-firebase-app-id
 FIREBASE_ADMIN_CREDENTIALS=your-firebase-admin-credentials-json
 
 # Python ML Server (Optional, for ML prediction)
-PYTHON_SERVER_URL=http://localhost:5000
-PYTHON_SERVER_TIMEOUT=30000
-PYTHON_SERVER_RETRY_MAX=3
-
-# ML API Authentication (Optional)
+ML_API_URL=http://localhost:8000
 ML_API_KEY=your-ml-api-key
 ```
-
-**Important Notes**:
-- `NEXTAUTH_SECRET` must be set to a strong random string in production
-- `DATABASE_URL` is the PostgreSQL connection string
-- If OpenAI API key is not provided, LLM features will use mock data
 
 ---
 
@@ -117,10 +108,9 @@ ML_API_KEY=your-ml-api-key
 
 ### Local Development (PostgreSQL)
 
-1. **Install PostgreSQL**
-
+1. **Install PostgreSQL**:
    ```bash
-   # macOS (using Homebrew)
+   # macOS
    brew install postgresql@14
    brew services start postgresql@14
 
@@ -131,41 +121,28 @@ ML_API_KEY=your-ml-api-key
    # Download from https://www.postgresql.org/download/windows/
    ```
 
-2. **Create Database**
-
+2. **Create Database**:
    ```bash
-   # Connect to PostgreSQL
-   psql -U postgres
-
-   # Create database
-   CREATE DATABASE moodmanager;
-
-   # Exit
-   \q
+   createdb moodmanager
    ```
 
-3. **Update Environment Variable**
-
+3. **Update `.env.local`**:
    ```env
    DATABASE_URL=postgresql://postgres:password@localhost:5432/moodmanager
    ```
 
 ### Production (AWS RDS)
 
-1. **Get Connection Details**
+1. **Create RDS Instance**:
+   - Engine: PostgreSQL 14.x
+   - Instance class: db.t3.micro (for testing)
+   - Storage: 20GB
+   - Security group: Allow inbound from your application server
 
-   - Host: `mood-manager-db.cd4iisicagg0.ap-northeast-2.rds.amazonaws.com`
-   - Port: `5432`
-   - User: `postgres`
-   - Password: `moodmanagerrds`
-
-2. **Set Environment Variable**
-
+2. **Get Connection String**:
    ```env
-   DATABASE_URL=postgresql://postgres:moodmanagerrds@mood-manager-db.cd4iisicagg0.ap-northeast-2.rds.amazonaws.com:5432/postgres?sslmode=require
+   DATABASE_URL=postgresql://username:password@your-rds-endpoint:5432/moodmanager
    ```
-
-   **Note**: Replace `postgres` with the actual database name if different.
 
 ---
 
@@ -180,13 +157,11 @@ npx prisma generate
 
 ### 2. Run Migrations
 
-**Development**:
 ```bash
+# Development (creates migration files)
 npx prisma migrate dev
-```
 
-**Production**:
-```bash
+# Production (applies existing migrations)
 npx prisma migrate deploy
 ```
 
@@ -196,11 +171,6 @@ npx prisma migrate deploy
 # Open Prisma Studio
 npx prisma studio
 ```
-
-### Migration Notes
-
-- **V1 (Mock Mode)**: Database migration is optional. You can test the full flow with mock data using the admin account (`admin@moodmanager.com` / `admin1234`).
-- **V2 (Production)**: Database migration is required for user data persistence.
 
 ---
 
@@ -213,7 +183,7 @@ cd Web
 npm run dev
 ```
 
-Access the application at `http://localhost:3000` in your browser.
+The application will be available at `http://localhost:3000`.
 
 ### Production Build
 
@@ -227,15 +197,56 @@ npm start
 
 ## Admin Mode (Mock Mode)
 
-In V1, you can test the full flow without a real database:
+For development and testing, you can use Admin mode:
 
-- **Email**: `admin@moodmanager.com`
-- **Password**: `admin1234`
+1. Register or login with an admin account
+2. Admin mode automatically enables mock data
+3. All features work with localStorage-based storage
 
-In Admin Mode:
-- Create/delete devices with mock data
-- Manage mood sets based on localStorage
-- Make actual LLM calls (if API key is provided)
+---
+
+## Code Style Guide
+
+### 주석 스타일 가이드
+
+#### 1. 한국어 주석 (기능 설명)
+- **음슴체 사용**: "~한다", "~한다" 형태
+- **예시**:
+  - ✅ "무드스트림을 관리한다"
+  - ✅ "색상을 계산한다"
+  - ✅ "다음 스트림을 생성한다"
+  - ❌ "무드스트림을 관리한다" (평서체)
+  - ❌ "무드스트림 관리" (명사형)
+
+#### 2. 영어 주석 (UI 요소, 간단한 표시)
+- **Button, Link, Text 등 UI 요소**: 영어 사용
+- **예시**:
+  - ✅ `title="Save mood"`
+  - ✅ `// button`
+  - ✅ `// link`
+
+#### 3. 주석 위치
+- **파일 상단**: 파일 역할 설명 (음슴체)
+- **함수/컴포넌트**: 기능 설명 (음슴체)
+- **인라인 주석**: 간단한 설명 (음슴체 또는 영어)
+
+### 점검 범위
+
+#### 우선순위 높음 (배포 전 필수)
+- `Web/src/app/(main)/home/components/MoodDashboard/` - 무드 대시보드 관련
+- `Web/src/hooks/useMoodStream/` - 무드스트림 관리 훅
+- `Web/src/app/(main)/home/components/HomeContent.tsx` - 홈 컨텐츠
+- `Web/src/app/api/` - API 라우트 (에러 메시지는 영어)
+
+#### 우선순위 중간
+- `Web/src/app/(main)/mood/` - 무드 페이지
+- `Web/src/app/(main)/mypage/` - 마이페이지
+- `Web/src/app/(auth)/` - 인증 페이지
+
+#### 우선순위 낮음 (배포 후)
+- `Web/src/lib/` - 유틸리티 함수
+- `Web/src/components/` - 공통 컴포넌트
+- `Web/src/types/` - 타입 정의
 
 ---
 
@@ -243,34 +254,30 @@ In Admin Mode:
 
 ### Common Issues
 
-1. **Port 3000 already in use**
+1. **Prisma Client Error**:
    ```bash
-   # Kill process on port 3000
-   lsof -ti:3000 | xargs kill -9
-   ```
-
-2. **Prisma Client not generated**
-   ```bash
+   cd Web
    npx prisma generate
    ```
 
-3. **Database connection failed**
-   - Check `DATABASE_URL` environment variable
+2. **Database Connection Error**:
+   - Check `DATABASE_URL` in `.env.local`
    - Verify PostgreSQL is running
    - Check firewall settings
 
-4. **Module not found errors**
+3. **Build Errors**:
    ```bash
-   # Clear node_modules and reinstall
-   rm -rf node_modules package-lock.json
+   cd Web
+   rm -rf node_modules .next
    npm install
+   npm run build
    ```
 
 ---
 
 ## Additional Resources
 
-- **Project Structure**: See `PROJECT_STRUCTURE.md`
-- **API Specification**: See `API_SPECIFICATION.md`
-- **Firestore Structure**: See `FIRESTORE_STRUCTURE.md`
-- **V2 Development Plan**: See `V2_DEVELOPMENT_PLAN.md`
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Prisma Documentation](https://www.prisma.io/docs)
+- [TypeScript Documentation](https://www.typescriptlang.org/docs)
+

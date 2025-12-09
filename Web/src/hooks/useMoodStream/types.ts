@@ -2,9 +2,11 @@
  * 무드스트림 관련 타입 정의
  * 
  * Phase 1 리팩토링: CompleteSegmentOutput 타입과의 매핑 관계 정의
+ * Phase 1: backgroundParams를 MoodStreamSegment에 통합
  */
 
 import type { CompleteSegmentOutput } from "@/lib/llm/types/completeOutput";
+import type { BackgroundParams } from "@/hooks/useBackgroundParams";
 
 /**
  * 음악 트랙 정보
@@ -48,7 +50,9 @@ export interface MoodStreamSegment {
     };
   };
   musicTracks: MusicTrack[]; // 1개 노래
-  // 배경 효과 (선택적)
+  // LLM 배경 파라미터 (Phase 1: 통합)
+  backgroundParams?: BackgroundParams;
+  // 배경 효과 (하위 호환성을 위해 유지, backgroundParams에 통합 예정)
   backgroundIcon?: {
     name: string;
     category: string;

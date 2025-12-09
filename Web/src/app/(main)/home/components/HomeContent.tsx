@@ -14,15 +14,14 @@ import MoodDashboard from "./MoodDashboard/MoodDashboard";
 import DeviceGrid from "./Device/DeviceGrid";
 import ScentBackground from "@/components/ui/ScentBackground";
 import { MoodDashboardSkeleton } from "@/components/ui/Skeleton";
-import { useMoodStreamContext } from "@/context/MoodStreamContext";
-import { useBackgroundParams } from "@/hooks/useBackgroundParams";
 import { useDeviceSync } from "@/hooks/useDeviceSync";
 import { detectCurrentEvent } from "@/lib/events/detectEvents";
-import { convertSegmentMoodToMood } from "./MoodDashboard/utils/moodStreamConverter";
 import { useDevicePreferences } from "@/hooks/useDevicePreferences";
 import type { Device } from "@/types/device";
 import type { Mood } from "@/types/mood";
 import type { BackgroundParams } from "@/hooks/useBackgroundParams";
+import type { MoodStreamSegment } from "@/hooks/useMoodStream/types";
+import type { CurrentSegmentData } from "@/types/moodStream";
 
 interface MoodState {
   current: Mood | null;
@@ -50,6 +49,13 @@ interface HomeContentProps {
   deviceState: DeviceState;
   backgroundState?: BackgroundState;
   onMoodColorChange?: (color: string) => void; // 홈 컬러 변경 콜백
+  // Phase 4: currentSegmentData를 props로 받기
+  currentSegmentData: CurrentSegmentData | null;
+  onSegmentIndexChange?: (index: number) => void; // 세그먼트 인덱스 변경 콜백
+  onUpdateCurrentSegment?: (updates: Partial<MoodStreamSegment>) => void; // 현재 세그먼트 업데이트 콜백
+  isLoadingMoodStream?: boolean; // 무드스트림 로딩 상태
+  // Phase 5: segments 배열 전달
+  segments?: MoodStreamSegment[]; // 전체 세그먼트 배열
 }
 
 export default function HomeContent({
@@ -57,65 +63,36 @@ export default function HomeContent({
   deviceState,
   backgroundState,
   onMoodColorChange,
+  currentSegmentData,
+  onSegmentIndexChange,
+  onUpdateCurrentSegment,
+  isLoadingMoodStream = false,
+  segments = [],
 }: HomeContentProps) {
   const { current: currentMood, onChange: onMoodChange, onScentChange, onSongChange } = moodState;
   const { devices, setDevices, expandedId, setExpandedId, onOpenAddModal, onDeleteRequest } = deviceState;
   const onBackgroundParamsChange = backgroundState?.onChange;
-  // 무드스트림 관리 (전역 Context에서 가져오기)
-  const { 
-    moodStream, 
-    isLoading: isLoadingMoodStream,
-    currentSegmentIndex,
-    updateCurrentSegment,
-  } = useMoodStreamContext();
   
-  // LLM 배경 파라미터 관리 (새로고침 시에만 호출)
-  const [shouldFetchLLM, setShouldFetchLLM] = useState(false);
-  const { 
-    backgroundParams, 
-    isLoading: isLoadingParams,
-    allSegmentsParams,
-    setBackgroundParams,
-  } = useBackgroundParams(
-    moodStream, 
-    shouldFetchLLM,
-    currentSegmentIndex
-  );
+  // Phase 4: Context 접근 제거, props로 받은 currentSegmentData 사용
+  const currentSegment = currentSegmentData?.segment;
+  const backgroundParams: BackgroundParams | null = currentSegmentData?.backgroundParams || null;
+  const currentSegmentIndex = currentSegmentData?.index ?? 0;
 
-  /**
-   * V1: 초기 콜드스타트 1세그먼트가 준비되면,
-   * 그 세그먼트를 재생하는 동안 백그라운드에서
-   * 전처리 → (ML/마르코프 목업) → LLM 호출이 한 번 자동으로 돌도록 트리거.
-   * 이후에는 사용자가 새로고침을 눌렀을 때만 다시 호출.
-   */
-  const [initialLLMTriggered, setInitialLLMTriggered] = useState(false);
-
-  useEffect(() => {
-    if (!initialLLMTriggered && !isLoadingMoodStream && moodStream) {
-      setShouldFetchLLM(true);
-      setInitialLLMTriggered(true);
-    }
-  }, [initialLLMTriggered, isLoadingMoodStream, moodStream]);
+  // Phase 4: useBackgroundParams 제거, currentSegmentData에서 backgroundParams 사용
+  // backgroundParams는 이미 currentSegmentData에 포함되어 있음
   
-  // OpenAI 호출 완료 후 플래그 리셋 및 상위로 전달
+  // backgroundParams 변경 시 상위로 전달
   useEffect(() => {
-    if (shouldFetchLLM && !isLoadingParams && backgroundParams) {
-      setShouldFetchLLM(false);
-    }
-    // backgroundParams 변경 시 상위로 전달
     if (backgroundParams && onBackgroundParamsChange) {
       onBackgroundParamsChange(backgroundParams);
     }
-  }, [shouldFetchLLM, isLoadingParams, backgroundParams, onBackgroundParamsChange]);
+  }, [backgroundParams, onBackgroundParamsChange]);
   
-  /**
-   * 새로고침 버튼에서 사용할 LLM 로딩 상태
-   * - 사용자가 새로고침을 누른 순간(shouldFetchLLM === true)부터
-   * - 실제 LLM 호출이 끝나서 isLoadingParams === false가 되고,
-   *   backgroundParams까지 채워져서 shouldFetchLLM이 false로 내려갈 때까지
-   * 전 구간을 "LLM 로딩 중"으로 간주
-   */
-  const isLLMLoading = shouldFetchLLM || isLoadingParams;
+  // Phase 4: 새로고침 요청 핸들러 (나중에 구현)
+  const handleRefreshRequest = useCallback(() => {
+    // TODO: 새로고침 로직 구현 (Phase 4 이후)
+    console.log("[HomeContent] Refresh requested");
+  }, []);
   
   // 저장된 디바이스 설정 불러오기
   const { loadPreferences } = useDevicePreferences();
@@ -147,25 +124,8 @@ export default function HomeContent({
     volume,
   });
   
-  // moodStream이 로드되면 첫 번째 세그먼트로 currentMood 초기화
-  // 초기 세그먼트 정보를 즉시 반영하기 위해 조건 완화
-  useEffect(() => {
-    if (moodStream && moodStream.segments && moodStream.segments.length > 0) {
-      const firstSegment = moodStream.segments[0];
-      if (firstSegment?.mood) {
-        /**
-         * convertSegmentMoodToMood를 사용하여 Mood 타입으로 변환
-         * segment 전체를 전달하여 musicTracks에서 duration 가져오기
-         * currentMood가 없거나 세그먼트가 변경되었을 때 업데이트
-         */
-        const convertedMood = convertSegmentMoodToMood(firstSegment.mood, currentMood, firstSegment);
-        // currentMood가 없거나 첫 번째 세그먼트의 mood ID가 다를 때만 업데이트
-        if (!currentMood || currentMood.id !== convertedMood.id) {
-          onMoodChange(convertedMood);
-        }
-      }
-    }
-  }, [moodStream, currentMood, onMoodChange]);
+  // Phase 4: currentSegmentData에서 이미 mood가 변환되어 있으므로 이 useEffect 제거
+  // currentMood는 home/page.tsx에서 currentSegmentData 변경 시 자동 업데이트됨
   
   /**
    * 모든 hooks는 early return 전에 호출해야 함 (React Hooks 규칙)
@@ -179,8 +139,7 @@ export default function HomeContent({
   // 현재 이벤트 감지 (크리스마스, 신년 등)
   const currentEvent = useMemo(() => detectCurrentEvent(), []);
 
-  // 무드 컬러(raw & pastel) - 메모이제이션
-  // moodStream이 있으면 첫 번째 세그먼트 컬러도 고려
+  // Phase 4: 무드 컬러(raw & pastel) - currentSegmentData 사용
   const rawMoodColor = useMemo(() => {
     // backgroundParams가 있으면 우선 사용 (LLM 생성된 컬러)
     if (backgroundParams?.moodColor) {
@@ -192,20 +151,17 @@ export default function HomeContent({
       return currentMood.color;
     }
     
-    // moodStream의 첫 번째 세그먼트 컬러 사용 (초기 세그먼트)
-    if (moodStream && moodStream.segments && moodStream.segments.length > 0) {
-      const firstSegment = moodStream.segments[0];
-      if (firstSegment?.mood?.color) {
-        return firstSegment.mood.color;
-      }
-      if (firstSegment?.mood?.lighting?.color) {
-        return firstSegment.mood.lighting.color;
-      }
+    // currentSegment의 컬러 사용
+    if (currentSegment?.mood?.color) {
+      return currentSegment.mood.color;
+    }
+    if (currentSegment?.mood?.lighting?.color) {
+      return currentSegment.mood.lighting.color;
     }
     
     // 기본값
     return "#E6F3FF";
-  }, [backgroundParams?.moodColor, currentMood?.color, moodStream]);
+  }, [backgroundParams?.moodColor, currentMood?.color, currentSegment]);
 
   // rawMoodColor 변경 시 상위 컴포넌트에 전달
   useEffect(() => {
@@ -214,56 +170,40 @@ export default function HomeContent({
     }
   }, [rawMoodColor, onMoodColorChange]);
 
-  // 새로고침 요청 핸들러 - 메모이제이션
-  const handleRefreshRequest = useCallback(() => {
-    setShouldFetchLLM(true);
-  }, []);
-
-  // DeviceGrid에 전달할 currentMood - 메모이제이션
-  // moodStream의 현재 세그먼트를 사용 (currentSegmentIndex 기반)
-  // 초기 세그먼트(0-2)는 backgroundParams가 없으므로 세그먼트 자체의 color 사용
-  const deviceGridMood = useMemo(
-    () => {
-      // moodStream이 있고 현재 세그먼트가 있으면 그것을 사용
-      if (moodStream && moodStream.segments && moodStream.segments.length > 0) {
-        const currentSegment = moodStream.segments[currentSegmentIndex];
-        if (currentSegment?.mood) {
-          const convertedMood = convertSegmentMoodToMood(currentSegment.mood, currentMood, currentSegment);
-          // 초기 세그먼트(0-2)는 backgroundParams가 없으므로 세그먼트 자체의 color 사용
-          // LLM 생성 세그먼트(3+)는 backgroundParams.moodColor 사용
-          const useBackgroundColor = backgroundParams?.moodColor && currentSegmentIndex >= 3;
-          return {
-            ...convertedMood,
-            color: useBackgroundColor ? backgroundParams.moodColor : convertedMood.color,
-          };
-        }
-      }
-      
-      // currentMood가 있으면 사용
-      if (currentMood) {
-        return {
-          ...currentMood,
-          color: backgroundParams?.moodColor || currentMood.color || "#E6F3FF",
-        };
-      }
-      
-      // 둘 다 없으면 기본값 반환
+  // Phase 4: deviceGridMood 제거, currentSegmentData.mood 사용
+  const deviceGridMood = useMemo(() => {
+    if (currentSegmentData?.mood) {
+      // backgroundParams가 있고 인덱스가 3 이상이면 backgroundParams.moodColor 사용
+      const useBackgroundColor = backgroundParams?.moodColor && currentSegmentIndex >= 3;
       return {
-        id: "default",
-        name: "Unknown Mood",
-        color: "#E6F3FF",
-        song: { title: "Unknown Song", duration: 180 },
-        scent: { type: "Musk" as const, name: "Default", color: "#9CAF88" },
+        ...currentSegmentData.mood,
+        color: useBackgroundColor ? backgroundParams.moodColor : currentSegmentData.mood.color,
       };
-    },
-    [currentMood, backgroundParams?.moodColor, moodStream, currentSegmentIndex]
-  );
+    }
+    
+    // currentMood가 있으면 사용
+    if (currentMood) {
+      return {
+        ...currentMood,
+        color: backgroundParams?.moodColor || currentMood.color || "#E6F3FF",
+      };
+    }
+    
+    // 기본값
+    return {
+      id: "default",
+      name: "Unknown Mood",
+      color: "#E6F3FF",
+      song: { title: "Unknown Song", duration: 180 },
+      scent: { type: "Musk" as const, name: "Default", color: "#9CAF88" },
+    };
+  }, [currentSegmentData?.mood, backgroundParams?.moodColor, currentMood, currentSegmentIndex]);
   
   /**
-   * 무드스트림이 없거나 currentMood가 없으면 스켈레톤 UI 표시 (early return)
+   * Phase 4: 무드스트림이 없거나 currentMood가 없으면 스켈레톤 UI 표시 (early return)
    * 모든 hooks 호출 후에 체크
    */
-  if ((isLoadingMoodStream && !moodStream) || !currentMood) {
+  if (isLoadingMoodStream || !currentMood || !currentSegmentData) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <MoodDashboardSkeleton />
@@ -305,9 +245,14 @@ export default function HomeContent({
             onSongChange={onSongChange}
             backgroundParams={backgroundParams}
             onRefreshRequest={handleRefreshRequest}
-            allSegmentsParams={allSegmentsParams}
-            setBackgroundParams={setBackgroundParams}
-            isLLMLoading={isLLMLoading}
+            allSegmentsParams={null} // Phase 4: 나중에 구현
+            setBackgroundParams={() => {}} // Phase 4: 나중에 구현
+            isLLMLoading={false} // Phase 4: 나중에 구현
+            // Phase 5: currentSegmentData 전달
+            currentSegmentData={currentSegmentData}
+            onSegmentIndexChange={onSegmentIndexChange}
+            segments={segments}
+            isLoadingMoodStream={isLoadingMoodStream}
           />
         </div>
 
@@ -321,7 +266,7 @@ export default function HomeContent({
             openAddModal={onOpenAddModal}
             currentMood={deviceGridMood}
             onDeleteRequest={onDeleteRequest}
-            isLoading={isLLMLoading || !backgroundParams}
+            isLoading={isLoadingMoodStream}
             volume={volume}
             onUpdateVolume={(newVolume) => {
               setVolume(newVolume);
@@ -338,23 +283,18 @@ export default function HomeContent({
                   shouldUpdate = true;
                 }
                 
-                // 향 강도 변경은 디바이스 상태로 관리되며, 다른 디바이스 카드에 자동 반영됨
-                // (useDevices의 useEffect가 currentMood 변경을 감지하여 디바이스 output 업데이트)
-                
-                // 음량 변경은 이미 volume state로 관리되며, MusicPlayer에 즉각 반영됨
-                
                 // currentMood 업데이트하여 모든 컴포넌트에 즉각 반영
                 if (shouldUpdate && changes.color) {
                   onMoodChange(updatedMood);
                   
-                  // 현재 세그먼트의 mood도 업데이트하여 다음 세그먼트로 넘어가도 유지되도록
-                  if (moodStream && currentSegmentIndex >= 0 && currentSegmentIndex < moodStream.segments.length) {
-                    updateCurrentSegment({
+                  // Phase 4: 현재 세그먼트의 mood도 업데이트하여 스트림 재생성 없이 반영
+                  if (currentSegment && onUpdateCurrentSegment) {
+                    onUpdateCurrentSegment({
                       mood: {
-                        ...moodStream.segments[currentSegmentIndex].mood,
+                        ...currentSegment.mood,
                         color: changes.color,
                         lighting: {
-                          ...moodStream.segments[currentSegmentIndex].mood.lighting,
+                          ...currentSegment.mood.lighting,
                           color: changes.color,
                         },
                       },

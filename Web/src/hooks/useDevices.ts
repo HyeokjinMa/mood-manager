@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import type { Device } from "@/types/device";
 import type { Mood } from "@/types/mood";
-import { useMoodStreamContext } from "@/context/MoodStreamContext";
+import type { MoodStreamSegment } from "@/hooks/useMoodStream/types";
 import { convertSegmentMoodToMood } from "@/app/(main)/home/components/MoodDashboard/utils/moodStreamConverter";
 
 // 정렬 우선순위 정의
@@ -23,12 +23,15 @@ function _getDefaultOutput(_type: Device["type"]): Device["output"] {
  * 디바이스 관리 커스텀 훅
  *
  * DB 연동 버전 (실제 API 호출)
+ * Phase 6: Context 접근 제거, segments와 currentSegmentIndex를 props로 받기
  */
-export function useDevices(currentMood: Mood | null) {
+export function useDevices(
+  currentMood: Mood | null,
+  segments: MoodStreamSegment[] = [],
+  currentSegmentIndex: number = 0
+) {
   const [devices, setDevices] = useState<Device[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  // moodStream과 현재 세그먼트 인덱스를 Context에서 직접 가져오기
-  const { moodStream, currentSegmentIndex } = useMoodStreamContext();
 
   // 초기 로드: DB에서 디바이스 목록 가져오기
   useEffect(() => {
@@ -82,19 +85,19 @@ export function useDevices(currentMood: Mood | null) {
     fetchDevices();
   }, []);
 
-  // 현재 세그먼트 정보를 디바이스에 동기화
-  // 핵심: moodStream의 현재 세그먼트를 단일 소스로 사용하여 모든 디바이스에 일관되게 반영
+  // Phase 6: 현재 세그먼트 정보를 디바이스에 동기화
+  // 핵심: segments 배열의 현재 세그먼트를 단일 소스로 사용하여 모든 디바이스에 일관되게 반영
   // 세그먼트가 변경될 때마다 자동으로 디바이스 정보 업데이트
-  // 중요: moodStream이 로드되기 전에는 디바이스를 업데이트하지 않음 (더미데이터 방지)
+  // 중요: segments가 로드되기 전에는 디바이스를 업데이트하지 않음 (더미데이터 방지)
   useEffect(() => {
-    // moodStream이 없으면 업데이트하지 않음 (초기 3세그먼트가 로드될 때까지 대기)
+    // segments가 없으면 업데이트하지 않음 (초기 3세그먼트가 로드될 때까지 대기)
     // 이렇게 하면 DB에서 가져온 더미데이터가 먼저 보이지 않음
-    if (!moodStream || !moodStream.segments || moodStream.segments.length === 0) {
+    if (!segments || segments.length === 0) {
       return;
     }
     
     // 현재 세그먼트 가져오기
-    const currentSegment = moodStream.segments[currentSegmentIndex];
+    const currentSegment = segments[currentSegmentIndex];
     if (!currentSegment?.mood) {
       return;
     }
@@ -162,7 +165,7 @@ export function useDevices(currentMood: Mood | null) {
         return d;
       })
     );
-  }, [currentMood, moodStream, currentSegmentIndex, setDevices]); // 현재 세그먼트 변경 시 자동 업데이트
+  }, [currentMood, segments, currentSegmentIndex, setDevices]); // Phase 6: 현재 세그먼트 변경 시 자동 업데이트
 
   // 디바이스 추가 (DB에 저장)
   const addDevice = async (type: Device["type"], name?: string, currentMood?: Mood | null) => {

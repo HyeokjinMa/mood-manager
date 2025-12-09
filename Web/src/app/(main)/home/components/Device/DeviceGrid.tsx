@@ -98,6 +98,7 @@ export default function DeviceGrid({
                     prev.map((d) => (d.id === updatedDevice.id ? updatedDevice : d))
                   );
                 }}
+                onDeviceControlChange={onDeviceControlChange}
               />
             </div>
           );

@@ -195,7 +195,11 @@ export async function handleStreamMode({
 
 Required: segments[].{moodAlias, moodColor, lighting{rgb[], brightness, temperature}, scent{type, name, level, interval}, music{musicID:10-69, volume, fadeIn, fadeOut}, background{icons[], wind{}, animation{}}}
 
-Use music.musicID (not musicSelection). Use background.icons (not backgroundIcons).` 
+Use music.musicID (not musicSelection). Use background.icons (not backgroundIcons).
+
+CRITICAL: Icon Diversity & Music Diversity
+- Use 8-12 DIFFERENT icon keys across 10 segments
+- Use DIFFERENT musicID for each segment (no duplicates)` 
         },
         { role: "user", content: prompt },
       ],
@@ -527,7 +531,11 @@ async function handleStreamModeFallback({
 
 Required: segments[].{moodAlias, moodColor, lighting{rgb[], brightness, temperature}, scent{type, name, level, interval}, music{musicID:10-69, volume, fadeIn, fadeOut}, background{icons[], wind{}, animation{}}}
 
-Use music.musicID (not musicSelection). Use background.icons (not backgroundIcons).` 
+Use music.musicID (not musicSelection). Use background.icons (not backgroundIcons).
+
+CRITICAL: Icon Diversity & Music Diversity
+- Use 8-12 DIFFERENT icon keys across 10 segments
+- Use DIFFERENT musicID for each segment (no duplicates)` 
         },
         { role: "user", content: prompt },
       ],
