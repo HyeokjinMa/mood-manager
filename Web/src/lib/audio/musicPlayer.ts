@@ -276,10 +276,16 @@ export class MusicPlayer {
 
   /**
    * 볼륨 설정
+   * 사용자가 음량을 조절할 때는 페이드를 중지하고 즉시 반영
    */
   setVolume(volume: number) {
     this.targetVolume = Math.max(0, Math.min(1, volume));
-    if (this.audioElement && !this.isFadingIn && !this.isFadingOut) {
+    if (this.audioElement) {
+      // 페이드 중이면 중지하고 즉시 반영
+      if (this.isFadingIn || this.isFadingOut) {
+        this.stopFade();
+      }
+      // 즉시 볼륨 반영
       this.audioElement.volume = this.targetVolume;
     }
   }

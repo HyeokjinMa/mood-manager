@@ -81,7 +81,7 @@ export default function DeviceCardSmall({
         <div className="text-sm">{getBatteryIcon(device.battery, device.power)}</div>
       </div>
 
-      <div className="text-[10px] text-gray-600">{getStatusDescription(device, isLoading)}</div>
+      <div className="text-[10px] text-gray-600">{getStatusDescription(device, isLoading, currentMood)}</div>
     </div>
   );
 }
@@ -103,7 +103,7 @@ function getBatteryIcon(battery: number, power: boolean) {
   return <FaBatteryEmpty className="text-red-500" />;
 }
 
-function getStatusDescription(device: Device, isLoading: boolean): ReactNode {
+function getStatusDescription(device: Device, isLoading: boolean, currentMood?: Mood): ReactNode {
   if (!device.power) {
     return (
       <div className="flex items-center gap-1 text-gray-500">
@@ -113,8 +113,9 @@ function getStatusDescription(device: Device, isLoading: boolean): ReactNode {
     );
   }
 
-  // 로딩 중이면 "..." 표시
-  if (isLoading) {
+  // 로딩 중이지만 currentMood가 있으면 정보 표시 (초기 세그먼트 정보 활용)
+  // 로딩 중이고 currentMood도 없으면 스켈레톤 표시
+  if (isLoading && !currentMood) {
     return (
       <div className="flex items-center gap-1 text-gray-400">
         <span className="animate-pulse">...</span>
@@ -130,21 +131,23 @@ function getStatusDescription(device: Device, isLoading: boolean): ReactNode {
           <div className="flex items-center gap-1">
             <HiOutlineSun className="text-[11px]" />
             <span className="truncate">
-              {device.output.brightness ? `${device.output.brightness}%` : "..."}
+              {device.output.brightness 
+                ? `${device.output.brightness}%` 
+                : "50%"}
             </span>
           </div>
           {/* Scent Status */}
           <div className="flex items-center gap-1">
             <HiOutlineBeaker className="text-[11px]" />
             <span className="truncate">
-              {device.output.scentType || "..."}
+              {device.output.scentType || currentMood?.scent.name || "Lavender"}
             </span>
           </div>
           {/* Music Status */}
           <div className="flex items-center gap-1">
             <HiOutlineMusicalNote className="text-[11px]" />
             <span className="truncate">
-              {device.output.nowPlaying || "..."}
+              {device.output.nowPlaying || currentMood?.song.title || "Unknown Song"}
             </span>
           </div>
         </div>
@@ -154,7 +157,9 @@ function getStatusDescription(device: Device, isLoading: boolean): ReactNode {
         <div className="flex items-center gap-1">
           <HiOutlineSun className="text-[11px]" />
           <span>
-            {device.output.brightness ? `${device.output.brightness}%` : "..."}
+            {device.output.brightness 
+              ? `${device.output.brightness}%` 
+              : "50%"}
           </span>
         </div>
       );
@@ -165,7 +170,7 @@ function getStatusDescription(device: Device, isLoading: boolean): ReactNode {
           <span className="truncate">
             {device.output.scentType 
               ? `${device.output.scentType} ${device.output.scentLevel ? `Lv${device.output.scentLevel}` : ""}`.trim()
-              : "..."}
+              : `${currentMood?.scent.name || "Lavender"} ${device.output.scentLevel ? `Lv${device.output.scentLevel}` : "Lv5"}`.trim()}
           </span>
         </div>
       );
@@ -174,7 +179,7 @@ function getStatusDescription(device: Device, isLoading: boolean): ReactNode {
         <div className="flex items-center gap-1">
           <HiOutlineMusicalNote className="text-[11px]" />
           <span className="truncate">
-            {device.output.nowPlaying || "..."}
+            {device.output.nowPlaying || currentMood?.song.title || "Unknown Song"}
           </span>
         </div>
       );

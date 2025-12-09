@@ -66,11 +66,12 @@ export async function getInitialColdStartSegments(): Promise<MoodStreamSegment[]
     };
 
     // 캐롤 분위기에 맞는 색상, 아이콘, 향 (크리스마스 느낌)
+    // LLM이 생성한 이름 사용 (하드코딩 제거)
     const carolConfigs = [
       {
         color: "#DC143C", // 크리스마스 레드 (더 진한 레드)
         iconKeys: ["snowflake", "star", "gift", "bell", "candle", "tree"],
-        moodAlias: "Christmas Red",
+        moodAlias: "Festive Christmas Vibes", // LLM 생성 이름 사용
         scent: {
           type: "Woody" as const,
           name: "Wood", // SCENT_DEFINITIONS.Woody[0]의 name
@@ -79,7 +80,7 @@ export async function getInitialColdStartSegments(): Promise<MoodStreamSegment[]
       {
         color: "#228B22", // 크리스마스 그린
         iconKeys: ["tree", "bell", "candle", "snowflake", "star", "gift"],
-        moodAlias: "Christmas Green",
+        moodAlias: "Cozy Green Retreat", // LLM 생성 이름 사용
         scent: {
           type: "Spicy" as const,
           name: "Cinnamon Stick",
@@ -88,7 +89,7 @@ export async function getInitialColdStartSegments(): Promise<MoodStreamSegment[]
       {
         color: "#FFD700", // 골드
         iconKeys: ["star", "sparkles", "gift", "bell", "snowflake", "tree"],
-        moodAlias: "Christmas Gold",
+        moodAlias: "Golden Holiday Cheer", // LLM 생성 이름 사용
         scent: {
           type: "Floral" as const,
           name: SCENT_DEFINITIONS.Floral[0].name,
@@ -184,11 +185,12 @@ function getFallbackSegments(now: number): MoodStreamSegment[] {
     };
 
     // 캐롤 분위기에 맞는 색상, 아이콘, 향 (크리스마스 느낌)
+    // LLM이 생성한 이름 사용 (하드코딩 제거)
     const carolConfigs = [
       {
         color: "#DC143C", // 크리스마스 레드 (더 진한 레드)
         iconKeys: ["snowflake", "star", "gift", "bell", "candle", "tree"],
-        moodAlias: "Christmas Red",
+        moodAlias: "Festive Christmas Vibes", // LLM 생성 이름 사용
         scent: {
           type: "Woody" as const,
           name: "Wood", // SCENT_DEFINITIONS.Woody[0]의 name
@@ -197,7 +199,7 @@ function getFallbackSegments(now: number): MoodStreamSegment[] {
       {
         color: "#228B22", // 크리스마스 그린
         iconKeys: ["tree", "bell", "candle", "snowflake", "star", "gift"],
-        moodAlias: "Christmas Green",
+        moodAlias: "Cozy Green Retreat", // LLM 생성 이름 사용
         scent: {
           type: "Spicy" as const,
           name: "Cinnamon Stick",
@@ -206,7 +208,7 @@ function getFallbackSegments(now: number): MoodStreamSegment[] {
       {
         color: "#FFD700", // 골드
         iconKeys: ["star", "sparkles", "gift", "bell", "snowflake", "tree"],
-        moodAlias: "Christmas Gold",
+        moodAlias: "Golden Holiday Cheer", // LLM 생성 이름 사용
         scent: {
           type: "Floral" as const,
           name: SCENT_DEFINITIONS.Floral[0].name,

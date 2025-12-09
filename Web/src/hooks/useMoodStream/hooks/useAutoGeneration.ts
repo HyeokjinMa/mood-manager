@@ -43,6 +43,8 @@ export function useAutoGeneration({
     const remainingFromClamped = clampedTotal - clampedIndex - 1;
     
     // 첫 번째 스트림 생성: 캐롤 3개 + 새로 생성된 7개 = 총 10개
+    // 단, 이미 생성이 완료되었는지 확인 (segments.length가 10개 이상이면 이미 생성됨)
+    // 사용자가 1, 2, 3번 세그먼트로 다시 돌아가도 재생성하지 않도록 함
     if (moodStream.segments.length === 3 && clampedIndex === 0) {
       console.log("[useAutoGeneration] 초기 3개 세그먼트 이후 4-10번째 세그먼트 생성 시작");
     } 
@@ -55,10 +57,19 @@ export function useAutoGeneration({
     }
     
     // 중복 호출 방지: 같은 스트림 ID + 같은 세그먼트 인덱스 조합 체크
-    const generationKey = `${moodStream.streamId}_${clampedIndex}`;
+    // 초기 3개 세그먼트의 경우, 한 번만 생성되도록 streamId와 "initial" 키 사용
+    const generationKey = moodStream.segments.length === 3 && clampedIndex === 0
+      ? `${moodStream.streamId}_initial`
+      : `${moodStream.streamId}_${clampedIndex}`;
+    
+    // 이미 생성된 경우 스킵 (초기 3개 세그먼트의 경우 한 번만 생성)
+    if (generatedKeysRef.current.has(generationKey)) {
+      console.log(`[useAutoGeneration] ⏭️ 이미 생성 완료: streamId=${moodStream.streamId}, key=${generationKey}`);
+      return;
+    }
     
     // 현재 생성 중이면 스킵
-    if (generatedKeysRef.current.has(generationKey) && isGeneratingRef.current) {
+    if (isGeneratingRef.current) {
       console.log(`[useAutoGeneration] ⏭️ 이미 생성 중: streamId=${moodStream.streamId}, segmentIndex=${clampedIndex}`);
       return;
     }
@@ -155,10 +166,18 @@ export function useAutoGeneration({
     } finally {
       isGeneratingRef.current = false;
       setIsGeneratingNextStream(false);
-      // 생성 완료 후 키 제거 (다음 세그먼트에서 다시 생성 가능하도록)
-      if (generatedKeysRef.current.has(generationKey)) {
-        console.log(`[useAutoGeneration] 생성 완료, 키 제거: ${generationKey}`);
-        generatedKeysRef.current.delete(generationKey);
+      // 생성 완료 후 키 관리
+      // 초기 3개 세그먼트의 경우 키 유지 (재생성 방지)
+      // 다음 스트림(10개) 생성의 경우 키 제거 (재생성 가능)
+      if (moodStream.segments.length >= 10 && remainingFromClamped > 0 && remainingFromClamped <= 3) {
+        // 다음 스트림 생성의 경우 키 제거 (재생성 가능)
+        if (generatedKeysRef.current.has(generationKey)) {
+          console.log(`[useAutoGeneration] 생성 완료, 키 제거: ${generationKey}`);
+          generatedKeysRef.current.delete(generationKey);
+        }
+      } else {
+        // 초기 3개 세그먼트의 경우 키 유지 (재생성 방지)
+        console.log(`[useAutoGeneration] 생성 완료, 키 유지: ${generationKey}`);
       }
     }
   }, [moodStream, currentSegmentIndex, setMoodStream, setNextColdStartSegment, isGeneratingRef, setIsGeneratingNextStream]);

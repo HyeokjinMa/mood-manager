@@ -21,6 +21,7 @@ interface MoodStreamContextValue {
   switchToNextStream: () => void;
   nextStreamAvailable: boolean;
   isGeneratingNextStream: boolean;
+  updateCurrentSegment: (updates: Partial<MoodStreamSegment>) => void;
 }
 
 const MoodStreamContext = createContext<MoodStreamContextValue | undefined>(undefined);
@@ -36,6 +37,7 @@ const emptyMoodStreamValue: MoodStreamContextValue = {
   switchToNextStream: () => {},
   nextStreamAvailable: false,
   isGeneratingNextStream: false,
+  updateCurrentSegment: () => {},
 };
 
 export function MoodStreamProvider({ children }: { children: ReactNode }) {

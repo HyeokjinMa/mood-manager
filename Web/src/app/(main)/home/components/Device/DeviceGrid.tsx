@@ -33,6 +33,7 @@ export default function DeviceGrid({
   isLoading = false,
   volume,
   onUpdateVolume,
+  onDeviceControlChange,
 }: {
   devices: Device[];
   expandedId: string | null;
@@ -44,6 +45,7 @@ export default function DeviceGrid({
   isLoading?: boolean; // 디바이스 데이터 로딩 상태
   volume?: number; // 0-100 범위
   onUpdateVolume?: (volume: number) => void; // 0-100 범위
+  onDeviceControlChange?: (changes: { color?: string; brightness?: number; scentLevel?: number; volume?: number }) => void; // 디바이스 컨트롤 변경 콜백
 }) {
 
   // 확장 카드가 있으면 그 카드를 먼저 앞으로 정렬
@@ -72,13 +74,29 @@ export default function DeviceGrid({
                 onDelete={() => onDeleteRequest(device)}
                 onTogglePower={handlers.handleTogglePower}
                 onUpdateName={handlers.handleUpdateName}
-                onUpdateLightColor={handlers.handleUpdateLightColor}
-                onUpdateLightBrightness={handlers.handleUpdateLightBrightness}
-                onUpdateScentLevel={handlers.handleUpdateScentLevel}
+                onUpdateLightColor={(color) => {
+                  handlers.handleUpdateLightColor(color);
+                  onDeviceControlChange?.({ color });
+                }}
+                onUpdateLightBrightness={(brightness) => {
+                  handlers.handleUpdateLightBrightness(brightness);
+                  onDeviceControlChange?.({ brightness });
+                }}
+                onUpdateScentLevel={(level) => {
+                  handlers.handleUpdateScentLevel(level);
+                  onDeviceControlChange?.({ scentLevel: level });
+                }}
                 volume={volume}
                 onUpdateVolume={(newVolume) => {
                   // 0-100 범위를 0-1로 변환하여 MusicPlayer에 전달
                   onUpdateVolume?.(newVolume);
+                  onDeviceControlChange?.({ volume: newVolume });
+                }}
+                onDeviceUpdate={(updatedDevice) => {
+                  // 디바이스 업데이트 시 상태 반영 (페이지 리로드 없이)
+                  setDevices((prev) =>
+                    prev.map((d) => (d.id === updatedDevice.id ? updatedDevice : d))
+                  );
                 }}
               />
             </div>

@@ -27,8 +27,9 @@ export function useDeviceSync({
   volume,
 }: UseDeviceSyncProps) {
   useEffect(() => {
-    // backgroundParams나 currentMood가 없으면 동기화하지 않음 (초기 더미 데이터 유지)
-    if (!backgroundParams && !currentMood) {
+    // currentMood가 없으면 동기화하지 않음 (초기 더미 데이터 유지)
+    // backgroundParams는 LLM 생성 세그먼트에만 있으므로, 초기 세그먼트는 currentMood만으로 동기화
+    if (!currentMood) {
       return;
     }
     
@@ -36,9 +37,9 @@ export function useDeviceSync({
       prev.map((d) => {
         if (d.type === "manager") {
           // Manager: 무드 색상, 향, 음악, 브라이트니스, 색온도 반영
-          const moodColor = backgroundParams?.moodColor || currentMood?.color || "#E6F3FF";
-          const brightness = backgroundParams?.lighting.brightness || d.output.brightness || 80;
-          const temperature = backgroundParams?.lighting.temperature; // LLM 생성 색온도
+          const moodColor = backgroundParams?.moodColor || currentMood.color || "#E6F3FF";
+          const brightness = backgroundParams?.lighting?.brightness || d.output.brightness || 50;
+          const temperature = backgroundParams?.lighting?.temperature; // LLM 생성 색온도
           
           return {
             ...d,
@@ -47,23 +48,23 @@ export function useDeviceSync({
               color: moodColor,
               brightness: brightness,
               temperature: temperature, // 조명 디바이스 색온도 (목업이지만 유의미한 연결)
-              scentType: currentMood?.scent.name || currentMood?.scent.type || "Floral",
-              nowPlaying: currentMood?.song.title || "Unknown",
+              scentType: currentMood.scent.name || currentMood.scent.type || "Floral",
+              nowPlaying: currentMood.song.title || "Unknown",
             },
           };
         }
         if (d.type === "light") {
           // Light: 브라이트니스, 색온도 반영 (manager와 동일한 brightness 사용)
-          const brightness = backgroundParams?.lighting.brightness || d.output.brightness || 80;
-          const temperature = backgroundParams?.lighting.temperature; // LLM 생성 색온도
+          const brightness = backgroundParams?.lighting?.brightness || d.output.brightness || 50;
+          const temperature = backgroundParams?.lighting?.temperature; // LLM 생성 색온도
           
           return {
             ...d,
             output: {
               ...d.output,
+              color: currentMood.color, // 초기 세그먼트에서도 컬러 반영
               brightness: brightness,
               temperature: temperature, // 조명 디바이스 색온도 (목업이지만 유의미한 연결)
-              // color는 변경하지 않음 (기존 색상 유지)
             },
           };
         }
@@ -73,8 +74,8 @@ export function useDeviceSync({
             ...d,
             output: {
               ...d.output,
-              scentType: currentMood?.scent.name || currentMood?.scent.type || "Floral",
-              scentLevel: d.output.scentLevel || 7,
+              scentType: currentMood.scent.name || currentMood.scent.type || "Floral",
+              scentLevel: d.output.scentLevel || 5,
               scentInterval: d.output.scentInterval || 30,
             },
           };
@@ -85,7 +86,7 @@ export function useDeviceSync({
             ...d,
             output: {
               ...d.output,
-              nowPlaying: currentMood?.song.title || "Unknown",
+              nowPlaying: currentMood.song.title || "Unknown",
               volume: volume !== undefined ? volume : (d.output.volume || 70),
             },
           };
@@ -93,6 +94,6 @@ export function useDeviceSync({
         return d;
       })
     );
-  }, [backgroundParams, currentMood, setDevices]);
+  }, [backgroundParams, currentMood, volume, setDevices]);
 }
 

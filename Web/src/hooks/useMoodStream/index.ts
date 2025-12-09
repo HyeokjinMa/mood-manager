@@ -97,8 +97,13 @@ export function useMoodStream() {
       const remainingFromClamped = clampedTotal - clampedIndex - 1;
       
       // 초기 3개 세그먼트 이후 바로 생성 (segments.length가 3개이고 첫 번째 세그먼트 재생 중)
-      // 또는 segments.length가 3개이고 아직 생성되지 않았을 때
+      // 단, 이미 생성이 완료되었는지 확인 (segments.length가 10개 이상이면 이미 생성됨)
+      // 사용자가 1, 2, 3번 세그먼트로 다시 돌아가도 재생성하지 않도록 함
       if (moodStream.segments.length === 3 && clampedIndex === 0) {
+        // 이미 생성 중이거나 생성이 완료된 경우 스킵
+        if (isGeneratingNextStream) {
+          return;
+        }
         console.log("[useMoodStream] 초기 3개 세그먼트 이후 4-10번째 세그먼트 생성 시작");
         generateNextStream();
         return;
@@ -123,6 +128,28 @@ export function useMoodStream() {
   // 현재 세그먼트 가져오기
   const currentSegment = moodStream?.segments[currentSegmentIndex] || null;
 
+  // 현재 세그먼트 업데이트 함수
+  const updateCurrentSegment = (updates: Partial<MoodStreamSegment>) => {
+    if (!moodStream || currentSegmentIndex < 0 || currentSegmentIndex >= moodStream.segments.length) {
+      return;
+    }
+
+    setMoodStream((prev) => {
+      if (!prev) return prev;
+
+      const updatedSegments = [...prev.segments];
+      updatedSegments[currentSegmentIndex] = {
+        ...updatedSegments[currentSegmentIndex],
+        ...updates,
+      };
+
+      return {
+        ...prev,
+        segments: updatedSegments,
+      };
+    });
+  };
+
   return {
     moodStream,
     currentSegment,
@@ -133,6 +160,7 @@ export function useMoodStream() {
     switchToNextStream,
     nextStreamAvailable,
     isGeneratingNextStream,
+    updateCurrentSegment,
   };
 }
 

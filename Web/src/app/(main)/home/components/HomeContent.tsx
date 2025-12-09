@@ -49,12 +49,14 @@ interface HomeContentProps {
   moodState: MoodState;
   deviceState: DeviceState;
   backgroundState?: BackgroundState;
+  onMoodColorChange?: (color: string) => void; // 홈 컬러 변경 콜백
 }
 
 export default function HomeContent({
   moodState,
   deviceState,
   backgroundState,
+  onMoodColorChange,
 }: HomeContentProps) {
   const { current: currentMood, onChange: onMoodChange, onScentChange, onSongChange } = moodState;
   const { devices, setDevices, expandedId, setExpandedId, onOpenAddModal, onDeleteRequest } = deviceState;
@@ -64,6 +66,7 @@ export default function HomeContent({
     moodStream, 
     isLoading: isLoadingMoodStream,
     currentSegmentIndex,
+    updateCurrentSegment,
   } = useMoodStreamContext();
   
   // LLM 배경 파라미터 관리 (새로고침 시에만 호출)
@@ -145,16 +148,21 @@ export default function HomeContent({
   });
   
   // moodStream이 로드되면 첫 번째 세그먼트로 currentMood 초기화
+  // 초기 세그먼트 정보를 즉시 반영하기 위해 조건 완화
   useEffect(() => {
-    if (moodStream && moodStream.segments && moodStream.segments.length > 0 && !currentMood) {
+    if (moodStream && moodStream.segments && moodStream.segments.length > 0) {
       const firstSegment = moodStream.segments[0];
       if (firstSegment?.mood) {
         /**
          * convertSegmentMoodToMood를 사용하여 Mood 타입으로 변환
          * segment 전체를 전달하여 musicTracks에서 duration 가져오기
+         * currentMood가 없거나 세그먼트가 변경되었을 때 업데이트
          */
-        const convertedMood = convertSegmentMoodToMood(firstSegment.mood, null, firstSegment);
-        onMoodChange(convertedMood);
+        const convertedMood = convertSegmentMoodToMood(firstSegment.mood, currentMood, firstSegment);
+        // currentMood가 없거나 첫 번째 세그먼트의 mood ID가 다를 때만 업데이트
+        if (!currentMood || currentMood.id !== convertedMood.id) {
+          onMoodChange(convertedMood);
+        }
       }
     }
   }, [moodStream, currentMood, onMoodChange]);
@@ -172,9 +180,39 @@ export default function HomeContent({
   const currentEvent = useMemo(() => detectCurrentEvent(), []);
 
   // 무드 컬러(raw & pastel) - 메모이제이션
+  // moodStream이 있으면 첫 번째 세그먼트 컬러도 고려
   const rawMoodColor = useMemo(() => {
-    return backgroundParams?.moodColor || currentMood?.color || "#E6F3FF";
-  }, [backgroundParams?.moodColor, currentMood?.color]);
+    // backgroundParams가 있으면 우선 사용 (LLM 생성된 컬러)
+    if (backgroundParams?.moodColor) {
+      return backgroundParams.moodColor;
+    }
+    
+    // currentMood가 있으면 사용
+    if (currentMood?.color) {
+      return currentMood.color;
+    }
+    
+    // moodStream의 첫 번째 세그먼트 컬러 사용 (초기 세그먼트)
+    if (moodStream && moodStream.segments && moodStream.segments.length > 0) {
+      const firstSegment = moodStream.segments[0];
+      if (firstSegment?.mood?.color) {
+        return firstSegment.mood.color;
+      }
+      if (firstSegment?.mood?.lighting?.color) {
+        return firstSegment.mood.lighting.color;
+      }
+    }
+    
+    // 기본값
+    return "#E6F3FF";
+  }, [backgroundParams?.moodColor, currentMood?.color, moodStream]);
+
+  // rawMoodColor 변경 시 상위 컴포넌트에 전달
+  useEffect(() => {
+    if (onMoodColorChange) {
+      onMoodColorChange(rawMoodColor);
+    }
+  }, [rawMoodColor, onMoodColorChange]);
 
   // 새로고침 요청 핸들러 - 메모이제이션
   const handleRefreshRequest = useCallback(() => {
@@ -182,24 +220,43 @@ export default function HomeContent({
   }, []);
 
   // DeviceGrid에 전달할 currentMood - 메모이제이션
+  // moodStream의 현재 세그먼트를 사용 (currentSegmentIndex 기반)
+  // 초기 세그먼트(0-2)는 backgroundParams가 없으므로 세그먼트 자체의 color 사용
   const deviceGridMood = useMemo(
     () => {
-      if (!currentMood) {
-        // 타입 가드 (currentMood가 null일 때 기본값 반환)
+      // moodStream이 있고 현재 세그먼트가 있으면 그것을 사용
+      if (moodStream && moodStream.segments && moodStream.segments.length > 0) {
+        const currentSegment = moodStream.segments[currentSegmentIndex];
+        if (currentSegment?.mood) {
+          const convertedMood = convertSegmentMoodToMood(currentSegment.mood, currentMood, currentSegment);
+          // 초기 세그먼트(0-2)는 backgroundParams가 없으므로 세그먼트 자체의 color 사용
+          // LLM 생성 세그먼트(3+)는 backgroundParams.moodColor 사용
+          const useBackgroundColor = backgroundParams?.moodColor && currentSegmentIndex >= 3;
+          return {
+            ...convertedMood,
+            color: useBackgroundColor ? backgroundParams.moodColor : convertedMood.color,
+          };
+        }
+      }
+      
+      // currentMood가 있으면 사용
+      if (currentMood) {
         return {
-          id: "default",
-          name: "Unknown Mood",
-          color: "#E6F3FF",
-          song: { title: "Unknown Song", duration: 180 },
-          scent: { type: "Musk" as const, name: "Default", color: "#9CAF88" },
+          ...currentMood,
+          color: backgroundParams?.moodColor || currentMood.color || "#E6F3FF",
         };
       }
+      
+      // 둘 다 없으면 기본값 반환
       return {
-        ...currentMood,
-        color: backgroundParams?.moodColor || currentMood.color || "#E6F3FF",
+        id: "default",
+        name: "Unknown Mood",
+        color: "#E6F3FF",
+        song: { title: "Unknown Song", duration: 180 },
+        scent: { type: "Musk" as const, name: "Default", color: "#9CAF88" },
       };
     },
-    [currentMood, backgroundParams?.moodColor]
+    [currentMood, backgroundParams?.moodColor, moodStream, currentSegmentIndex]
   );
   
   /**
@@ -268,6 +325,86 @@ export default function HomeContent({
             volume={volume}
             onUpdateVolume={(newVolume) => {
               setVolume(newVolume);
+            }}
+            onDeviceControlChange={(changes) => {
+              // 디바이스 컨트롤 변경 시 currentMood 업데이트하여 모든 컴포넌트에 즉각 반영
+              if (currentMood) {
+                const updatedMood = { ...currentMood };
+                let shouldUpdate = false;
+                
+                // 무드 컬러 변경 (Manager나 Light의 color 변경)
+                if (changes.color && changes.color !== currentMood.color) {
+                  updatedMood.color = changes.color;
+                  shouldUpdate = true;
+                }
+                
+                // 향 강도 변경은 디바이스 상태로 관리되며, 다른 디바이스 카드에 자동 반영됨
+                // (useDevices의 useEffect가 currentMood 변경을 감지하여 디바이스 output 업데이트)
+                
+                // 음량 변경은 이미 volume state로 관리되며, MusicPlayer에 즉각 반영됨
+                
+                // currentMood 업데이트하여 모든 컴포넌트에 즉각 반영
+                if (shouldUpdate && changes.color) {
+                  onMoodChange(updatedMood);
+                  
+                  // 현재 세그먼트의 mood도 업데이트하여 다음 세그먼트로 넘어가도 유지되도록
+                  if (moodStream && currentSegmentIndex >= 0 && currentSegmentIndex < moodStream.segments.length) {
+                    updateCurrentSegment({
+                      mood: {
+                        ...moodStream.segments[currentSegmentIndex].mood,
+                        color: changes.color,
+                        lighting: {
+                          ...moodStream.segments[currentSegmentIndex].mood.lighting,
+                          color: changes.color,
+                        },
+                      },
+                    });
+                  }
+                }
+              }
+              
+              // 디바이스 output을 직접 업데이트하여 다른 디바이스 카드에 즉시 반영
+              setDevices((prev) =>
+                prev.map((d) => {
+                  if (changes.color && (d.type === "manager" || d.type === "light")) {
+                    return {
+                      ...d,
+                      output: {
+                        ...d.output,
+                        color: changes.color,
+                      },
+                    };
+                  }
+                  if (changes.brightness !== undefined && (d.type === "manager" || d.type === "light")) {
+                    return {
+                      ...d,
+                      output: {
+                        ...d.output,
+                        brightness: changes.brightness,
+                      },
+                    };
+                  }
+                  if (changes.scentLevel !== undefined && (d.type === "manager" || d.type === "scent")) {
+                    return {
+                      ...d,
+                      output: {
+                        ...d.output,
+                        scentLevel: changes.scentLevel,
+                      },
+                    };
+                  }
+                  if (changes.volume !== undefined && (d.type === "manager" || d.type === "speaker")) {
+                    return {
+                      ...d,
+                      output: {
+                        ...d.output,
+                        volume: changes.volume,
+                      },
+                    };
+                  }
+                  return d;
+                })
+              );
             }}
           />
         </div>

@@ -198,4 +198,4 @@ For production environments, ensure the following:
 
 ## Additional Resources
 
-- **Deployed Demo**: [mood-manager-deployed](https://moodmanager-v1.vercel.app)
+- **Deployed Demo**: [moodmanager](https://moodmanager.me)

@@ -12,7 +12,6 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import Image from "next/image";
 import type { MusicTrack } from "@/hooks/useMoodStream/types";
-import { getMusicTrackByTitle } from "@/lib/music/getMusicTrackByID";
 
 interface AlbumInfoModalProps {
   isOpen: boolean;
@@ -29,9 +28,16 @@ export default function AlbumInfoModal({
 
   useEffect(() => {
     if (track?.title) {
-      getMusicTrackByTitle(track.title).then((trackData) => {
-        setDescription(trackData?.description || null);
-      });
+      // API 라우트를 통해 서버 사이드에서 조회
+      fetch(`/api/music/track?title=${encodeURIComponent(track.title)}`)
+        .then((res) => res.json())
+        .then((trackData) => {
+          setDescription(trackData?.description || null);
+        })
+        .catch((error) => {
+          console.error("[AlbumInfoModal] Failed to fetch track description:", error);
+          setDescription(null);
+        });
     } else {
       setDescription(null);
     }
@@ -41,11 +47,15 @@ export default function AlbumInfoModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center"
       onClick={onClose}
     >
       <div
-        className="relative bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto"
+        className="relative bg-white rounded-xl shadow-2xl p-6 w-[calc(100%-2rem)] max-w-[320px] mx-4 overflow-y-auto"
+        style={{
+          maxHeight: "calc(100vh - 4rem)",
+          boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* 닫기 버튼 */}
@@ -63,13 +73,13 @@ export default function AlbumInfoModal({
             <Image
               src={track.albumImageUrl}
               alt={track.title || "Album Art"}
-              width={200}
-              height={200}
-              className="w-48 h-48 rounded-lg object-cover shadow-lg"
+              width={160}
+              height={160}
+              className="w-40 h-40 rounded-lg object-cover shadow-md"
               unoptimized
             />
           ) : (
-            <div className="w-48 h-48 rounded-lg bg-gray-200 flex items-center justify-center">
+            <div className="w-40 h-40 rounded-lg bg-gray-200 flex items-center justify-center">
               <span className="text-gray-400 text-sm">Album Art</span>
             </div>
           )}

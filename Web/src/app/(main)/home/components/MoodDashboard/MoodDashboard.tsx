@@ -9,7 +9,7 @@
 
 "use client";
 
-import { useCallback, useRef, useState, useEffect } from "react";
+import { useCallback, useRef, useState, useEffect, useMemo } from "react";
 import { MoodDashboardSkeleton } from "@/components/ui/Skeleton";
 import type { Mood } from "@/types/mood";
 import { useMoodDashboard } from "./hooks/useMoodDashboard";
@@ -152,20 +152,35 @@ export default function MoodDashboard({
   });
 
   // 외부에서 volume 변경 시 MusicPlayer에 반영 (0-100 → 0-1 변환)
+  // 무한 루프 방지: ref를 사용하여 이전 값 추적
+  const prevExternalVolumeRef = useRef<number | undefined>(undefined);
   useEffect(() => {
-    if (externalVolume !== undefined) {
+    if (externalVolume !== undefined && externalVolume !== prevExternalVolumeRef.current) {
       const volumeNormalized = externalVolume / 100; // 0-100 → 0-1
-      setVolume(volumeNormalized);
+      const currentVolumePercent = Math.round(volume * 100);
+      // 0.5% 이상 차이날 때만 업데이트
+      if (Math.abs(externalVolume - currentVolumePercent) >= 0.5) {
+        prevExternalVolumeRef.current = externalVolume;
+        setVolume(volumeNormalized);
+      }
     }
-  }, [externalVolume, setVolume]);
+  }, [externalVolume, volume, setVolume]);
 
   // 음량 변경 시 상위 컴포넌트에 전달 (0-1 → 0-100 변환)
+  // 무한 루프 방지: ref를 사용하여 이전 값 추적
+  const prevVolumeRef = useRef<number | undefined>(undefined);
   useEffect(() => {
     if (onVolumeChange) {
       const volumePercent = Math.round(volume * 100);
-      onVolumeChange(volumePercent);
+      // externalVolume과 비교하여 실제로 변경되었을 때만 전달
+      if (externalVolume === undefined || Math.abs(externalVolume - volumePercent) >= 0.5) {
+        if (prevVolumeRef.current !== volumePercent) {
+          prevVolumeRef.current = volumePercent;
+          onVolumeChange(volumePercent);
+        }
+      }
     }
-  }, [volume, onVolumeChange]);
+  }, [volume, onVolumeChange, externalVolume]);
 
   /**
    * 새로고침 버튼 스피너 상태 관리

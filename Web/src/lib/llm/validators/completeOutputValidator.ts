@@ -4,10 +4,10 @@
  * Phase 2: 새로운 CompleteSegmentOutput 구조를 처리하는 검증 로직
  */
 
-import type { CompleteSegmentOutput, ScentType } from "../types/completeOutput";
+import type { CompleteSegmentOutput, ScentType as CompleteOutputScentType } from "../types/completeOutput";
 import type { BackgroundParamsResponse } from "../validateResponse";
 import { mapIconCategory } from "../validateResponse";
-import { SCENT_DEFINITIONS } from "@/types/mood";
+import { SCENT_DEFINITIONS, type ScentType } from "@/types/mood";
 
 /**
  * HEX 색상을 RGB 배열로 변환
@@ -77,14 +77,26 @@ export function validateCompleteSegmentOutput(
 
   // 향
   const scent = segment.scent as Record<string, unknown> | undefined;
-  const scentType = String(scent?.type || "").trim();
-  const validScentTypes = ["Floral", "Woody", "Spicy", "Fresh", "Citrus", "Herbal", "Musk", "Oriental"];
-  const finalScentType = validScentTypes.includes(scentType) ? scentType : "Floral";
+  const rawScentType = String(scent?.type || "").trim();
+  
+  // completeOutput의 ScentType을 mood의 ScentType으로 변환
+  const scentTypeMap: Record<CompleteOutputScentType | string, ScentType> = {
+    "Floral": "Floral",
+    "Woody": "Woody",
+    "Spicy": "Spicy",
+    "Fresh": "Aromatic", // Fresh → Aromatic
+    "Citrus": "Citrus",
+    "Herbal": "Green", // Herbal → Green
+    "Musk": "Musk",
+    "Oriental": "Aromatic", // Oriental → Aromatic
+  };
+  
+  const finalScentType: ScentType = scentTypeMap[rawScentType] || "Floral";
   
   // scent.name이 없으면 SCENT_DEFINITIONS에서 기본값 선택 (하드코딩 "Rose" 제거)
   let scentName = String(scent?.name || "").trim();
   if (!scentName) {
-    const definitions = SCENT_DEFINITIONS[finalScentType as ScentType];
+    const definitions = SCENT_DEFINITIONS[finalScentType];
     scentName = definitions && definitions.length > 0 ? definitions[0].name : "Default";
   }
   const scentLevel = clamp(
@@ -174,7 +186,7 @@ export function validateCompleteSegmentOutput(
       temperature,
     },
     scent: {
-      type: finalScentType as ScentType,
+      type: finalScentType as CompleteOutputScentType, // 타입 변환 (내부적으로는 mood의 ScentType 사용)
       name: scentName,
       level: scentLevel,
       interval: scentInterval,
@@ -225,6 +237,11 @@ export function convertToBackgroundParamsResponse(
     backgroundWind: output.background.wind,
     animationSpeed: output.background.animation.speed,
     iconOpacity: output.background.animation.iconOpacity,
+    // 향 정보 포함 (LLM 응답에서 가져온 값)
+    scent: {
+      type: output.scent.type,
+      name: output.scent.name,
+    },
   };
 }
 

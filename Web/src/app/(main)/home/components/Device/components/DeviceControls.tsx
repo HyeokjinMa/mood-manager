@@ -36,6 +36,20 @@ export default function DeviceControls({
     case "light":
       return (
         <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+          {/* 컬러 조정 */}
+          <div>
+            <label className="text-xs text-gray-600 mb-1 block">Light Color</label>
+            <input
+              type="color"
+              value={lightColor}
+              onChange={(e) => {
+                const newColor = e.target.value;
+                onUpdateLightColor?.(newColor);
+              }}
+              className="w-full h-8 rounded cursor-pointer"
+            />
+          </div>
+          {/* 밝기 조정 */}
           <div>
             <label className="text-xs text-gray-600 mb-1 block">
               Brightness: {lightBrightness}%
@@ -50,7 +64,7 @@ export default function DeviceControls({
                 onUpdateLightBrightness?.(newBrightness);
               }}
               className="w-full"
-              style={{ accentColor: currentMood?.color || "#FFD700" }}
+              style={{ accentColor: lightColor }}
             />
           </div>
         </div>

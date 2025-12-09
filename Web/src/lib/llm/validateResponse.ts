@@ -38,6 +38,11 @@ export interface BackgroundParamsResponse {
   };
   animationSpeed: number;
   iconOpacity: number;
+  // 향 정보 (CompleteSegmentOutput에서 변환 시 포함)
+  scent?: {
+    type?: string;
+    name?: string;
+  };
   // 사용되지 않는 필드들 (제거 예정)
   // iconCount?: number;
   // iconSize?: number;
@@ -432,8 +437,8 @@ export function validateAndNormalizeResponse(
         if (isNewStructure) {
           // 새로운 구조: CompleteSegmentOutput 검증 후 BackgroundParamsResponse로 변환
           const completeOutput = validateCompleteSegmentOutput(segment as Parameters<typeof validateCompleteSegmentOutput>[0]);
-          // 모든 세그먼트 로그 출력
-          console.log(`  Segment ${index}: ${completeOutput.moodAlias} | musicID ${completeOutput.music.musicID} | ${completeOutput.background.icons.length} icons`);
+          // 모든 세그먼트 로그 출력 (scent 정보 포함)
+          console.log(`  Segment ${index}: ${completeOutput.moodAlias} | musicID ${completeOutput.music.musicID} | scent: ${completeOutput.scent.type}/${completeOutput.scent.name} | ${completeOutput.background.icons.length} icons`);
           return convertToBackgroundParamsResponse(completeOutput);
         } else {
           // 기존 구조: 기존 검증 로직 사용

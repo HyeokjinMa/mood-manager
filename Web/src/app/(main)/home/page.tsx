@@ -66,6 +66,7 @@ export default function HomePage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [deviceToDelete, setDeviceToDelete] = useState<Device | null>(null);
   const [backgroundParams, setBackgroundParams] = useState<BackgroundParams | null>(null);
+  const [homeMoodColor, setHomeMoodColor] = useState<string | undefined>(undefined); // 홈 컬러 상태
 
   // 커스텀 훅 사용
   const { devices, setDevices, addDevice, isLoading } = useDevices(null);
@@ -118,13 +119,14 @@ export default function HomePage() {
             params: backgroundParams,
             onChange: setBackgroundParams,
           }}
+          onMoodColorChange={setHomeMoodColor}
         />
       )}
 
         <BottomNav 
           currentMood={currentMood || undefined}
-        moodColor={backgroundParams?.moodColor}
-      />
+          moodColor={homeMoodColor || backgroundParams?.moodColor}
+        />
 
       {showAddModal && (
         <DeviceAddModal

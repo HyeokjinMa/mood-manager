@@ -229,8 +229,21 @@ export async function POST(request: NextRequest) {
 }
 
 /**
+ * 초기 세그먼트 컬러 (폴백 값)
+ * 스트림 생성 후에도 같은 값이므로 사용자 경험이 부드러움
+ */
+const INITIAL_SEGMENT_COLORS = ["#DC143C", "#228B22", "#FFD700"]; // 크리스마스 레드, 그린, 골드
+const INITIAL_SEGMENT_SCENTS = ["Wood", "Cinnamon Stick", "Lavender"]; // 초기 세그먼트 향
+const INITIAL_SEGMENT_SONGS = [
+  "All I want for christmas",
+  "Last Christmas", 
+  "Jingle bell rock"
+]; // 초기 세그먼트 노래
+
+/**
  * 디바이스 타입별 기본 설정값 반환
  * @param currentMood - 현재 무드 정보 (선택적, 있으면 반영)
+ * 초기 세그먼트 값들을 폴백으로 사용하여 스트림 생성 전에도 일관된 경험 제공
  */
 function getDefaultDeviceSettings(
   type: string,
@@ -254,30 +267,35 @@ function getDefaultDeviceSettings(
     nowPlaying: null,
   };
 
+  // 초기 세그먼트 값들을 폴백으로 사용 (첫 번째 세그먼트 값)
+  const fallbackColor = currentMood?.color || INITIAL_SEGMENT_COLORS[0];
+  const fallbackScent = currentMood?.scentName || currentMood?.scentType || INITIAL_SEGMENT_SCENTS[0];
+  const fallbackSong = currentMood?.songTitle || INITIAL_SEGMENT_SONGS[0];
+
   switch (type) {
     case "manager":
       return {
         ...baseSettings,
         brightness: 85,
-        color: currentMood?.color || "#FFD966",
+        color: fallbackColor,
         temperature: 4000, // 색온도 추가
-        scentType: currentMood?.scentName || currentMood?.scentType || "Lavender",
+        scentType: fallbackScent,
         scentLevel: 7,
         scentInterval: 30,
         volume: 65,
-        nowPlaying: currentMood?.songTitle || "Unknown Song",
+        nowPlaying: fallbackSong,
       };
     case "light":
       return {
         ...baseSettings,
         brightness: 75,
-        color: currentMood?.color || "#FFD966",
+        color: fallbackColor,
         temperature: 4000, // 색온도 추가
       };
     case "scent":
       return {
         ...baseSettings,
-        scentType: currentMood?.scentName || currentMood?.scentType || "Lavender",
+        scentType: fallbackScent,
         scentLevel: 7,
         scentInterval: 30,
       };
@@ -285,7 +303,7 @@ function getDefaultDeviceSettings(
       return {
         ...baseSettings,
         volume: 65,
-        nowPlaying: currentMood?.songTitle || "Unknown Song",
+        nowPlaying: fallbackSong,
       };
     default:
       return baseSettings;

@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import type { Device } from "@/types/device";
 import type { Mood } from "@/types/mood";
+import { useMoodStreamContext } from "@/context/MoodStreamContext";
+import { convertSegmentMoodToMood } from "@/app/(main)/home/components/MoodDashboard/utils/moodStreamConverter";
 
 // 정렬 우선순위 정의
 const PRIORITY: Record<Device["type"], number> = {
@@ -25,6 +27,8 @@ function _getDefaultOutput(_type: Device["type"]): Device["output"] {
 export function useDevices(currentMood: Mood | null) {
   const [devices, setDevices] = useState<Device[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  // moodStream과 현재 세그먼트 인덱스를 Context에서 직접 가져오기
+  const { moodStream, currentSegmentIndex } = useMoodStreamContext();
 
   // 초기 로드: DB에서 디바이스 목록 가져오기
   useEffect(() => {
@@ -78,11 +82,37 @@ export function useDevices(currentMood: Mood | null) {
     fetchDevices();
   }, []);
 
-  // 무드 변경 시 디바이스 업데이트 (로컬 상태만 업데이트)
-  // TODO: 백엔드 무드 API 구현 후 실제 API 호출로 변경
+  // 현재 세그먼트 정보를 디바이스에 동기화
+  // 핵심: moodStream의 현재 세그먼트를 단일 소스로 사용하여 모든 디바이스에 일관되게 반영
+  // 세그먼트가 변경될 때마다 자동으로 디바이스 정보 업데이트
+  // 중요: moodStream이 로드되기 전에는 디바이스를 업데이트하지 않음 (더미데이터 방지)
   useEffect(() => {
-    if (!currentMood) return; // currentMood가 null이면 업데이트하지 않음
+    // moodStream이 없으면 업데이트하지 않음 (초기 3세그먼트가 로드될 때까지 대기)
+    // 이렇게 하면 DB에서 가져온 더미데이터가 먼저 보이지 않음
+    if (!moodStream || !moodStream.segments || moodStream.segments.length === 0) {
+      return;
+    }
     
+    // 현재 세그먼트 가져오기
+    const currentSegment = moodStream.segments[currentSegmentIndex];
+    if (!currentSegment?.mood) {
+      return;
+    }
+    
+    // convertSegmentMoodToMood를 사용하여 안전하게 변환
+    // 이 함수는 musicTracks에서 실제 노래 제목과 duration을 가져오고,
+    // scent.name도 제대로 처리함
+    const moodFromSegment = convertSegmentMoodToMood(
+      currentSegment.mood,
+      currentMood,
+      currentSegment
+    );
+    
+    // currentMood가 있으면 우선 사용 (사용자가 변경한 값, 예: 색상 변경)
+    const moodToUse = currentMood || moodFromSegment;
+    
+    // 디바이스 업데이트: 현재 세그먼트 정보를 모든 디바이스에 반영
+    // 사용자가 수동으로 변경한 값(brightness, scentLevel, volume)은 보존
     setDevices((prev) =>
       prev.map((d) => {
         if (d.type === "manager") {
@@ -90,9 +120,13 @@ export function useDevices(currentMood: Mood | null) {
             ...d,
             output: {
               ...d.output,
-              color: currentMood.color,
-              scentType: currentMood.scent.name,
-              nowPlaying: currentMood.song.title,
+              // 현재 세그먼트 정보 반영
+              color: moodToUse.color,
+              scentType: moodToUse.scent.name,
+              nowPlaying: moodToUse.song.title,
+              // 사용자가 변경한 값은 보존
+              brightness: d.output.brightness ?? 50,
+              scentLevel: d.output.scentLevel ?? 5,
             },
           };
         }
@@ -101,14 +135,34 @@ export function useDevices(currentMood: Mood | null) {
             ...d,
             output: {
               ...d.output,
-              color: currentMood.color,
+              color: moodToUse.color,
+              brightness: d.output.brightness ?? 50,
+            },
+          };
+        }
+        if (d.type === "scent") {
+          return {
+            ...d,
+            output: {
+              ...d.output,
+              scentType: moodToUse.scent.name,
+              scentLevel: d.output.scentLevel ?? 5,
+            },
+          };
+        }
+        if (d.type === "speaker") {
+          return {
+            ...d,
+            output: {
+              ...d.output,
+              nowPlaying: moodToUse.song.title,
             },
           };
         }
         return d;
       })
     );
-  }, [currentMood]);
+  }, [currentMood, moodStream, currentSegmentIndex, setDevices]); // 현재 세그먼트 변경 시 자동 업데이트
 
   // 디바이스 추가 (DB에 저장)
   const addDevice = async (type: Device["type"], name?: string, currentMood?: Mood | null) => {
