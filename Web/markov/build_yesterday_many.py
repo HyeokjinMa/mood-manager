@@ -1,5 +1,3 @@
-# build_yesterday_model_from_api_step2lite.py
-# -*- coding: utf-8 -*-
 """
 어제 하루(10분 간격) 실제 API raw 데이터를 받아서
 → step2-lite (결측치 보간 + ffill/bfill, count=0, categorical ffill)
@@ -11,7 +9,7 @@
 from __future__ import annotations
 from typing import List, Dict, Any, Tuple
 from pathlib import Path
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date
 import json
 
 from flask import Flask, request, Response
@@ -385,7 +383,7 @@ def build_yesterday_model_from_raw(
 # 6. 실제 서비스 API에서 하루 raw 가져오는 함수 (템플릿)
 # ============================================================
 
-def fetch_day_raw_from_rds(user_id: str, date: datetime) -> pd.DataFrame:
+def fetch_day_raw_from_rds(user_id: str, date: date) -> pd.DataFrame:
     """
     RDS에서 하루(144개) raw 데이터를 가져오는 부분.
     """
@@ -442,7 +440,7 @@ def fetch_day_raw_from_rds(user_id: str, date: datetime) -> pd.DataFrame:
 # 7. 유저 1명 빌드
 # ============================================================
 
-def build_yesterday_model_for_user(user_id: str, date: datetime) -> None:
+def build_yesterday_model_for_user(user_id: str, date: date) -> None:
     date_str = date.strftime("%Y%m%d")
     prefix = f"{user_id}_{date_str}"
 
@@ -465,6 +463,12 @@ def build_yesterday_model_for_user(user_id: str, date: datetime) -> None:
 # 8. Flask 서버: 어제 모델 빌드 POST API
 # ============================================================
 
+def get_kst_today_date():
+    now_utc = datetime.now(timezone.utc)
+    KST = timezone(timedelta(hours=9))
+    now_kst = now_utc.astimezone(KST)
+    return now_kst.date()
+
 @app.route("/", methods=["GET"])
 def health():
     return "Yesterday model build POST server is running.", 200
@@ -480,7 +484,6 @@ def build_yesterday():
       "date": "2025-11-30"   # (선택) 없으면 서버 기준 어제 날짜로 처리
     }
     """
-    now = datetime.now(timezone.utc)
 
     # 1) JSON 파싱
     try:
@@ -505,10 +508,11 @@ def build_yesterday():
         return Response(body, status=400,
                         mimetype="application/json; charset=utf-8")
 
+    kst_today = get_kst_today_date()
     date_str = payload.get("date")
     if date_str:
         try:
-            target_date = datetime.strptime(date_str, "%Y-%m-%d")
+            target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
         except ValueError:
             err = {"error": "invalid_date",
                    "message": "date는 YYYY-MM-DD 형식이어야 합니다."}
@@ -517,7 +521,7 @@ def build_yesterday():
                             mimetype="application/json; charset=utf-8")
     else:
         # date가 없으면 '오늘 기준 어제'
-        target_date = now - timedelta(days=1)
+        target_date = kst_today - timedelta(days=1)
 
     # 3) 빌드 실행
     try:

@@ -1,6 +1,3 @@
-# flask_realtime_inference_server_post.py
-# -*- coding: utf-8 -*-
-
 """
 어제 생성된 마르코프 기반 무드 모델을 사용해서
 실시간 인풋(스트레스/수면/날씨/웃음/한숨)을 받아,
@@ -40,7 +37,7 @@
 from __future__ import annotations
 from typing import Dict, Any, Tuple, List
 from pathlib import Path
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date
 import json
 
 import numpy as np
@@ -87,11 +84,11 @@ def build_raw_point_from_payload(payload: dict) -> dict:
 
     raw_point = {
         # 1) 스트레스 / 수면
-        "average_stress_index": payload["average_stress_index"],
+        "average_stress_index": int(payload["average_stress_index"]),
         "recent_stress_index": payload["recent_stress_index"],
         "latest_sleep_score": payload["latest_sleep_score"],
         "latest_sleep_duration": payload["latest_sleep_duration"],
-        "temparature": payload["temperature"],
+        "temperature": float(payload["temperature"]),
         "humidity": payload["humidity"],
         "rainType": payload["rainType"],
         "sky": payload["sky"],
@@ -300,13 +297,13 @@ def explain_cluster(summary: dict) -> Tuple[str, str]:
 # 4. 어제 모델 로드
 # ==============================
 
-def load_yesterday_model_runtime(user_id: str, today: datetime) -> Dict[str, Any]:
+def load_yesterday_model_runtime(user_id: str, today_date: date) -> Dict[str, Any]:
     """
     today 기준으로 '어제' 날짜의 모델 메타를 읽어서
     실시간 추론에 사용할 runtime_model dict로 변환.
     """
-    yesterday = today - timedelta(days=1)
-    date_str = yesterday.strftime("%Y%m%d")
+    yesterday_date = today_date - timedelta(days=1)
+    date_str = yesterday_date.strftime("%Y%m%d")
     prefix = f"{user_id}_{date_str}"
     meta_path = MODEL_DIR / f"{prefix}_yesterday_model_meta.json"
 
@@ -323,7 +320,7 @@ def load_yesterday_model_runtime(user_id: str, today: datetime) -> Dict[str, Any
 
     runtime_model = {
         "user_id": user_id,
-        "model_date": yesterday,
+        "model_date": yesterday_date,
         "meta_path": str(meta_path),
         "freq_minutes": meta["freq_minutes"],
         "window_length": meta["window_length"],
@@ -397,6 +394,12 @@ def infer_state_simple(
 # 6. Flask 서버 세팅 (POST /inference)
 # ==============================
 
+def get_kst_today_date():
+    now_utc = datetime.now(timezone.utc)
+    KST = timezone(timedelta(hours=9))
+    now_kst = now_utc.astimezone(KST)
+    return now_kst.date()
+
 @app.route("/", methods=["GET"])
 def health():
     return "Mood inference POST server is running.", 200
@@ -407,8 +410,6 @@ def inference():
     """
     POST http://localhost:5000/inference   
     """
-    now = datetime.now(timezone.utc)
-    today = now
 
     try:
         payload = request.get_json(force=True, silent=False)
@@ -433,7 +434,8 @@ def inference():
         raw_point = build_raw_point_from_payload(payload)
 
         # 2) 어제 모델 로드
-        yesterday_model = load_yesterday_model_runtime(user_id, today)
+        kst_today = get_kst_today_date()
+        yesterday_model = load_yesterday_model_runtime(user_id, today_date=kst_today)
 
         # 3) 인퍼런스
         result = infer_state_simple(
