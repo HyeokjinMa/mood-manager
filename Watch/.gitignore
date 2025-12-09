@@ -1,26 +1,25 @@
-# 1. Firebase 비밀 키 (보안!)
-# 이 파일이 유출되면 다른 사람이 내 DB에 접근할 수 있습니다.
-google-service.json
-
-# 2. 빌드 결과물 및 캐시 (용량이 크고 불필요함)
+# Android / Gradle
+local.properties
 .gradle/
 build/
-/build/
-/app/build/
-captures/
-.externalNativeBuild/
-.cxx/
-
-# 3. 로컬 환경 설정 (개인 PC마다 다름)
-local.properties
-.DS_Store
-
-# 4. IDE (Android Studio / IntelliJ) 설정
 .idea/
+.kotlin/
 *.iml
-*.hprof
-*.ap_
 
-# 5. 서명 키 (앱 출시용 비밀 키)
-*.jks
-*.keystore
+# Firebase (민감한 정보 포함)
+google-services.json
+GoogleService-Info.plist
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# 로그
+*.log

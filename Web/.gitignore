@@ -1,8 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
-Web/node_modules
+node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -10,9 +9,6 @@ Web/node_modules
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
-/prisma/migrations/
-/prisma/erd.svg
-Web/prisma/migrations/
 
 # testing
 /coverage
@@ -20,10 +16,9 @@ Web/prisma/migrations/
 
 # next.js
 /.next/
-Web/.next/
-Web/.next/**
-Web/server/
-Web/.build-artifacts/
+/.next/**
+/server/
+/.build-artifacts/
 /out/
 
 # production
@@ -41,6 +36,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -49,24 +45,12 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Android / Gradle
-**/local.properties
-**/.gradle/
-**/build/
-**/.idea/
-**/.kotlin/
-*.iml
-
-# Firebase (민감한 정보 포함)
-**/google-services.json
-**/GoogleService-Info.plist
-
-# macOS
-.DS_Store
-**/.DS_Store
-ML/moodManagerCredKey.json
-
 # 음악 파일 및 앨범 이미지 (용량이 크므로 GitHub 제외)
-Web/public/musics/
-Web/public/musics_img/
-Web/public/album/
+public/musics/
+public/musics_img/
+public/album/
+
+# Prisma
+prisma/migrations/
+prisma/erd.svg
+
