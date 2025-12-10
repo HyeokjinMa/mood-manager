@@ -143,7 +143,10 @@ export async function fetchWeather(): Promise<WeatherData> {
   };
 
   try {
-    const res = await axios.get(url, { params });
+    const res = await axios.get(url, { 
+      params,
+      timeout: 10000, // 10초 타임아웃 (날씨 API가 느릴 수 있음)
+    });
 
     // 5) 응답에서 필요한 항목 추출
     const items = res.data?.response?.body?.items?.item;

@@ -38,13 +38,18 @@ export async function getCommonData(
     const timeout1 = setTimeout(() => controller1.abort(), 30000); // 30초 타임아웃
     const timeout2 = setTimeout(() => controller2.abort(), 30000); // 30초 타임아웃
     
+    // AWS EC2에서는 자기 자신을 호출할 때 localhost나 내부 IP를 사용해야 함
+    // NEXT_PUBLIC_BASE_URL이 외부 URL이면 순환 참조나 느린 응답 가능
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
+                    (typeof window === "undefined" ? "http://localhost:3000" : ""); // 서버 사이드에서는 localhost 사용
+    
     const [preprocessedRes, moodStreamRes] = await Promise.all([
-      fetch(`${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/preprocessing`, {
+      fetch(`${baseUrl}/api/preprocessing`, {
         headers: requestHeaders,
         credentials: "include",
         signal: controller1.signal,
       }),
-      fetch(`${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/moods/current`, {
+      fetch(`${baseUrl}/api/moods/current`, {
         headers: requestHeaders,
         credentials: "include",
         signal: controller2.signal,
