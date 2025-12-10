@@ -40,8 +40,8 @@ function validateApiKey(request: NextRequest): boolean {
 // 전구 전원 상태 저장소 (메모리 기반)
 type PowerState = "on" | "off";
 
-// 기본 상태: off
-let lightPowerState: PowerState = "off";
+// 기본 상태: on (조명 등록 시 자동으로 켜짐)
+let lightPowerState: PowerState = "on";
 
 /**
  * GET /api/light_power
@@ -50,12 +50,16 @@ let lightPowerState: PowerState = "off";
  */
 export async function GET(request: NextRequest) {
   try {
-    // API 키 인증 확인
-    if (!validateApiKey(request)) {
-      return NextResponse.json(
-        { message: "Unauthorized: Invalid API Key" },
-        { status: 401 }
-      );
+    // 클라이언트에서 호출하는 경우 (브라우저) API 키 검증 완화
+    // 개발 환경에서는 API 키 검증 완화
+    if (process.env.NODE_ENV === "production") {
+      // 프로덕션 환경에서만 API 키 검증
+      if (!validateApiKey(request)) {
+        return NextResponse.json(
+          { message: "Unauthorized: Invalid API Key" },
+          { status: 401 }
+        );
+      }
     }
 
     return NextResponse.json({

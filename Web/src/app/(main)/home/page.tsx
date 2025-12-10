@@ -173,55 +173,83 @@ export default function HomePage() {
   }, [currentSegmentData?.mood?.id, setCurrentMood]);
   
   // 전구 제어: currentSegmentData 변경 시 조명 정보를 저장 (라즈베리파이가 GET으로 가져감)
+  // 단, light_power가 "on"일 때만 전달
   // 라즈베리파이가 RGB/colortemp 판단을 하므로 모든 값을 함께 전달
   useEffect(() => {
     if (!currentSegmentData?.segment?.mood?.lighting) {
       return;
     }
     
-    const lighting = currentSegmentData.segment.mood.lighting;
-    const rgb = lighting.rgb;
-    // brightness와 temperature는 backgroundParams에서 가져오기
-    const brightness = currentSegmentData.backgroundParams?.lighting?.brightness || 50; // 0-100 범위
-    const temperature = currentSegmentData.backgroundParams?.lighting?.temperature;
-    
-    // 모든 값을 함께 전달 (라즈베리파이가 판단)
-    const requestBody: {
-      r?: number;
-      g?: number;
-      b?: number;
-      colortemp?: number;
-      brightness?: number;
-    } = {};
-    
-    // Brightness 값이 있으면 추가
-    if (brightness !== undefined) {
-      requestBody.brightness = Math.round((brightness / 100) * 255); // 0-100 → 0-255 변환
-    }
-    
-    // RGB 값이 있으면 추가
-    if (rgb && rgb.length === 3 && rgb[0] !== null && rgb[1] !== null && rgb[2] !== null) {
-      requestBody.r = Math.round(rgb[0]);
-      requestBody.g = Math.round(rgb[1]);
-      requestBody.b = Math.round(rgb[2]);
-    }
-    
-    // Color Temperature 값이 있으면 추가
-    if (temperature) {
-      requestBody.colortemp = Math.round(temperature);
-    }
-    
-    // API 호출: 전구 정보 업데이트 (메모리에 저장)
-    fetch("/api/light_info", {
-      method: "POST",
+    // light_power 상태 확인 (on일 때만 전달)
+    fetch("/api/light_power", {
+      method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
       credentials: "include",
-      body: JSON.stringify(requestBody),
-    }).catch((error) => {
-      console.error("[HomePage] Failed to update light info:", error);
-    });
+    })
+      .then((response) => {
+        if (!response.ok) {
+          console.log("[HomePage] light_power 상태 확인 실패, 전달 건너뜀");
+          return null;
+        }
+        return response.json();
+      })
+      .then((powerData) => {
+        // power가 "on"이 아니면 전달하지 않음
+        if (!powerData || powerData.power !== "on") {
+          console.log("[HomePage] light_power가 off 상태, light_info 전달 건너뜀");
+          return;
+        }
+        
+        const lighting = currentSegmentData.segment.mood.lighting;
+        const rgb = lighting.rgb;
+        // brightness와 temperature는 backgroundParams에서 가져오기
+        const brightness = currentSegmentData.backgroundParams?.lighting?.brightness || 50; // 0-100 범위
+        const temperature = currentSegmentData.backgroundParams?.lighting?.temperature;
+        
+        // 모든 값을 함께 전달 (라즈베리파이가 판단)
+        const requestBody: {
+          r?: number;
+          g?: number;
+          b?: number;
+          colortemp?: number;
+          brightness?: number;
+        } = {};
+        
+        // Brightness 값이 있으면 추가
+        if (brightness !== undefined) {
+          requestBody.brightness = Math.round((brightness / 100) * 255); // 0-100 → 0-255 변환
+        }
+        
+        // RGB 값이 있으면 추가
+        if (rgb && rgb.length === 3 && rgb[0] !== null && rgb[1] !== null && rgb[2] !== null) {
+          requestBody.r = Math.round(rgb[0]);
+          requestBody.g = Math.round(rgb[1]);
+          requestBody.b = Math.round(rgb[2]);
+        }
+        
+        // Color Temperature 값이 있으면 추가
+        if (temperature) {
+          requestBody.colortemp = Math.round(temperature);
+        }
+        
+        // API 호출: 전구 정보 업데이트 (메모리에 저장)
+        console.log("[HomePage] ✅ light_power가 on 상태, light_info 전달:", requestBody);
+        fetch("/api/light_info", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(requestBody),
+        }).catch((error) => {
+          console.error("[HomePage] Failed to update light info:", error);
+        });
+      })
+      .catch((error) => {
+        console.error("[HomePage] light_power 상태 확인 에러:", error);
+      });
   }, [currentSegmentData]);
 
   // 디바이스 컨트롤 변경 시 전구 API 업데이트 및 currentMood 업데이트
@@ -293,49 +321,76 @@ export default function HomePage() {
     }
 
     // Light/Manager 타입 디바이스의 색상/밝기 변경 시 light_info 업데이트
+    // 단, light_power가 "on"일 때만 전달
     if (changes.color || changes.brightness !== undefined) {
-      const requestBody: {
-        r?: number;
-        g?: number;
-        b?: number;
-        brightness?: number;
-      } = {};
-
-      // 색상 변경 시 RGB 변환
-      if (changes.color) {
-        const { hexToRgb } = require("@/lib/utils/colorUtils");
-        const rgb = hexToRgb(changes.color);
-        requestBody.r = rgb[0];
-        requestBody.g = rgb[1];
-        requestBody.b = rgb[2];
-        console.log(`[HomePage] 🔄 RGB 변환: ${changes.color} → r:${rgb[0]}, g:${rgb[1]}, b:${rgb[2]}`);
-      }
-
-      // 밝기 변경 시 (0-100 → 0-255 변환)
-      if (changes.brightness !== undefined) {
-        requestBody.brightness = Math.round((changes.brightness / 100) * 255);
-        console.log(`[HomePage] 🔄 밝기 변환: ${changes.brightness}% → ${requestBody.brightness} (0-255)`);
-      }
-
-      // API 호출: 전구 정보 업데이트 (메모리에 저장)
-      console.log("[HomePage] 📡 /api/light_info 업데이트 요청:", requestBody);
-      fetch("/api/light_info", {
-        method: "POST",
+      // light_power 상태 확인 (on일 때만 전달)
+      fetch("/api/light_power", {
+        method: "GET",
         headers: {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify(requestBody),
       })
         .then((response) => {
-          if (response.ok) {
-            console.log("[HomePage] ✅ /api/light_info 업데이트 성공");
-          } else {
-            console.error("[HomePage] ❌ /api/light_info 업데이트 실패:", response.status);
+          if (!response.ok) {
+            console.log("[HomePage] light_power 상태 확인 실패, light_info 전달 건너뜀");
+            return null;
           }
+          return response.json();
+        })
+        .then((powerData) => {
+          // power가 "on"이 아니면 전달하지 않음
+          if (!powerData || powerData.power !== "on") {
+            console.log("[HomePage] light_power가 off 상태, light_info 전달 건너뜀");
+            return;
+          }
+          
+          const requestBody: {
+            r?: number;
+            g?: number;
+            b?: number;
+            brightness?: number;
+          } = {};
+
+          // 색상 변경 시 RGB 변환
+          if (changes.color) {
+            const { hexToRgb } = require("@/lib/utils/colorUtils");
+            const rgb = hexToRgb(changes.color);
+            requestBody.r = rgb[0];
+            requestBody.g = rgb[1];
+            requestBody.b = rgb[2];
+            console.log(`[HomePage] 🔄 RGB 변환: ${changes.color} → r:${rgb[0]}, g:${rgb[1]}, b:${rgb[2]}`);
+          }
+
+          // 밝기 변경 시 (0-100 → 0-255 변환)
+          if (changes.brightness !== undefined) {
+            requestBody.brightness = Math.round((changes.brightness / 100) * 255);
+            console.log(`[HomePage] 🔄 밝기 변환: ${changes.brightness}% → ${requestBody.brightness} (0-255)`);
+          }
+
+          // API 호출: 전구 정보 업데이트 (메모리에 저장)
+          console.log("[HomePage] 📡 /api/light_info 업데이트 요청 (power: on):", requestBody);
+          fetch("/api/light_info", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify(requestBody),
+          })
+            .then((response) => {
+              if (response.ok) {
+                console.log("[HomePage] ✅ /api/light_info 업데이트 성공");
+              } else {
+                console.error("[HomePage] ❌ /api/light_info 업데이트 실패:", response.status);
+              }
+            })
+            .catch((error) => {
+              console.error("[HomePage] ❌ /api/light_info 업데이트 에러:", error);
+            });
         })
         .catch((error) => {
-          console.error("[HomePage] ❌ /api/light_info 업데이트 에러:", error);
+          console.error("[HomePage] light_power 상태 확인 에러:", error);
         });
     }
 
