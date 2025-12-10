@@ -74,8 +74,12 @@ export async function getCommonData(
       moodStream,
     };
   } catch (error) {
-    // 네트워크 에러 등 예외 발생 시 목업 데이터로 대체
-    console.error("[getCommonData] 에러 발생, 목업 데이터 사용:", error);
+    // 네트워크 에러, 타임아웃 등 예외 발생 시 목업 데이터로 대체
+    if (error instanceof Error && error.name === "AbortError") {
+      console.error("[getCommonData] Request timeout after 30 seconds");
+    } else {
+      console.error("[getCommonData] 에러 발생, 목업 데이터 사용:", error);
+    }
     return getMockCommonData();
   }
 }
