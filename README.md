@@ -12,7 +12,8 @@ The system operates based on the following pipeline:
 ---
 
 ## 🔗 Links
-[Mood-manager | Tech Blog](https://www.notion.so/Mood-Manager-2c42a535a226809d9206ef6166f28718?source=copy_link)
+- **Tech Blog**: [Mood-manager | Tech Blog](https://www.notion.so/Mood-Manager-2c42a535a226809d9206ef6166f28718?source=copy_link)
+- **Deployed Demo**: [moodmanager](https://moodmanager.me)
 
 ---
 
@@ -198,6 +199,3 @@ For production environments, ensure the following:
 3. **Security**: `NEXTAUTH_SECRET` is set to a strong random string
 4. **HTTPS**: Production environments must use HTTPS (set `NEXTAUTH_URL` to HTTPS as well)
 
-## Additional Resources
-
-- **Deployed Demo**: [moodmanager](https://moodmanager.me)
