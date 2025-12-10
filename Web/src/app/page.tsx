@@ -14,20 +14,27 @@ import { useRouter } from "next/navigation";
 
 export default function SplashPage() {
   const router = useRouter();
-  const { status } = useSession(); 
+  const { status, data: session } = useSession(); 
   const redirectingRef = useRef(false);
 
   useEffect(() => {
     if (redirectingRef.current) return;
 
+    // authenticated 상태일 때 세션 데이터 확인
     if (status === "authenticated") {
+      // 세션이 null이거나 사용자 정보가 없으면 로그인 페이지로
+      if (!session || !session.user || !(session.user as { id?: string })?.id) {
+        redirectingRef.current = true;
+        router.replace("/login");
+        return;
+      }
       redirectingRef.current = true;
       router.replace("/home");
     } else if (status === "unauthenticated") {
       redirectingRef.current = true;
       router.replace("/login");
     }
-  }, [status, router]);
+  }, [status, session, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">

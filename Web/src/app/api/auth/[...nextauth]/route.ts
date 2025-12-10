@@ -553,14 +553,23 @@ export const authOptions: NextAuthOptions = {
       return true; // 로그인 성공
     },
     async jwt({ token, user }) {
+      // user가 있을 때만 토큰 업데이트 (실제 로그인 시에만)
       if (user) {
         token.id = user.id;
         token.email = user.email;
         token.name = user.name;
       }
+      // user가 없고 token.id도 없으면 null 반환하여 세션 무효화
+      if (!user && !token.id) {
+        return null as any;
+      }
       return token;
     },
     async session({ session, token }) {
+      // token이 null이거나 token.id가 없으면 세션 무효화
+      if (!token || !token.id) {
+        return null as any;
+      }
       if (session.user) {
         (session.user as { id?: string }).id = token.id as string;
       }
