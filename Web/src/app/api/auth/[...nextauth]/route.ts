@@ -553,36 +553,16 @@ export const authOptions: NextAuthOptions = {
       return true; // 로그인 성공
     },
     async jwt({ token, user }) {
-      // user가 있을 때만 토큰 업데이트 (실제 로그인 시에만)
       if (user) {
         token.id = user.id;
         token.email = user.email;
         token.name = user.name;
-        console.log("[NextAuth jwt] Token updated with user:", { id: user.id, email: user.email });
-      } else if (!token.id) {
-        // user가 없고 token.id도 없으면 유효하지 않은 토큰
-        // 빈 객체를 반환하면 NextAuth가 자동으로 세션을 무효화함
-        console.log("[NextAuth jwt] No user and no token.id, invalidating token");
-        return {};
       }
       return token;
     },
     async session({ session, token }) {
-      // token.id가 없으면 세션을 무효화 (인증되지 않은 상태)
-      if (!token.id) {
-        console.log("[NextAuth session] No token.id, invalidating session");
-        // 세션을 무효화하기 위해 user를 null로 설정
-        return {
-          ...session,
-          user: null,
-          expires: new Date(0).toISOString(), // 만료 시간을 과거로 설정
-        } as any;
-      }
-      
-      // token에 id가 있을 때만 세션에 추가 (실제 로그인한 사용자만)
       if (session.user) {
         (session.user as { id?: string }).id = token.id as string;
-        console.log("[NextAuth session] Session updated with token.id:", token.id);
       }
       return session;
     },
