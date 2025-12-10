@@ -41,15 +41,15 @@ Mood Manager는 생체 신호 분석, 오디오 이벤트 분류, 감정 예측,
   - 색상 (moodColor, lighting)
   - 음악 (musicID, volume, fadeIn, fadeOut)
   - 향 (scent type, name, level, interval)
-  - 배경 아이콘 (icons, wind, animation)
+  - 배경 요소 (icons, wind, animation)
 
 #### 2.2 배경 파라미터 생성 (`/api/ai/background-params`)
 - **Stream Mode**: 10개 세그먼트 전체에 대한 배경 파라미터 생성
-- **Scent Mode**: 현재 세그먼트의 향/아이콘만 재추천
+- **Scent Mode**: 현재 세그먼트의 향/배경 요소만 재추천
 - **Music Mode**: 현재 세그먼트의 음악/풍향·풍속만 재추천
 
 #### 2.3 프롬프트 엔지니어링
-- **다양성 강조**: 아이콘과 음악의 다양성을 보장하기 위한 프롬프트를 최적화한다.
+- **다양성 강조**: 배경 요소와 음악의 다양성을 보장하기 위한 프롬프트를 최적화한다.
 - **구조화된 출력**: JSON Schema를 통한 구조화된 응답을 보장한다.
 - **컨텍스트 통합**: 사용자 선호도, 생체 신호, 외부 요인(날씨)을 통합한다.
 

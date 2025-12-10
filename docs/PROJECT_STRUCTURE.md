@@ -70,17 +70,17 @@ mood-manager/
 - **상태**: 완성된 v4 버전, 정상 작동한다.
 
 ### Firebase 연동
-- ✅ `google-services.json` 파일 존재
-- ✅ Firebase BOM 사용
-- ✅ Firestore KTX 포함
-- ✅ Firebase Storage KTX 포함
-- ✅ Google Services 플러그인 적용
+- `google-services.json` 파일 존재
+- Firebase BOM 사용
+- Firestore KTX 포함
+- Firebase Storage KTX 포함
+- Google Services 플러그인 적용
 
 ### 빌드 설정
-- ✅ Kotlin + Compose 사용
-- ✅ Wear OS SDK 설정 (minSdk 30, targetSdk 36)
-- ✅ Health Services 클라이언트 포함
-- ✅ Java 11 호환성 설정
+- Kotlin + Compose 사용
+- Wear OS SDK 설정 (minSdk 30, targetSdk 36)
+- Health Services 클라이언트 포함
+- Java 11 호환성 설정
 
 ### 데이터 전송
 - **PeriodicDataService**: 1분마다 생체 데이터 수집 → `users/{userId}/raw_periodic`

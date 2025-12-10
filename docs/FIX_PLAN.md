@@ -120,7 +120,7 @@ Web/src/app/(main)/home/
 
 ---
 
-## 3. 세션 체크 문제 (3번) - ✅ 완료
+## 3. 세션 체크 문제 (3번)
 
 ### 해결 사항
 - SessionProvider refetchInterval/refetchOnWindowFocus 설정 개선
@@ -138,7 +138,7 @@ Web/src/app/(main)/home/
 
 ## 우선순위
 
-1. **3번 (세션 체크)**: ✅ 완료
+1. **3번 (세션 체크)**: 완료
 2. **1번 (Admin LLM)**: 다음 작업
 3. **2번 (Modal 전환)**: 그 다음 작업
 

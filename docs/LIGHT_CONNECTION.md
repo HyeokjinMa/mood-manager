@@ -197,12 +197,12 @@ RASPBERRY_PI_URL=http://raspberrypi.local:8000
                                                    │
                                                    │ 메모리 저장
                                                    │ (lightControlState)
-                                                   │ ✅ 상태 유지 가능
+                                                   │ 상태 유지 가능
                                                    │
                                                    │ HTTPS GET
 ┌─────────────────┐         공인 IP       ┌───────▼──────────┐
 │  라즈베리파이   │ <─────────────────────│  EC2 서버        │
-│  (로컬 네트워크)│   ✅ 통신 가능        │  (고정 IP)       │
+│  (로컬 네트워크)│   통신 가능        │  (고정 IP)       │
 │  또는 공인 IP   │                       │  Port: 3000/443  │
 └─────────────────┘                       └─────────────────┘
 ```
@@ -256,10 +256,10 @@ export async function GET(request: NextRequest) {
 
 ### 6.1 완료된 기능
 
-- ✅ POST `/api/light/control`: 조명 상태 저장
-- ✅ GET `/api/light/control`: 조명 상태 조회 (라즈베리파이 polling)
-- ✅ RGB 우선 전략 구현
-- ✅ `home/page.tsx`에서 자동 전송
+- POST `/api/light/control`: 조명 상태 저장
+- GET `/api/light/control`: 조명 상태 조회 (라즈베리파이 polling)
+- RGB 우선 전략 구현
+- `home/page.tsx`에서 자동 전송
 
 ### 6.2 라즈베리파이 측 구현 필요
 

@@ -247,7 +247,7 @@ LLM으로 동적 배경 파라미터를 생성한다 (10개 세그먼트 전체�
     "brightness": 50,
     "temperature": 4000
   },
-  "backgroundIcon": {
+  "backgroundElement": {
     "name": "FaCloudRain",
     "category": "weather"
   },
@@ -256,9 +256,9 @@ LLM으로 동적 배경 파라미터를 생성한다 (10개 세그먼트 전체�
     "speed": 3
   },
   "animationSpeed": 4,
-  "iconOpacity": 0.7,
-  "iconCount": 8,
-  "iconSize": 50,
+  "elementOpacity": 0.7,
+  "elementCount": 8,
+  "elementSize": 50,
   "particleEffect": false,
   "gradientColors": ["#6B8E9F", "#87CEEB"],
   "source": "openai"
@@ -275,14 +275,14 @@ LLM으로 동적 배경 파라미터를 생성한다 (10개 세그먼트 전체�
 | `lighting.rgb` | number[] | 조명 RGB 값 |
 | `lighting.brightness` | number | 조명 밝기 (0-100) |
 | `lighting.temperature` | number | 색온도 (선택적) |
-| `backgroundIcon.name` | string | React Icons 이름 |
-| `backgroundIcon.category` | string | 아이콘 카테고리 |
+| `backgroundElement.name` | string | React Icons 이름 |
+| `backgroundElement.category` | string | 배경 요소 카테고리 |
 | `backgroundWind.direction` | number | 풍향 (0-360도) |
 | `backgroundWind.speed` | number | 풍속 (0-10) |
 | `animationSpeed` | number | 애니메이션 속도 (0-10) |
-| `iconOpacity` | number | 아이콘 투명도 (0-1) |
-| `iconCount` | number | 아이콘 개수 (5-10, 선택적) |
-| `iconSize` | number | 아이콘 크기 (0-100, 선택적) |
+| `elementOpacity` | number | 배경 요소 투명도 (0-1) |
+| `elementCount` | number | 배경 요소 개수 (5-10, 선택적) |
+| `elementSize` | number | 배경 요소 크기 (0-100, 선택적) |
 | `particleEffect` | boolean | 파티클 효과 (선택적) |
 | `gradientColors` | string[] | 그라데이션 색상 (2-3개 HEX, 선택적) |
 | `source` | string | LLM 응답 출처 (`"openai"`, `"cache"`, `"mock-no-key"`) |
@@ -296,10 +296,10 @@ LLM으로 동적 배경 파라미터를 생성한다 (10개 세그먼트 전체�
 - 실제 백엔드 연동은 코드 내 `TODO` 주석으로 표시되어 있다.
 
 ### 구현 상태
-- ✅ **무드스트림 생성 로직**: 1분 단위 예측값을 3분 단위로 분절하여 10개 세그먼트를 생성한다 (동일한 무드 기반).
-- ✅ **자동 재생성 로직**: 예약된 세그먼트가 3개 이하가 되면 자동으로 재생성한다.
-- ✅ **LLM 통합**: OpenAI API를 호출하고 배경 파라미터를 생성한다 (캐싱 포함).
-- ⏳ **백엔드 연동**: 시계열 + 마르코프 체인 예측값을 받는다 (TODO).
+- 무드스트림 생성 로직: 1분 단위 예측값을 3분 단위로 분절하여 10개 세그먼트를 생성한다 (동일한 무드 기반).
+- 자동 재생성 로직: 예약된 세그먼트가 3개 이하가 되면 자동으로 재생성한다.
+- LLM 통합: OpenAI API를 호출하고 배경 파라미터를 생성한다 (캐싱 포함).
+- 백엔드 연동: 시계열 + 마르코프 체인 예측값을 받는다 (TODO).
 
 ### 다음 단계
 1. 백엔드 API 연동 브랜치 병합 후 `/api/preprocessing` 실제 구현을 사용한다.
@@ -370,9 +370,9 @@ doc.reference.update({
 
 ### Firestore 연결 상태
 
-- **Watch 앱 (WearOS)**: ✅ Firestore가 연결되어 있다 (`google-services.json` 설정 완료).
-- **Web 앱 (Next.js)**: ❌ Firestore가 연결되어 있지 않다 (현재 TODO 상태, V1 Mock 모드 사용 중).
-- **ML Python 서버**: ✅ Firestore가 연결되어 있다 (서비스 계정 키로 접근).
+- **Watch 앱 (WearOS)**: Firestore가 연결되어 있다 (`google-services.json` 설정 완료).
+- **Web 앱 (Next.js)**: Firestore가 연결되어 있지 않다 (현재 TODO 상태, V1 Mock 모드 사용 중).
+- **ML Python 서버**: Firestore가 연결되어 있다 (서비스 계정 키로 접근).
 
 ---
 
