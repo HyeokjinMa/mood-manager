@@ -1,9 +1,6 @@
 # Mood Manager
 
 **AI-Based Personalized Mood Management System for Smart Homes**
-
-Mood Manager is an AI-powered service that analyzes biometric signals and audio events from WearOS devices to generate personalized mood streams. The system controls lighting, scents, and sound in smart home environments through a system called the **Manager**.
-
 ---
 
 ## Overview
