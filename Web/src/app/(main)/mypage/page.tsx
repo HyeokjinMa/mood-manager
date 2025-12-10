@@ -49,7 +49,8 @@ export default function MyPage() {
     handleProfileCancel,
   } = useProfile();
 
-  const isAdminMode = session?.user?.email === ADMIN_EMAIL;
+  // 관리자 모드 확인 (사용자 ID 기반으로만 확인, 이메일만으로는 판단하지 않음)
+  const isAdminMode = session?.user?.id === "admin-mock-user-id";
 
   const handleLogout = async () => {
     await signOut({ redirect: false });
