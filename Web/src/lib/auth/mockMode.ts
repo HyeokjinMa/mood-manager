@@ -62,27 +62,39 @@ export function isAdminAccount(email: string, password?: string): boolean {
  * 
  * 우선순위:
  * 1. DB에서 isAdmin 필드 조회 (userId가 있는 경우)
- * 2. 이메일 기반 확인 (하위 호환성)
+ * 2. 사용자 ID가 "admin-mock-user-id"인 경우 (관리자 계정으로 로그인한 경우만)
+ * 
+ * 보안: 이메일만으로는 관리자 모드를 판단하지 않음 (비밀번호 확인 필요)
  */
 export async function isMockMode(session: { user?: { email?: string; id?: string } } | null): Promise<boolean> {
   if (!session?.user) {
     return false;
   }
 
-  // DB에서 isAdmin 필드 조회 시도
+  // 1. 사용자 ID 기반 확인 (가장 안전)
   if (session.user.id) {
+    // 관리자 계정으로 로그인한 경우 (NextAuth에서 "admin-mock-user-id"로 설정)
+    if (session.user.id === "admin-mock-user-id") {
+      console.log("[isMockMode] 관리자 계정으로 로그인됨 (admin-mock-user-id)");
+      return true;
+    }
+
+    // DB에서 isAdmin 필드 조회 시도
     try {
-      return await isAdminUser(session.user.id);
+      const isAdmin = await isAdminUser(session.user.id);
+      if (isAdmin) {
+        console.log("[isMockMode] DB에서 관리자 확인됨", { userId: session.user.id });
+        return true;
+      }
     } catch (error) {
-      console.warn("[isMockMode] DB 조회 실패, 이메일 기반 확인으로 폴백:", error);
+      console.warn("[isMockMode] DB 조회 실패:", error);
+      // DB 조회 실패 시 false 반환 (보안상 안전한 선택)
     }
   }
 
-  // 하위 호환성: 이메일 기반 확인
-  if (session.user.email) {
-    return isAdminAccount(session.user.email);
-  }
-
+  // 이메일만으로는 관리자 모드를 판단하지 않음 (보안상 위험)
+  // 비밀번호 확인 없이 이메일만으로 관리자 모드 진입 방지
   return false;
 }
+
 

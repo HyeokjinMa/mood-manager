@@ -38,8 +38,8 @@ export default function HomePage() {
   const redirectingRef = useRef(false); // 리다이렉트 중복 방지
   const lastStatusRef = useRef<string | null>(null); // 이전 상태 추적
   
-  // 관리자 모드 확인
-  const isAdminMode = session?.user?.email === ADMIN_EMAIL;
+  // 관리자 모드 확인 (사용자 ID 기반으로만 확인, 이메일만으로는 판단하지 않음)
+  const isAdminMode = session?.user?.id === "admin-mock-user-id";
 
   /**
    * 세션 체크: 로그인되지 않은 경우 로그인 페이지로 리다이렉트
