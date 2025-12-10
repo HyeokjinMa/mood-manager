@@ -12,6 +12,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { ADMIN_EMAIL } from "@/lib/auth/mockMode";
 import TopNav from "@/components/navigation/TopNav";
 import BottomNav from "@/components/navigation/BottomNav";
 import MyPageModal from "./components/modals/MyPageModal";
@@ -33,9 +34,12 @@ import { getLastSegmentEndTime } from "@/lib/utils/segmentUtils";
 
 export default function HomePage() {
   const router = useRouter();
-  const { status } = useSession();
+  const { status, data: session } = useSession();
   const redirectingRef = useRef(false); // 리다이렉트 중복 방지
   const lastStatusRef = useRef<string | null>(null); // 이전 상태 추적
+  
+  // 관리자 모드 확인
+  const isAdminMode = session?.user?.email === ADMIN_EMAIL;
 
   /**
    * 세션 체크: 로그인되지 않은 경우 로그인 페이지로 리다이렉트
@@ -106,7 +110,7 @@ export default function HomePage() {
   // 추가 작업이 필요 없음 (useDevices 내부 useEffect가 자동으로 반응함)
   
   // Phase 3: 현재 세그먼트 통합 데이터 제공 함수
-  // currentMood를 의존성에서 제거하여 무한 루프 방지
+  // currentMood를 사용하여 사용자가 변경한 값 반영
   const currentSegmentData = useMemo(() => {
     if (!moodStreamData.segments || moodStreamData.segments.length === 0) {
       return null;
@@ -115,10 +119,11 @@ export default function HomePage() {
     const segment = moodStreamData.segments[moodStreamData.currentIndex];
     if (!segment) return null;
     
-    // Mood 타입으로 변환 (currentMood는 변환에만 사용, 의존성 제외)
+    // Mood 타입으로 변환
+    // currentMood가 있으면 사용자 변경 값 반영, 없으면 세그먼트 기본값 사용
     const mood = convertSegmentMoodToMood(
       segment.mood,
-      null, // currentMood를 null로 전달하여 무한 루프 방지
+      currentMood, // currentMood 전달하여 사용자 변경 값 반영
       segment
     );
     
@@ -128,7 +133,7 @@ export default function HomePage() {
       backgroundParams: segment.backgroundParams,
       index: moodStreamData.currentIndex,
     };
-  }, [moodStreamData.segments, moodStreamData.currentIndex]);
+  }, [moodStreamData.segments, moodStreamData.currentIndex, currentMood]); // currentMood를 의존성에 추가
   
   // Phase 3: currentSegmentData 변경 시 currentMood 업데이트 (무한 루프 방지)
   const prevMoodIdRef = useRef<string | null>(null);
@@ -277,13 +282,15 @@ export default function HomePage() {
         }));
         
         // 3. 즉시 첫 번째 세그먼트 정보 공유 (currentMood 초기화)
+        // 초기 세그먼트가 로드되면 즉시 currentMood를 설정하여 디바이스 카드에 바로 반영
         const firstSegment = carolSegments[0];
         if (firstSegment?.mood) {
           const convertedMood = convertSegmentMoodToMood(firstSegment.mood, null, firstSegment);
           setCurrentMood(convertedMood);
         }
         
-        // 4. 바로 무드스트림 생성 호출 (7개 세그먼트)
+        // 4. 관리자 모드가 아닐 때만 무드스트림 생성 호출 (7개 세그먼트)
+        // 관리자 모드는 generateMoodStream 내부에서 목업 데이터로 즉시 반환됨
         // segments를 직접 전달하여 최신 상태 사용
         generateMoodStream(7, carolSegments);
       } catch (error) {
@@ -376,7 +383,16 @@ export default function HomePage() {
             setMoodStreamData(prev => {
               // 실제로 인덱스가 변경되었을 때만 업데이트하여 무한 루프 방지
               if (prev.currentIndex === index) return prev;
-              return { ...prev, currentIndex: index };
+              
+              // 인덱스 범위 체크: segments 배열 크기를 초과하지 않도록
+              // 초기 3세그먼트만 있을 때는 인덱스 0, 1, 2만 접근 가능
+              const maxIndex = prev.segments.length > 0 ? prev.segments.length - 1 : 0;
+              const clampedIndex = Math.max(0, Math.min(index, maxIndex));
+              
+              // 클램핑된 인덱스가 현재 인덱스와 같으면 변경하지 않음
+              if (prev.currentIndex === clampedIndex) return prev;
+              
+              return { ...prev, currentIndex: clampedIndex };
             });
           }}
           onUpdateCurrentSegment={(updates) => {

@@ -16,6 +16,7 @@ interface MoodDurationProps {
   onNextStreamSelect?: () => void; // 다음 스트림 선택 핸들러
   totalSegmentsIncludingNext?: number; // 다음 스트림 포함 전체 세그먼트 개수 (동적 계산용)
   availableSegmentsCount?: number; // 실제 사용 가능한 세그먼트 개수 (클릭 가능한 범위)
+  onSegmentSelectOutOfRange?: (index: number) => void; // 범위를 벗어난 세그먼트 선택 시 콜백
 }
 
 export default function MoodDuration({
@@ -29,6 +30,7 @@ export default function MoodDuration({
   onNextStreamSelect,
   totalSegmentsIncludingNext,
   availableSegmentsCount,
+  onSegmentSelectOutOfRange,
 }: MoodDurationProps) {
   const rawColor = moodColorCurrent || mood.color;
   const pastColor = moodColorPast || blendWithWhite(rawColor, 0.9);
@@ -97,6 +99,9 @@ export default function MoodDuration({
                 // 클릭 가능한 세그먼트만 선택 가능
                 if (isClickable) {
                   onSegmentSelect?.(idx);
+                } else {
+                  // 범위를 벗어난 세그먼트 클릭 시 알림 콜백 호출
+                  onSegmentSelectOutOfRange?.(idx);
                 }
               }}
               style={{

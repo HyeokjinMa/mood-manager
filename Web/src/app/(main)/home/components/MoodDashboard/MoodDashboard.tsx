@@ -12,6 +12,7 @@
 import { useCallback, useRef, useState, useEffect, useMemo } from "react";
 import { MoodDashboardSkeleton } from "@/components/ui/Skeleton";
 import type { Mood } from "@/types/mood";
+import { AlertCircle } from "lucide-react";
 import { useMoodDashboard } from "./hooks/useMoodDashboard";
 import { useMusicTrackPlayer } from "@/hooks/useMusicTrackPlayer";
 import { useMoodColors } from "./hooks/useMoodColors";
@@ -127,6 +128,16 @@ export default function MoodDashboard({
     // 전환 애니메이션은 V2 이후 재설계 예정이므로 현재는 사용하지 않음
     onTransitionTrigger: undefined,
   });
+  
+  // 범위를 벗어난 세그먼트 선택 시 알림 표시
+  const [showWaitingMessage, setShowWaitingMessage] = useState(false);
+  const handleSegmentSelectOutOfRange = useCallback((index: number) => {
+    setShowWaitingMessage(true);
+    // 3초 후 자동으로 알림 숨김
+    setTimeout(() => {
+      setShowWaitingMessage(false);
+    }, 3000);
+  }, []);
 
   // 음악 트랙 재생 관리 (3세그 구조)
   const {
@@ -334,8 +345,21 @@ export default function MoodDashboard({
         onNextStreamSelect={() => {}}
         totalSegmentsIncludingNext={undefined}
         availableSegmentsCount={segments.length} // 실제 사용 가능한 세그먼트 개수 전달
+        onSegmentSelectOutOfRange={handleSegmentSelectOutOfRange}
       />
-    </div>
+      </div>
+      
+      {/* 범위를 벗어난 세그먼트 선택 시 알림 메시지 */}
+      {showWaitingMessage && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-2 shadow-lg flex items-center gap-2">
+            <AlertCircle className="text-yellow-600" size={18} />
+            <span className="text-sm text-yellow-800">
+              세그먼트 생성 중입니다. 잠시만 기다려주세요.
+            </span>
+          </div>
+        </div>
+      )}
     </>
   );
 }

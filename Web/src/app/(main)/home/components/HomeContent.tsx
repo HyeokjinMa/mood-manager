@@ -144,15 +144,16 @@ export default function HomeContent({
   const currentEvent = useMemo(() => detectCurrentEvent(), []);
 
   // Phase 4: 무드 컬러(raw & pastel) - currentSegmentData 사용
+  // currentMood의 color를 최우선으로 사용하여 사용자 변경 값 즉시 반영
   const rawMoodColor = useMemo(() => {
-    // backgroundParams가 있으면 우선 사용 (LLM 생성된 컬러)
-    if (backgroundParams?.moodColor) {
-      return backgroundParams.moodColor;
-    }
-    
-    // currentMood가 있으면 사용
+    // currentMood가 있으면 최우선 사용 (사용자가 변경한 값)
     if (currentMood?.color) {
       return currentMood.color;
+    }
+    
+    // backgroundParams가 있으면 사용 (LLM 생성된 컬러)
+    if (backgroundParams?.moodColor) {
+      return backgroundParams.moodColor;
     }
     
     // currentSegment의 컬러 사용
@@ -165,7 +166,7 @@ export default function HomeContent({
     
     // 기본값
     return "#E6F3FF";
-  }, [backgroundParams?.moodColor, currentMood?.color, currentSegment]);
+  }, [currentMood?.color, backgroundParams?.moodColor, currentSegment]);
 
   // rawMoodColor 변경 시 상위 컴포넌트에 전달
   useEffect(() => {
@@ -211,10 +212,12 @@ export default function HomeContent({
    */
   // 초기 로딩 중이고 세그먼트가 없을 때만 스켈레톤 표시
   const isInitialLoading = isLoadingMoodStream && (!segments || segments.length === 0);
-  // 세그먼트가 있지만 현재 인덱스가 범위를 벗어났을 때는 스켈레톤 표시
-  const isIndexOutOfRange = segments && segments.length > 0 && segmentIndex >= segments.length;
+  // 세그먼트가 있지만 현재 인덱스가 범위를 벗어났을 때는 알림 표시 (스켈레톤 대신)
+  // isIndexOutOfRange는 MoodDashboard에서 처리하므로 여기서는 사용하지 않음
   
-  if (isInitialLoading || (!currentMood && !currentSegmentData) || isIndexOutOfRange) {
+  // 초기 로딩 중이거나 currentMood와 currentSegmentData가 모두 없을 때만 스켈레톤 표시
+  // 인덱스가 범위를 벗어났을 때는 스켈레톤 대신 알림을 표시하고 현재 세그먼트 정보는 유지
+  if (isInitialLoading || (!currentMood && !currentSegmentData)) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <MoodDashboardSkeleton />

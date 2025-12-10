@@ -219,6 +219,10 @@ export default function DeviceCardExpanded({
           volume={localVolume}
           onUpdateLightColor={device.type === "light" || device.type === "manager" ? (color) => {
             setLocalLightColor(color);
+            // RGB 변경 시 즉시 onDeviceControlChange 호출하여 currentMood 업데이트
+            if (onDeviceControlChange) {
+              onDeviceControlChange({ color });
+            }
           } : undefined}
           onUpdateLightBrightness={(brightness) => {
             setLocalLightBrightness(brightness);

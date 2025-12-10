@@ -44,10 +44,7 @@ export async function POST(request: NextRequest) {
 
     // 관리자 모드 확인
     const isAdminMode = await checkMockMode(session);
-    if (isAdminMode) {
-      console.log("[POST /api/moods/current/generate] 목업 모드: 관리자 계정");
-    }
-
+    
     // Request Body 파싱
     try {
       body = await request.json();
@@ -58,7 +55,51 @@ export async function POST(request: NextRequest) {
     nextStartTime = body.nextStartTime || Date.now();
     segmentCount = Math.min(body.segmentCount || 7, 10); // 최대 10개
 
-    // 1. 전처리 데이터 및 무드스트림 가져오기
+    // 관리자 모드: LLM 호출 없이 목업 데이터 즉시 반환
+    if (isAdminMode) {
+      console.log("[POST /api/moods/current/generate] 목업 모드: 관리자 계정 → 목업 데이터 즉시 반환");
+      
+      const mockStream = getMockMoodStream();
+      const chainedSegments = chainSegments(nextStartTime, mockStream.segments);
+      
+      // MoodStreamSegment 형식으로 변환 (backgroundParams 포함)
+      const mockSegments: MoodStreamSegment[] = chainedSegments.slice(0, segmentCount).map((seg, index) => ({
+        timestamp: seg.timestamp,
+        duration: seg.duration,
+        mood: seg.mood,
+        musicTracks: seg.musicTracks,
+        backgroundParams: {
+          moodAlias: seg.mood.name,
+          musicSelection: seg.musicTracks[0]?.title || "",
+          moodColor: seg.mood.color,
+          lighting: {
+            brightness: 50,
+            temperature: 4000,
+          },
+          backgroundIcon: {
+            name: "FaCircle",
+            category: "abstract",
+          },
+          iconKeys: ["circle", "dot"],
+          backgroundWind: {
+            direction: 180,
+            speed: 5,
+          },
+          animationSpeed: 5,
+          iconOpacity: 0.7,
+          source: "mock-admin",
+        } as BackgroundParams,
+      }));
+      
+      return NextResponse.json({
+        currentMood: mockStream.currentMood,
+        moodStream: mockSegments,
+        streamId: mockStream.streamId,
+        userDataCount: mockStream.userDataCount,
+      });
+    }
+
+    // 1. 전처리 데이터 및 무드스트림 가져오기 (일반 사용자)
     const { preprocessed, moodStream } = await getCommonData(request, isAdminMode);
 
     // 2. handleStreamMode 호출 준비
