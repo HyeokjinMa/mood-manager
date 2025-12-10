@@ -31,10 +31,32 @@ export async function generatePromptFromPythonResponse(
     .map((i) => `- ${i.key}: ${i.desc}`)
     .join("\n");
 
-  // 선호도 가중치 (간결하게)
-  const preferenceWeights = llmInput.userPreferences
-    ? `\n[선호도 가중치]\n${JSON.stringify(llmInput.userPreferences, null, 2)}`
-    : "";
+  // 선호도 가중치 (명시적 지시 포함)
+  let preferenceWeights = "";
+  if (llmInput.genrePreferenceWeights || llmInput.scentPreferenceWeights || llmInput.tagPreferenceWeights) {
+    const genreWeights = llmInput.genrePreferenceWeights || {};
+    const scentWeights = llmInput.scentPreferenceWeights || {};
+    const tagWeights = llmInput.tagPreferenceWeights || {};
+    
+    preferenceWeights = `\n[사용자 선호도 가중치 - 반드시 반영하세요]
+    
+음악 장르 선호도 (가중치가 높을수록 선호):
+${Object.entries(genreWeights).map(([genre, weight]) => `  - ${genre}: ${weight.toFixed(2)}`).join("\n")}
+
+향 타입 선호도 (가중치가 높을수록 선호):
+${Object.entries(scentWeights).map(([scent, weight]) => `  - ${scent}: ${weight.toFixed(2)}`).join("\n")}
+
+태그 선호도 (가중치가 높을수록 선호):
+${Object.entries(tagWeights).map(([tag, weight]) => `  - ${tag}: ${weight.toFixed(2)}`).join("\n")}
+
+[선호도 반영 규칙]
+1. 가중치가 0.7 이상인 항목을 우선적으로 선택하세요
+2. 가중치가 0.3 이하인 항목은 피하세요
+3. 음악 선택 시: 가중치가 높은 장르의 음악을 우선 선택
+4. 향 선택 시: 가중치가 높은 향 타입을 우선 선택
+5. 무드/태그 선택 시: 가중치가 높은 태그와 일치하는 무드를 우선 선택
+`;
+  }
 
   return `${musicListText}
 
