@@ -21,7 +21,8 @@ export async function POST(request: NextRequest) {
     }
 
     // 관리자 계정은 항상 사용 가능 (Mock 모드)
-    if (isAdminAccount(email)) {
+    // 이메일만으로는 관리자 확인 불가하므로, 이메일이 관리자 이메일인지만 확인
+    if (email === "admin@moodmanager.com") {
       return NextResponse.json({ available: true });
     }
 

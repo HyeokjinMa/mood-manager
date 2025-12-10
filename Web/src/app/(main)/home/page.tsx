@@ -263,6 +263,8 @@ export default function HomePage() {
   
   // 새로고침 요청 핸들러: 현재 세그먼트부터 다시 생성
   const handleRefreshRequest = useCallback(() => {
+    // 로딩 상태 즉시 설정하여 스피너 표시
+    setMoodStreamData(prev => ({ ...prev, isGeneratingNextStream: true }));
     // 현재 세그먼트부터 10개 새로 생성
     const currentSegments = moodStreamData.segments.slice(0, moodStreamData.currentIndex + 1);
     generateMoodStream(10, currentSegments);

@@ -60,7 +60,7 @@ export default function SplashPage() {
         router.replace("/login"); // 로그인 안됨 → 로그인 페이지로 이동
       }
       // loading 상태는 위에서 처리되므로 여기서는 무시
-    }, 500); // 딜레이를 300ms에서 500ms로 증가하여 세션 체크가 완료될 시간 확보
+    }, 1000); // 딜레이를 500ms에서 1000ms로 증가하여 세션 체크가 완료될 시간 확보 (쿠키 검증 시간 확보)
 
     return () => {
       clearTimeout(timer);

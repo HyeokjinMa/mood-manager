@@ -41,7 +41,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Admin account: Check password directly
-    if (userId === "admin-mock-user-id" || isAdminAccount(session.user.email || "")) {
+    // isAdminAccount는 비밀번호 없이 호출하면 false를 반환하므로, userId만 확인
+    if (userId === "admin-mock-user-id" || (session.user.email === "admin@moodmanager.com" && userId === "admin-mock-user-id")) {
       if (currentPassword !== "admin1234") {
         return NextResponse.json(
           { error: "INVALID_PASSWORD", message: "Current password is incorrect" },
