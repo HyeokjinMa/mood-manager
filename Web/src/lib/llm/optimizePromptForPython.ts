@@ -71,8 +71,9 @@ ${Object.entries(tagWeights).map(([tag, weight]) => `  - ${tag}: ${weight.toFixe
 - 시간: ${timeOfDay}시
 - 계절: ${season}
 
-[감정 예측]
+[감정 예측 - 참고 자료]
 ${pythonResponseJson}
+
 ${preferenceWeights}
 
 [아이콘 카탈로그]
