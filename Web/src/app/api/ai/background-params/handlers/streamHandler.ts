@@ -25,7 +25,7 @@ import type { StreamHandlerParams } from "../types";
 import OpenAI from "openai";
 import { getAllUserPreferenceWeights } from "@/lib/preferences/getUserPreferenceWeights";
 import { mapMusicIDToTrack } from "@/lib/music/mapMusicIDToTrack";
-import { getMusicTracksByGenre } from "@/lib/music/getMusicTrackByID";
+// import { getMusicTracksByGenre } from "@/lib/music/getMusicTrackByID"; // 사용되지 않음
 
 export async function handleStreamMode({
   segments,

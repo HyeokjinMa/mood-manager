@@ -285,6 +285,8 @@ export default function HomeContent({
             onUpdateVolume={(newVolume) => {
               setVolume(newVolume);
             }}
+            onUpdateCurrentSegment={onUpdateCurrentSegment}
+            currentSegment={currentSegment}
             onDeviceControlChange={(changes) => {
               // 디바이스 컨트롤 변경 시 currentMood 업데이트하여 모든 컴포넌트에 즉각 반영
               if (currentMood) {

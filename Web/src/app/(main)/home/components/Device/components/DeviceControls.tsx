@@ -87,7 +87,7 @@ export default function DeviceControls({
                 onUpdateScentLevel?.(newLevel);
               }}
               className="w-full"
-              style={{ accentColor: currentMood?.color || "#9CAF88" }}
+              style={{ accentColor: lightColor || currentMood?.color || "#9CAF88" }}
             />
           </div>
         </div>
@@ -114,7 +114,7 @@ export default function DeviceControls({
                 onUpdateVolume?.(newVolume);
               }}
               className="w-full"
-              style={{ accentColor: currentMood?.color || "#3B82F6" }}
+              style={{ accentColor: lightColor || currentMood?.color || "#3B82F6" }}
             />
           </div>
         </div>

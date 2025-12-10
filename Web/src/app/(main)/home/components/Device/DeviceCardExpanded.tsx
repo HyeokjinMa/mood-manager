@@ -44,6 +44,8 @@ export default function DeviceCardExpanded({
   onUpdateVolume,
   onDeviceUpdate,
   onDeviceControlChange,
+  onUpdateCurrentSegment,
+  currentSegment,
 }: {
   device: Device;
   currentMood?: Mood;
@@ -58,6 +60,8 @@ export default function DeviceCardExpanded({
   onUpdateVolume?: (volume: number) => void; // 0-100 범위
   onDeviceUpdate?: (updatedDevice: Device) => void; // 디바이스 업데이트 콜백
   onDeviceControlChange?: (changes: { color?: string; brightness?: number; scentLevel?: number; volume?: number }) => void; // 디바이스 컨트롤 변경 콜백
+  onUpdateCurrentSegment?: (updates: { mood?: { color?: string; lighting?: { color?: string; rgb?: number[]; brightness?: number } } }) => void; // 현재 세그먼트 업데이트 콜백
+  currentSegment?: any; // 현재 세그먼트 데이터
 }) {
   const {
     lightColor,
@@ -156,6 +160,31 @@ export default function DeviceCardExpanded({
           changes.volume = localVolume;
         }
         onDeviceControlChange(changes);
+        
+        // 현재 세그먼트의 mood도 업데이트하여 무드 대시보드 컬러 반영
+        if ((device.type === "light" || device.type === "manager") && localLightColor && onUpdateCurrentSegment && currentSegment) {
+          const hexToRgb = (hex: string): number[] => {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? [
+              parseInt(result[1], 16),
+              parseInt(result[2], 16),
+              parseInt(result[3], 16)
+            ] : [0, 0, 0];
+          };
+          
+          onUpdateCurrentSegment({
+            mood: {
+              ...currentSegment.mood,
+              color: localLightColor,
+              lighting: {
+                ...currentSegment.mood.lighting,
+                color: localLightColor,
+                rgb: hexToRgb(localLightColor),
+                brightness: localLightBrightness,
+              },
+            },
+          });
+        }
       }
     } catch (error) {
       console.error("Failed to save device settings:", error);
