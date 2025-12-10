@@ -188,10 +188,13 @@ export default function HomePage() {
       g?: number;
       b?: number;
       colortemp?: number;
-      brightness: number;
-    } = {
-      brightness: Math.round((brightness / 100) * 255), // 0-100 → 0-255 변환
-    };
+      brightness?: number;
+    } = {};
+    
+    // Brightness 값이 있으면 추가
+    if (brightness !== undefined) {
+      requestBody.brightness = Math.round((brightness / 100) * 255); // 0-100 → 0-255 변환
+    }
     
     // RGB 값이 있으면 추가
     if (rgb && rgb.length === 3 && rgb[0] !== null && rgb[1] !== null && rgb[2] !== null) {
@@ -205,8 +208,8 @@ export default function HomePage() {
       requestBody.colortemp = Math.round(temperature);
     }
     
-    // API 호출: 상태 저장 (라즈베리파이가 GET으로 가져감)
-    fetch("/api/light/control", {
+    // API 호출: 전구 정보 업데이트 (메모리에 저장)
+    fetch("/api/light_info", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -214,9 +217,63 @@ export default function HomePage() {
       credentials: "include",
       body: JSON.stringify(requestBody),
     }).catch((error) => {
-      console.error("[HomePage] Failed to update light control:", error);
+      console.error("[HomePage] Failed to update light info:", error);
     });
   }, [currentSegmentData]);
+
+  // 디바이스 컨트롤 변경 시 전구 API 업데이트
+  const handleDeviceControlChange = useCallback((changes: { 
+    color?: string; 
+    brightness?: number; 
+    scentLevel?: number; 
+    volume?: number;
+    power?: boolean;
+  }) => {
+    // Light/Manager 타입 디바이스의 색상/밝기 변경 시 light_info 업데이트
+    if (changes.color || changes.brightness !== undefined) {
+      const requestBody: {
+        r?: number;
+        g?: number;
+        b?: number;
+        brightness?: number;
+      } = {};
+
+      // 색상 변경 시 RGB 변환
+      if (changes.color) {
+        const hexToRgb = (hex: string): number[] => {
+          const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+          return result ? [
+            parseInt(result[1], 16),
+            parseInt(result[2], 16),
+            parseInt(result[3], 16)
+          ] : [0, 0, 0];
+        };
+        const rgb = hexToRgb(changes.color);
+        requestBody.r = rgb[0];
+        requestBody.g = rgb[1];
+        requestBody.b = rgb[2];
+      }
+
+      // 밝기 변경 시 (0-100 → 0-255 변환)
+      if (changes.brightness !== undefined) {
+        requestBody.brightness = Math.round((changes.brightness / 100) * 255);
+      }
+
+      // API 호출: 전구 정보 업데이트 (메모리에 저장)
+      fetch("/api/light_info", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(requestBody),
+      }).catch((error) => {
+        console.error("[HomePage] Failed to update light info from device control:", error);
+      });
+    }
+
+    // 전원 변경은 useDeviceHandlers에서 이미 처리됨
+  }, []);
   
   // Phase 2: 무드스트림 생성 함수
   const generateMoodStream = useCallback(async (segmentCount: number = 7, currentSegments?: MoodStreamSegment[]) => {
@@ -470,6 +527,8 @@ export default function HomePage() {
           segments={moodStreamData.segments}
           // 새로고침 요청 핸들러: 현재 세그먼트부터 다시 생성
           onRefreshRequest={handleRefreshRequest}
+          // 디바이스 컨트롤 변경 핸들러: 전구 API 업데이트
+          onDeviceControlChange={handleDeviceControlChange}
         />
       )}
 

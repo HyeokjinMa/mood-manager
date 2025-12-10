@@ -155,12 +155,23 @@ export async function handleStreamMode({
   // 세션 정보를 전달하여 목업 모드 확인
   const prompt = await generatePromptFromPythonResponse(llmInput, pythonResponse, userId, segments, session);
 
-  // ===== 프롬프트 로깅 (LLM 입력 확인) =====
+  // ===== LLM 인풋 로깅 =====
   console.log("\n" + "=".repeat(100));
-  console.log("📝 [LLM 프롬프트]");
+  console.log("📥 [LLM 인풋 정보]");
   console.log("=".repeat(100));
-  console.log("프롬프트 길이:", prompt.length, "자");
-  console.log("프롬프트 토큰 추정:", Math.ceil(prompt.length / 4), "토큰 (대략적 추정)");
+  console.log("\n[현재 무드 정보]");
+  console.log("  - 무드명:", llmInput.moodName);
+  console.log("  - 음악 장르:", llmInput.musicGenre);
+  console.log("  - 향 타입:", llmInput.scentType);
+  console.log("  - 시간:", llmInput.timeOfDay, "시");
+  console.log("  - 계절:", llmInput.season);
+  console.log("\n[선호도 가중치]");
+  console.log("  - 장르:", JSON.stringify(llmInput.genrePreferenceWeights || {}, null, 2));
+  console.log("  - 향:", JSON.stringify(llmInput.scentPreferenceWeights || {}, null, 2));
+  console.log("  - 태그:", JSON.stringify(llmInput.tagPreferenceWeights || {}, null, 2));
+  console.log("\n[프롬프트 정보]");
+  console.log("  - 프롬프트 길이:", prompt.length, "자");
+  console.log("  - 프롬프트 토큰 추정:", Math.ceil(prompt.length / 4), "토큰 (대략적 추정)");
   console.log("\n[프롬프트 내용 - 처음 1000자]");
   console.log(prompt.substring(0, 1000));
   console.log("\n[프롬프트 내용 - 마지막 500자]");
@@ -212,9 +223,14 @@ Required: segments[].{moodAlias, moodColor, lighting{rgb[], brightness, temperat
 
 Use music.musicID (not musicSelection). Use background.icons (not backgroundIcons).
 
-CRITICAL: Icon Diversity & Music Diversity
+CRITICAL: Icon Diversity & Music Diversity & Scent Diversity
 - Use 8-12 DIFFERENT icon keys across 10 segments
-- Use DIFFERENT musicID for each segment (no duplicates)` 
+- Use DIFFERENT musicID for each segment (no duplicates)
+- Use DIFFERENT scent types across 10 segments (no single type repeated more than 3 times)
+  - Available scent types: Floral, Woody, Spicy, Fresh, Citrus, Herbal, Musk, Oriental
+  - Vary scent types based on user preferences and segment mood
+  - Do NOT use the same scent type for all segments
+  - Example: Segment 0: Woody, Segment 1: Floral, Segment 2: Spicy, Segment 3: Fresh, etc.` 
         },
         { role: "user", content: prompt },
       ],
@@ -370,6 +386,21 @@ CRITICAL: Icon Diversity & Music Diversity
       console.log(`  - 고유 아이콘 키: ${uniqueIconKeys.size}개`);
       console.log(`  - 다양성: ${uniqueIconKeys.size >= 8 ? "✅ 좋음 (8개 이상)" : "⚠️ 부족 (8개 미만)"}`);
       
+      // 향 다양성 확인
+      const allScentTypes = validatedResponse.segments.map(seg => seg.scent?.type).filter(Boolean) as string[];
+      const uniqueScentTypes = new Set(allScentTypes);
+      const scentTypeCounts: Record<string, number> = {};
+      allScentTypes.forEach(type => {
+        scentTypeCounts[type] = (scentTypeCounts[type] || 0) + 1;
+      });
+      
+      console.log(`\n[향 다양성 확인]`);
+      console.log(`  - 총 향 타입: ${allScentTypes.length}개`);
+      console.log(`  - 고유 향 타입: ${uniqueScentTypes.size}개`);
+      console.log(`  - 향 타입 분포:`, JSON.stringify(scentTypeCounts, null, 2));
+      const maxScentCount = Object.keys(scentTypeCounts).length > 0 ? Math.max(...Object.values(scentTypeCounts)) : 0;
+      console.log(`  - 다양성: ${maxScentCount <= 3 ? "✅ 좋음 (최대 3회 이하)" : `⚠️ 부족 (${maxScentCount}회 반복)`}`);
+      
       validatedResponse.segments.forEach((seg, idx) => {
         console.log(`\n[Segment ${idx}]`);
         console.log(`  moodAlias: "${seg.moodAlias}"`);
@@ -381,6 +412,14 @@ CRITICAL: Icon Diversity & Music Diversity
         console.log(`  backgroundIcons: [${seg.iconKeys?.join(", ") || ""}]`);
         console.log(`  backgroundWind: direction=${seg.backgroundWind?.direction}°, speed=${seg.backgroundWind?.speed}`);
         console.log(`  animationSpeed: ${seg.animationSpeed}, iconOpacity: ${seg.iconOpacity}`);
+      });
+      
+      // 최종 요약 출력 (기존 형식 유지)
+      console.log(`\n✅ [Icon Diversity] 아이콘 다양성: ${(uniqueIconKeys.size / 21).toFixed(2)} (고유: ${uniqueIconKeys.size}/21)`);
+      validatedResponse.segments.forEach((seg, idx) => {
+        const musicID = typeof seg.musicSelection === "number" ? seg.musicSelection : parseInt(seg.musicSelection || "0", 10);
+        const iconCount = seg.iconKeys?.length || 0;
+        console.log(`Segment ${idx}: ${seg.moodAlias} | musicID ${musicID} | scent: ${seg.scent?.type}/${seg.scent?.name} | ${iconCount} icons`);
       });
     } else {
       console.log(JSON.stringify(validatedResponse, null, 2));
@@ -587,9 +626,14 @@ Required: segments[].{moodAlias, moodColor, lighting{rgb[], brightness, temperat
 
 Use music.musicID (not musicSelection). Use background.icons (not backgroundIcons).
 
-CRITICAL: Icon Diversity & Music Diversity
+CRITICAL: Icon Diversity & Music Diversity & Scent Diversity
 - Use 8-12 DIFFERENT icon keys across 10 segments
-- Use DIFFERENT musicID for each segment (no duplicates)` 
+- Use DIFFERENT musicID for each segment (no duplicates)
+- Use DIFFERENT scent types across 10 segments (no single type repeated more than 3 times)
+  - Available scent types: Floral, Woody, Spicy, Fresh, Citrus, Herbal, Musk, Oriental
+  - Vary scent types based on user preferences and segment mood
+  - Do NOT use the same scent type for all segments
+  - Example: Segment 0: Woody, Segment 1: Floral, Segment 2: Spicy, Segment 3: Fresh, etc.` 
         },
         { role: "user", content: prompt },
       ],
@@ -748,6 +792,21 @@ CRITICAL: Icon Diversity & Music Diversity
       console.log(`  - 총 아이콘 키: ${allIconKeys.length}개`);
       console.log(`  - 고유 아이콘 키: ${uniqueIconKeys.size}개`);
       console.log(`  - 다양성: ${uniqueIconKeys.size >= 8 ? "✅ 좋음 (8개 이상)" : "⚠️ 부족 (8개 미만)"}`);
+      
+      // 향 다양성 확인
+      const allScentTypes = validatedResponse.segments.map(seg => seg.scent?.type).filter((type): type is string => Boolean(type));
+      const uniqueScentTypes = new Set(allScentTypes);
+      const scentTypeCounts: Record<string, number> = {};
+      allScentTypes.forEach(type => {
+        scentTypeCounts[type] = (scentTypeCounts[type] || 0) + 1;
+      });
+      
+      console.log(`\n[향 다양성 확인]`);
+      console.log(`  - 총 향 타입: ${allScentTypes.length}개`);
+      console.log(`  - 고유 향 타입: ${uniqueScentTypes.size}개`);
+      console.log(`  - 향 타입 분포:`, JSON.stringify(scentTypeCounts, null, 2));
+      const maxScentCount = Object.keys(scentTypeCounts).length > 0 ? Math.max(...Object.values(scentTypeCounts)) : 0;
+      console.log(`  - 다양성: ${maxScentCount <= 3 ? "✅ 좋음 (최대 3회 이하)" : `⚠️ 부족 (${maxScentCount}회 반복)`}`);
     }
     console.log("=".repeat(100) + "\n");
     

@@ -55,9 +55,30 @@ export function createDeviceHandlers({
   const handleTogglePower = async () => {
     // 낙관적 업데이트 (UI 즉시 반영)
     const previousPower = device.power;
+    const newPower = !previousPower;
     setDevices((prev) =>
-      prev.map((d) => (d.id === device.id ? { ...d, power: !d.power } : d))
+      prev.map((d) => (d.id === device.id ? { ...d, power: newPower } : d))
     );
+
+    // light 타입 디바이스인 경우 /api/light_power에도 신호 전송
+    if (device.type === "light" || device.type === "manager") {
+      try {
+        await fetch("/api/light_power", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ power: newPower ? "on" : "off" }),
+        }).catch((error) => {
+          console.error("[Light Power] Failed to update light power:", error);
+          // 에러가 발생해도 계속 진행 (비동기 처리)
+        });
+      } catch (error) {
+        console.error("[Light Power] Error updating light power:", error);
+        // 에러가 발생해도 계속 진행 (비동기 처리)
+      }
+    }
 
     try {
       const response = await fetch(`/api/devices/${device.id}/power`, {
@@ -66,7 +87,7 @@ export function createDeviceHandlers({
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({ power: !previousPower }),
+        body: JSON.stringify({ power: newPower }),
       });
 
       if (!response.ok) {

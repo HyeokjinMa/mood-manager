@@ -79,22 +79,18 @@ export default function DeviceCardExpanded({
   const [localLightBrightness, setLocalLightBrightness] = useState(lightBrightness);
   const [localScentLevel, setLocalScentLevel] = useState(scentLevel);
   const [localVolume, setLocalVolume] = useState(volume ?? device.output.volume ?? 70);
-  const [isSaving, setIsSaving] = useState(false);
 
-  // 디바이스 변경 시 로컬 상태 동기화
+  // 디바이스 변경 시 로컬 상태 동기화 (세그먼트 이동 시 즉시 반영)
   useEffect(() => {
     setLocalLightColor(lightColor);
     setLocalLightBrightness(lightBrightness);
     setLocalScentLevel(scentLevel);
     setLocalVolume(volume ?? device.output.volume ?? 70);
-  }, [lightColor, lightBrightness, scentLevel, volume, device.output.volume]);
+  }, [lightColor, lightBrightness, scentLevel, volume, device.output.volume, currentMood?.color, currentSegment?.mood?.color]);
 
-  // 저장 함수
-  const handleSave = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsSaving(true);
-
-    try {
+  // 즉시 저장 함수 (변경 시 자동 저장, 디바운스 적용)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
       const updateData: {
         color?: string;
         brightness?: number;
@@ -113,91 +109,43 @@ export default function DeviceCardExpanded({
         updateData.volume = localVolume;
       }
 
-      const response = await fetch(`/api/devices/${device.id}/update`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updateData),
-      });
+      // 로컬 상태와 실제 디바이스 상태가 다를 때만 저장
+      const hasChanges = 
+        ((device.type === "light" || device.type === "manager") &&
+        (localLightColor !== lightColor || localLightBrightness !== lightBrightness)) ||
+        ((device.type === "scent" || device.type === "manager") &&
+        localScentLevel !== scentLevel) ||
+        ((device.type === "speaker" || device.type === "manager") &&
+        localVolume !== (volume ?? device.output.volume ?? 70));
 
-      if (!response.ok) {
-        throw new Error("Failed to save device settings");
+      if (hasChanges) {
+        fetch(`/api/devices/${device.id}/update`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updateData),
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to save device settings");
+            }
+            return response.json();
+          })
+          .then((result) => {
+            if (result.device && onDeviceUpdate) {
+              onDeviceUpdate(result.device);
+            }
+          })
+          .catch((error) => {
+            console.error("Failed to save device settings:", error);
+          });
       }
+    }, 1000); // 1초 디바운스
 
-      const result = await response.json();
-      
-      // 저장 성공 시 디바이스 상태 업데이트 (페이지 리로드 없이)
-      if (result.device && onDeviceUpdate) {
-        onDeviceUpdate(result.device);
-      }
-      
-      // 저장 성공 시 실제 디바이스 상태 업데이트
-      if (onUpdateLightColor && (device.type === "light" || device.type === "manager")) {
-        onUpdateLightColor(localLightColor);
-      }
-      if (onUpdateLightBrightness && (device.type === "light" || device.type === "manager")) {
-        onUpdateLightBrightness(localLightBrightness);
-      }
-      if (onUpdateScentLevel && (device.type === "scent" || device.type === "manager")) {
-        onUpdateScentLevel(localScentLevel);
-      }
-      if (onUpdateVolume && (device.type === "speaker" || device.type === "manager")) {
-        onUpdateVolume(localVolume);
-      }
-      
-      // 저장 성공 시 onDeviceControlChange 호출하여 currentMood 업데이트 및 세그먼트 반영
-      // 스트림 재생성 없이 현재 세그먼트만 업데이트
-      if (onDeviceControlChange) {
-        const changes: { color?: string; brightness?: number; scentLevel?: number; volume?: number } = {};
-        if (device.type === "light" || device.type === "manager") {
-          changes.color = localLightColor;
-          changes.brightness = localLightBrightness;
-        }
-        if (device.type === "scent" || device.type === "manager") {
-          changes.scentLevel = localScentLevel;
-        }
-        if (device.type === "speaker" || device.type === "manager") {
-          changes.volume = localVolume;
-        }
-        onDeviceControlChange(changes);
-        
-        // 현재 세그먼트의 mood도 업데이트하여 무드 대시보드 컬러 반영
-        if ((device.type === "light" || device.type === "manager") && localLightColor && onUpdateCurrentSegment && currentSegment) {
-          const hexToRgb = (hex: string): number[] => {
-            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-            return result ? [
-              parseInt(result[1], 16),
-              parseInt(result[2], 16),
-              parseInt(result[3], 16)
-            ] : [0, 0, 0];
-          };
-          
-          if (onUpdateCurrentSegment && currentSegment?.mood) {
-            const updatedMood = {
-              ...currentSegment.mood,
-              color: localLightColor,
-              lighting: {
-                ...(currentSegment.mood.lighting || {}),
-                color: localLightColor,
-                rgb: hexToRgb(localLightColor),
-                brightness: localLightBrightness,
-              },
-            };
-            // Partial<MoodStreamSegment>로 타입 단언 (mood만 업데이트하는 경우)
-            onUpdateCurrentSegment({
-              mood: updatedMood,
-            } as unknown as Partial<MoodStreamSegment>);
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Failed to save device settings:", error);
-      alert("설정 저장에 실패했습니다.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
+    return () => clearTimeout(timeoutId);
+  }, [localLightColor, localLightBrightness, localScentLevel, localVolume, lightColor, lightBrightness, scentLevel, volume, device.output.volume, device.type, device.id, onDeviceUpdate]);
+
 
   return (
     <div
@@ -257,6 +205,28 @@ export default function DeviceCardExpanded({
             if (onDeviceControlChange) {
               onDeviceControlChange({ color });
             }
+            // 무드대시보드 색상 즉각 반영을 위해 세그먼트도 즉시 업데이트
+            if (onUpdateCurrentSegment && currentSegment?.mood) {
+              const hexToRgb = (hex: string): number[] => {
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? [
+                  parseInt(result[1], 16),
+                  parseInt(result[2], 16),
+                  parseInt(result[3], 16)
+                ] : [0, 0, 0];
+              };
+              onUpdateCurrentSegment({
+                mood: {
+                  ...currentSegment.mood,
+                  color: color,
+                  lighting: {
+                    ...(currentSegment.mood.lighting || {}),
+                    color: color,
+                    rgb: hexToRgb(color),
+                  },
+                },
+              } as unknown as Partial<MoodStreamSegment>);
+            }
           } : undefined}
           onUpdateLightBrightness={(brightness) => {
             setLocalLightBrightness(brightness);
@@ -266,6 +236,14 @@ export default function DeviceCardExpanded({
           }}
           onUpdateVolume={(newVolume) => {
             setLocalVolume(newVolume);
+            // 볼륨 즉각 반영
+            if (onUpdateVolume) {
+              onUpdateVolume(newVolume);
+            }
+            // currentMood에도 즉시 반영
+            if (onDeviceControlChange) {
+              onDeviceControlChange({ volume: newVolume });
+            }
           }}
         />
       </div>
@@ -277,15 +255,8 @@ export default function DeviceCardExpanded({
         </div>
       )}
 
-      {/* 하단 버튼 영역: Save (좌측) + Delete (우측) */}
-      <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center">
-        <button
-          onClick={handleSave}
-          disabled={isSaving}
-          className="text-green-600 text-sm underline cursor-pointer hover:text-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSaving ? "Saving..." : "Save"}
-        </button>
+      {/* 하단 버튼 영역: Delete만 표시 (Save 버튼 제거 - 즉시 반영) */}
+      <div className="absolute bottom-4 left-4 right-4 flex justify-end items-center">
         <button
           onClick={(e) => {
             e.stopPropagation(); // 부모 클릭(onClose) 방지

@@ -29,8 +29,9 @@ export function useMoodColors({
   backgroundParams,
 }: UseMoodColorsProps): MoodColors {
   return useMemo(() => {
-    // baseColor: 원본 무드 컬러 계산 (LLM 또는 기본 무드)
-    const baseColor = backgroundParams?.moodColor || mood.color;
+    // baseColor: 원본 무드 컬러 계산 (사용자가 변경한 mood.color 우선, 그 다음 LLM, 마지막 기본 무드)
+    // 사용자가 변경한 값이 있으면 우선 사용
+    const baseColor = mood.color || backgroundParams?.moodColor || "#E6F3FF";
     
     // accentColor: UI에서 사용할 파스텔톤 포인트 컬러 계산 (아이콘/바/버튼 등에만 사용)
     // 90% 흰색 + 10% 무드 컬러로 파스텔 톤 생성

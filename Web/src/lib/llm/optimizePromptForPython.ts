@@ -127,7 +127,14 @@ ${iconCatalogText}
    - 겨울 관련 아이콘(snowflake, star, tree)만 반복 사용하지 마세요
    - 자연 요소(leaf, flower, cloud, sun, moon), 추상 요소(circle, dot, line), 생활 요소(cup, book, heart) 등을 다양하게 활용하세요
    - 각 세그먼트마다 다른 icon 조합을 사용하여 시각적 다양성을 확보하세요
-5. 색상은 너무 밝지 않게 (#FFFFFF, #F0FFF0 등 피하기)
+5. ⚠️ scent.type은 위 선호도 가중치를 반영하여 다양하게 선택 (향 다양성 필수)
+   - 10개 세그먼트에서 같은 향 타입을 3번 이상 반복하지 마세요
+   - 사용 가능한 향 타입: Floral, Woody, Spicy, Fresh, Citrus, Herbal, Musk, Oriental
+   - 선호도 가중치가 높은 향 타입을 우선 선택하되, 다양성도 고려하세요
+   - 모든 세그먼트가 같은 향 타입(Woody 등)으로 통일되지 않도록 주의하세요
+   - 각 세그먼트의 무드와 분위기에 맞는 다양한 향 타입을 선택하세요
+   - 예: Segment 0: Woody, Segment 1: Floral, Segment 2: Spicy, Segment 3: Fresh 등
+6. 색상은 너무 밝지 않게 (#FFFFFF, #F0FFF0 등 피하기)
    - 흰색 비율이 80% 이상인 색상은 피하세요
 
 JSON Schema가 구조를 강제하므로 위 구조를 정확히 따라야 합니다.`;

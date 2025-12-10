@@ -179,8 +179,8 @@ export default function MoodDashboard({
     if (externalVolume !== undefined && externalVolume !== prevExternalVolumeRef.current) {
       const volumeNormalized = externalVolume / 100; // 0-100 → 0-1
       const currentVolumePercent = Math.round(volume * 100);
-      // 0.5% 이상 차이날 때만 업데이트
-      if (Math.abs(externalVolume - currentVolumePercent) >= 0.5) {
+      // 1% 이상 차이날 때만 업데이트 (0.5%에서 1%로 증가하여 흔들림 방지)
+      if (Math.abs(externalVolume - currentVolumePercent) >= 1) {
         prevExternalVolumeRef.current = externalVolume;
         setVolume(volumeNormalized);
       }
@@ -193,8 +193,8 @@ export default function MoodDashboard({
   useEffect(() => {
     if (onVolumeChange) {
       const volumePercent = Math.round(volume * 100);
-      // externalVolume과 비교하여 실제로 변경되었을 때만 전달
-      if (externalVolume === undefined || Math.abs(externalVolume - volumePercent) >= 0.5) {
+      // externalVolume과 비교하여 실제로 변경되었을 때만 전달 (1% 이상 차이)
+      if (externalVolume === undefined || Math.abs(externalVolume - volumePercent) >= 1) {
         if (prevVolumeRef.current !== volumePercent) {
           prevVolumeRef.current = volumePercent;
           onVolumeChange(volumePercent);

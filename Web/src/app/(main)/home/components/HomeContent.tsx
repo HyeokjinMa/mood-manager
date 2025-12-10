@@ -58,6 +58,8 @@ interface HomeContentProps {
   segments?: MoodStreamSegment[]; // 전체 세그먼트 배열
   // 새로고침 요청 콜백
   onRefreshRequest?: () => void;
+  // 디바이스 컨트롤 변경 콜백 (전구 API 업데이트용)
+  onDeviceControlChange?: (changes: { color?: string; brightness?: number; scentLevel?: number; volume?: number; power?: boolean }) => void;
 }
 
 export default function HomeContent({
@@ -71,6 +73,7 @@ export default function HomeContent({
   isLoadingMoodStream = false,
   segments = [],
   onRefreshRequest,
+  onDeviceControlChange: onDeviceControlChangeFromHome,
 }: HomeContentProps) {
   const { current: currentMood, onChange: onMoodChange, onScentChange, onSongChange } = moodState;
   const { devices, setDevices, expandedId, setExpandedId, onOpenAddModal, onDeleteRequest } = deviceState;
@@ -288,6 +291,11 @@ export default function HomeContent({
             onUpdateCurrentSegment={onUpdateCurrentSegment}
             currentSegment={currentSegment}
             onDeviceControlChange={(changes) => {
+              // 홈 페이지로 전달하여 전구 API 업데이트
+              if (onDeviceControlChangeFromHome) {
+                onDeviceControlChangeFromHome(changes);
+              }
+
               // 디바이스 컨트롤 변경 시 currentMood 업데이트하여 모든 컴포넌트에 즉각 반영
               if (currentMood) {
                 const updatedMood = { ...currentMood };
