@@ -484,9 +484,45 @@ export default function HomePage() {
       {showMyPageModal && (
         <MyPageModal 
           isOpen={showMyPageModal} 
-          onClose={() => setShowMyPageModal(false)} 
+          onClose={() => setShowMyPageModal(false)}
+          onQnaClick={() => {
+            setShowMyPageModal(false);
+            setShowQnaModal(true);
+          }}
+          onInquiryClick={() => {
+            setShowMyPageModal(false);
+            setShowInquiryModal(true);
+          }}
+          onPrivacyClick={() => {
+            setShowMyPageModal(false);
+            setShowPrivacyModal(true);
+          }}
         />
       )}
+
+      <MyPageInquiryModal
+        isOpen={showInquiryModal}
+        onClose={() => {
+          setShowInquiryModal(false);
+          setShowMyPageModal(true);
+        }}
+      />
+
+      <MyPagePrivacyModal
+        isOpen={showPrivacyModal}
+        onClose={() => {
+          setShowPrivacyModal(false);
+          setShowMyPageModal(true);
+        }}
+      />
+
+      <MyPageQnaModal
+        isOpen={showQnaModal}
+        onClose={() => {
+          setShowQnaModal(false);
+          setShowMyPageModal(true);
+        }}
+      />
 
       {showMoodModal && (
         <MoodModal 
