@@ -250,10 +250,15 @@ export default function HomePage() {
       clearTimeout(timeout);
       
       if (!response.ok) {
-        throw new Error("Failed to generate mood stream");
+        throw new Error(`Failed to generate mood stream: ${response.status} ${response.statusText}`);
       }
       
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        throw new Error("Failed to parse response JSON");
+      }
       const newSegments: MoodStreamSegment[] = data.moodStream || [];
       
       // 기존 세그먼트에 추가
@@ -264,6 +269,10 @@ export default function HomePage() {
       }));
     } catch (error) {
       console.error("[HomePage] Failed to generate mood stream:", error);
+      // AbortError인 경우 타임아웃 에러로 처리
+      if (error instanceof Error && error.name === "AbortError") {
+        console.error("[HomePage] Request timeout after 120 seconds");
+      }
       setMoodStreamData(prev => ({ ...prev, isGeneratingNextStream: false }));
     }
   }, [moodStreamData.isGeneratingNextStream]); // segments를 dependency에서 제거하여 무한 루프 방지
@@ -300,10 +309,15 @@ export default function HomePage() {
         clearTimeout(timeout);
         
         if (!response.ok) {
-          throw new Error("Failed to fetch carol segments");
+          throw new Error(`Failed to fetch carol segments: ${response.status} ${response.statusText}`);
         }
         
-        const data = await response.json();
+        let data;
+        try {
+          data = await response.json();
+        } catch (jsonError) {
+          throw new Error("Failed to parse carol segments JSON");
+        }
         const carolSegments: MoodStreamSegment[] = data.segments || [];
         
         if (carolSegments.length === 0) {
