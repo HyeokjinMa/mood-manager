@@ -59,9 +59,12 @@ export default function HomePage() {
     if (status === "loading") {
       redirectingRef.current = false;
       const timeout = setTimeout(() => {
-        // 5초 후에도 loading이면 세션을 다시 확인
-        console.log("[HomePage] 세션 로딩 타임아웃, 세션 재확인");
-        // useSession이 자동으로 재확인하므로 추가 작업 불필요
+        // 5초 후에도 loading이면 unauthenticated로 간주하고 로그인 페이지로 이동
+        console.log("[HomePage] 세션 로딩 타임아웃, 로그인 페이지로 이동");
+        if (!redirectingRef.current) {
+          redirectingRef.current = true;
+          router.replace("/login");
+        }
       }, 5000);
       
       return () => {
