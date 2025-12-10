@@ -1,9 +1,9 @@
-# Mood Manager
+# 🏠 Mood Manager
 
 #### AI-Based Personalized Mood Management System for Smart Homes
 ---
 
-## Overview
+## 📝 Overview
 
 Mood Manager is a multimodal AI service that analyzes users' psychological and physical states based on biometric information (heart rate, HRV, stress indicators) and audio events (laughter, sighs, anger, sadness detection) collected from WearOS devices. The system recommends personalized lighting, scent, and sound environments accordingly.
 
@@ -17,7 +17,7 @@ The system operates based on the following pipeline: **WearOS → Firebase → M
 
 ---
 
-## Members
+## 👥 Members
 
 | Name | Department | Email |
 | :--- | :--- | :--- |
