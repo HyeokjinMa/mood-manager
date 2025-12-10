@@ -54,7 +54,16 @@ export async function POST(request: NextRequest) {
       return sessionOrError;
     }
 
-    const body = await request.json();
+    let body: any = {};
+    try {
+      const bodyText = await request.text();
+      if (bodyText) {
+        body = JSON.parse(bodyText);
+      }
+    } catch (error) {
+      // 빈 body이거나 JSON 파싱 실패 시 기본값 사용
+      console.log("[Light Control] Empty body or JSON parse error, using defaults");
+    }
     const { r, g, b, colortemp, brightness } = body;
 
     // Brightness는 필수
