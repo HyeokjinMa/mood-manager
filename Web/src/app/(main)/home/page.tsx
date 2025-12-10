@@ -232,15 +232,22 @@ export default function HomePage() {
     try {
       const nextStartTime = getLastSegmentEndTime(segmentsToUse);
       
+      // 타임아웃을 위한 AbortController 생성
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 120000); // 120초 타임아웃
+      
       const response = await fetch("/api/moods/current/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
+        signal: controller.signal,
         body: JSON.stringify({
           nextStartTime,
           segmentCount,
         }),
       });
+      
+      clearTimeout(timeout);
       
       if (!response.ok) {
         throw new Error("Failed to generate mood stream");
@@ -259,7 +266,7 @@ export default function HomePage() {
       console.error("[HomePage] Failed to generate mood stream:", error);
       setMoodStreamData(prev => ({ ...prev, isGeneratingNextStream: false }));
     }
-  }, [moodStreamData.segments, moodStreamData.isGeneratingNextStream]);
+  }, [moodStreamData.isGeneratingNextStream]); // segments를 dependency에서 제거하여 무한 루프 방지
   
   // 새로고침 요청 핸들러: 현재 세그먼트부터 다시 생성
   const handleRefreshRequest = useCallback(() => {
@@ -281,9 +288,16 @@ export default function HomePage() {
       
       try {
         // 1. 초기 3개 캐롤 세그먼트 가져오기
+        // 타임아웃을 위한 AbortController 생성
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 30000); // 30초 타임아웃
+        
         const response = await fetch("/api/moods/carol-segments", {
           credentials: "include",
+          signal: controller.signal,
         });
+        
+        clearTimeout(timeout);
         
         if (!response.ok) {
           throw new Error("Failed to fetch carol segments");

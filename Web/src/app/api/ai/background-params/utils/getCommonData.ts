@@ -32,16 +32,27 @@ export async function getCommonData(
   }
 
   try {
+    // 타임아웃을 위한 AbortController 생성
+    const controller1 = new AbortController();
+    const controller2 = new AbortController();
+    const timeout1 = setTimeout(() => controller1.abort(), 30000); // 30초 타임아웃
+    const timeout2 = setTimeout(() => controller2.abort(), 30000); // 30초 타임아웃
+    
     const [preprocessedRes, moodStreamRes] = await Promise.all([
       fetch(`${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/preprocessing`, {
         headers: requestHeaders,
         credentials: "include",
+        signal: controller1.signal,
       }),
       fetch(`${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/moods/current`, {
         headers: requestHeaders,
         credentials: "include",
+        signal: controller2.signal,
       }),
     ]);
+    
+    clearTimeout(timeout1);
+    clearTimeout(timeout2);
 
     if (!preprocessedRes.ok || !moodStreamRes.ok) {
       // 에러 발생 시 목업 데이터로 대체
