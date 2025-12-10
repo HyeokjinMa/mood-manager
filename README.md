@@ -20,6 +20,18 @@ The system operates based on the following pipeline: **WearOS → Firebase → M
 
 ---
 
+## Members
+
+| Name | Department | Email |
+| :--- | :--- | :--- |
+| Hyeokjin Ma | Information Systems | tema0311@hanyang.ac.kr |
+| Saeyeon Park | Information Systems | saeyeon0317@hanyang.ac.kr |
+| Junseong Ahn | Information Systems | lljs1113@hanyang.ac.kr |
+| Heejoo Chae | Information Systems | heeju0203@hanyang.ac.kr |
+| Hyeonwoo Choi | Information Systems | hhyyrr0713@hanyang.ac.kr |
+
+---
+
 ### Key Features
 
 - **Real-time Biometric Data Collection**: Collects heart rate, HRV, and respiratory rate from WearOS devices at 5 minutes intervals
@@ -183,20 +195,6 @@ For production environments, ensure the following:
 2. **Database**: PostgreSQL connection and migration completed
 3. **Security**: `NEXTAUTH_SECRET` is set to a strong random string
 4. **HTTPS**: Production environments must use HTTPS (set `NEXTAUTH_URL` to HTTPS as well)
-
----
-
-## Members
-
-| Name | Department | Email |
-| :--- | :--- | :--- |
-| Hyeokjin Ma | Information Systems | tema0311@hanyang.ac.kr |
-| Saeyeon Park | Information Systems | saeyeon0317@hanyang.ac.kr |
-| Junseong Ahn | Information Systems | lljs1113@hanyang.ac.kr |
-| Heejoo Chae | Information Systems | heeju0203@hanyang.ac.kr |
-| Hyeonwoo Choi | Information Systems | hhyyrr0713@hanyang.ac.kr |
-
----
 
 ## Additional Resources
 
