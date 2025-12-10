@@ -28,7 +28,7 @@ export default function ScentInfoModal({
 }: ScentInfoModalProps) {
   if (!isOpen) return null;
 
-  const description = SCENT_DESCRIPTIONS[scentType] || "향에 대한 설명이 없습니다.";
+  const description = SCENT_DESCRIPTIONS[scentType] || "No description available for this scent.";
 
   return (
     <div

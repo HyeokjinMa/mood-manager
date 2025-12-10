@@ -115,18 +115,18 @@ export const SCENT_DEFINITIONS: Record<ScentType, Scent[]> = {
 
 // 향 카테고리별 설명
 export const SCENT_DESCRIPTIONS: Record<ScentType, string> = {
-  Musk: "부드럽고 따뜻한 향으로 편안함과 안정감을 줍니다.",
-  Aromatic: "상쾌하고 허브 향으로 집중력 향상과 스트레스 완화에 도움이 됩니다.",
-  Woody: "깊고 따뜻한 나무 향으로 차분함과 안정감을 제공합니다.",
-  Citrus: "밝고 상쾌한 과일 향으로 활력과 기분 전환에 좋습니다.",
-  Honey: "달콤하고 따뜻한 꿀 향으로 편안함과 행복감을 줍니다.",
-  Green: "신선하고 자연스러운 풀 향으로 상쾌함과 활력을 줍니다.",
-  Dry: "건조하고 따뜻한 대지 향으로 차분함과 안정감을 제공합니다.",
-  Leathery: "고급스럽고 따뜻한 가죽 향으로 세련됨과 편안함을 줍니다.",
-  Marine: "시원하고 상쾌한 바다 향으로 활력과 기분 전환에 좋습니다.",
-  Spicy: "따뜻하고 자극적인 향으로 활력과 집중력 향상에 도움이 됩니다.",
-  Floral: "부드럽고 달콤한 꽃 향으로 편안함과 행복감을 줍니다.",
-  Powdery: "부드럽고 따뜻한 파우더 향으로 편안함과 안정감을 제공합니다.",
+  Musk: "A soft and warm scent that provides comfort and a sense of calm.",
+  Aromatic: "A fresh, herbal scent that helps improve focus and reduce stress.",
+  Woody: "A deep, warm wood scent that provides tranquility and stability.",
+  Citrus: "A bright, fresh fruit scent that boosts energy and improves mood.",
+  Honey: "A sweet and warm honey scent that brings comfort and happiness.",
+  Green: "A fresh, natural grass scent that provides refreshment and vitality.",
+  Dry: "A dry, warm earth scent that offers calmness and stability.",
+  Leathery: "A luxurious, warm leather scent that provides sophistication and comfort.",
+  Marine: "A cool, fresh ocean scent that boosts energy and improves mood.",
+  Spicy: "A warm, stimulating scent that helps increase energy and focus.",
+  Floral: "A soft, sweet flower scent that brings comfort and happiness.",
+  Powdery: "A soft, warm powder scent that provides comfort and stability.",
 };
 
 // 무드 데이터 (각 무드별 3개 세트)

@@ -111,16 +111,17 @@ export async function POST(request: NextRequest) {
  */
 export async function GET() {
   try {
-    // 인증 확인 (라즈베리파이에서 호출할 때는 인증 생략 가능하도록 옵션 추가)
-    // TODO: 라즈베리파이 인증 방식 확인 필요
-    const sessionOrError = await requireAuth();
-    if (sessionOrError instanceof NextResponse) {
-      // 인증 실패 시에도 라즈베리파이가 값을 가져갈 수 있도록 허용 (개발 환경)
-      // 프로덕션에서는 적절한 인증 방식 필요
-      if (process.env.NODE_ENV === "production") {
+    // 라즈베리파이에서 주기적으로 호출하므로 빠른 응답이 중요
+    // 개발 환경에서는 인증 체크를 건너뛰어 타임아웃 방지
+    // 프로덕션에서는 IP 화이트리스트 또는 API 키 방식 권장
+    if (process.env.NODE_ENV === "production") {
+      const sessionOrError = await requireAuth();
+      if (sessionOrError instanceof NextResponse) {
+        // 프로덕션에서는 인증 실패 시 에러 반환
         return sessionOrError;
       }
     }
+    // 개발 환경에서는 인증 체크 건너뛰기 (빠른 응답 보장)
 
     if (!lightControlState) {
       return NextResponse.json({
@@ -130,12 +131,20 @@ export async function GET() {
     }
 
     // 모든 값을 함께 반환 (라즈베리파이가 판단)
+    // 빠른 응답을 위해 추가 처리 없이 바로 반환
     return NextResponse.json({
       r: lightControlState.r,
       g: lightControlState.g,
       b: lightControlState.b,
       colortemp: lightControlState.colortemp,
       brightness: lightControlState.brightness,
+    }, {
+      // 캐시 헤더 추가로 라즈베리파이 요청 최적화
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0",
+      },
     });
   } catch (error) {
     console.error("[Light Control] Error:", error);
