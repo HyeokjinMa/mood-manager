@@ -46,6 +46,12 @@ export default function DeviceControls({
                 const newColor = e.target.value;
                 onUpdateLightColor?.(newColor);
               }}
+              onClick={(e) => {
+                e.stopPropagation(); // 컬러 피커 클릭 시 카드 닫힘 방지
+              }}
+              onFocus={(e) => {
+                e.stopPropagation(); // 컬러 피커 포커스 시 카드 닫힘 방지
+              }}
               className="w-full h-8 rounded cursor-pointer"
             />
           </div>
@@ -134,6 +140,12 @@ export default function DeviceControls({
               onChange={(e) => {
                 const newColor = e.target.value;
                 onUpdateLightColor?.(newColor);
+              }}
+              onClick={(e) => {
+                e.stopPropagation(); // 컬러 피커 클릭 시 카드 닫힘 방지
+              }}
+              onFocus={(e) => {
+                e.stopPropagation(); // 컬러 피커 포커스 시 카드 닫힘 방지
               }}
               className="w-full h-8 rounded cursor-pointer"
             />

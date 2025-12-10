@@ -126,6 +126,9 @@ export default function HomePage() {
     useMood(null, setDevices);
   const { showSurvey, handleSurveyComplete, handleSurveySkip } = useSurvey();
   
+  // 음량 상태 관리 (0-100 범위, 오디오 플레이어에 즉시 반영)
+  const [volume, setVolume] = useState<number>(70); // 기본값 70%
+  
   // Phase 6: currentMood가 변경되면 useDevices에 전달하기 위해
   // useDevices를 다시 호출하는 대신, useEffect로 segments와 currentSegmentIndex를 업데이트
   // 하지만 useDevices는 이미 segments와 currentSegmentIndex를 props로 받고 있으므로
@@ -221,7 +224,7 @@ export default function HomePage() {
     });
   }, [currentSegmentData]);
 
-  // 디바이스 컨트롤 변경 시 전구 API 업데이트
+  // 디바이스 컨트롤 변경 시 전구 API 업데이트 및 currentMood 업데이트
   const handleDeviceControlChange = useCallback((changes: { 
     color?: string; 
     brightness?: number; 
@@ -229,6 +232,66 @@ export default function HomePage() {
     volume?: number;
     power?: boolean;
   }) => {
+    // 변경된 값 로그 출력
+    console.log("\n" + "=".repeat(80));
+    console.log("[HomePage] 📱 디바이스 컨트롤 변경 감지");
+    console.log("=".repeat(80));
+    console.log("변경사항:", JSON.stringify(changes, null, 2));
+    
+    if (changes.color) {
+      const prevColor = currentMood?.color || "N/A";
+      console.log(`  🎨 색상 변경: ${prevColor} → ${changes.color}`);
+    }
+    if (changes.brightness !== undefined) {
+      const prevBrightness = currentSegmentData?.backgroundParams?.lighting?.brightness || "N/A";
+      console.log(`  💡 밝기 변경: ${prevBrightness}% → ${changes.brightness}%`);
+    }
+    if (changes.scentLevel !== undefined) {
+      console.log(`  🌸 센트 레벨 변경: ${changes.scentLevel}`);
+    }
+    if (changes.volume !== undefined) {
+      console.log(`  🔊 볼륨 변경: ${changes.volume}%`);
+    }
+
+    // currentMood 업데이트 (모든 컴포넌트에 즉시 반영)
+    if (currentMood) {
+      const updatedMood = { ...currentMood };
+      let moodUpdated = false;
+
+      // 색상 변경
+      if (changes.color && changes.color !== currentMood.color) {
+        updatedMood.color = changes.color;
+        moodUpdated = true;
+        console.log(`[HomePage] ✅ currentMood.color 업데이트: ${currentMood.color} → ${changes.color}`);
+      }
+
+      // 볼륨 변경 시 오디오 플레이어에 즉시 반영
+      if (changes.volume !== undefined && changes.volume !== volume) {
+        const prevVolume = volume;
+        setVolume(changes.volume);
+        console.log(`[HomePage] ✅ 볼륨 업데이트: ${prevVolume}% → ${changes.volume}% (오디오 플레이어에 즉시 반영)`);
+      }
+      if (changes.scentLevel !== undefined) {
+        console.log(`[HomePage] ℹ️ 센트 레벨 변경 (디바이스 output에 저장): ${changes.scentLevel}`);
+      }
+
+      if (moodUpdated) {
+        setCurrentMood(updatedMood);
+        console.log("[HomePage] ✅ currentMood 업데이트 완료 (모든 컴포넌트에 반영됨)");
+      }
+    }
+
+    // 현재 세그먼트 업데이트 (스트림 재생성 없이 반영)
+    if (currentSegmentData?.segment) {
+      // onUpdateCurrentSegment는 HomeContent에서 처리하므로 여기서는 로그만 출력
+      if (changes.color) {
+        console.log(`[HomePage] ℹ️ 세그먼트 색상 변경 (HomeContent에서 처리): ${changes.color}`);
+      }
+      if (changes.brightness !== undefined) {
+        console.log(`[HomePage] ℹ️ 세그먼트 밝기 변경 (HomeContent에서 처리): ${changes.brightness}%`);
+      }
+    }
+
     // Light/Manager 타입 디바이스의 색상/밝기 변경 시 light_info 업데이트
     if (changes.color || changes.brightness !== undefined) {
       const requestBody: {
@@ -240,26 +303,22 @@ export default function HomePage() {
 
       // 색상 변경 시 RGB 변환
       if (changes.color) {
-        const hexToRgb = (hex: string): number[] => {
-          const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-          return result ? [
-            parseInt(result[1], 16),
-            parseInt(result[2], 16),
-            parseInt(result[3], 16)
-          ] : [0, 0, 0];
-        };
+        const { hexToRgb } = require("@/lib/utils/colorUtils");
         const rgb = hexToRgb(changes.color);
         requestBody.r = rgb[0];
         requestBody.g = rgb[1];
         requestBody.b = rgb[2];
+        console.log(`[HomePage] 🔄 RGB 변환: ${changes.color} → r:${rgb[0]}, g:${rgb[1]}, b:${rgb[2]}`);
       }
 
       // 밝기 변경 시 (0-100 → 0-255 변환)
       if (changes.brightness !== undefined) {
         requestBody.brightness = Math.round((changes.brightness / 100) * 255);
+        console.log(`[HomePage] 🔄 밝기 변환: ${changes.brightness}% → ${requestBody.brightness} (0-255)`);
       }
 
       // API 호출: 전구 정보 업데이트 (메모리에 저장)
+      console.log("[HomePage] 📡 /api/light_info 업데이트 요청:", requestBody);
       fetch("/api/light_info", {
         method: "POST",
         headers: {
@@ -267,13 +326,23 @@ export default function HomePage() {
         },
         credentials: "include",
         body: JSON.stringify(requestBody),
-      }).catch((error) => {
-        console.error("[HomePage] Failed to update light info from device control:", error);
-      });
+      })
+        .then((response) => {
+          if (response.ok) {
+            console.log("[HomePage] ✅ /api/light_info 업데이트 성공");
+          } else {
+            console.error("[HomePage] ❌ /api/light_info 업데이트 실패:", response.status);
+          }
+        })
+        .catch((error) => {
+          console.error("[HomePage] ❌ /api/light_info 업데이트 에러:", error);
+        });
     }
 
+    console.log("=".repeat(80) + "\n");
+
     // 전원 변경은 useDeviceHandlers에서 이미 처리됨
-  }, []);
+  }, [currentMood, currentSegmentData, setCurrentMood, volume]);
   
   // Phase 2: 무드스트림 생성 함수
   const generateMoodStream = useCallback(async (segmentCount: number = 7, currentSegments?: MoodStreamSegment[]) => {
@@ -529,6 +598,12 @@ export default function HomePage() {
           onRefreshRequest={handleRefreshRequest}
           // 디바이스 컨트롤 변경 핸들러: 전구 API 업데이트
           onDeviceControlChange={handleDeviceControlChange}
+          // 음량 전달 (오디오 플레이어에 즉시 반영)
+          volume={volume}
+          onVolumeChange={(newVolume) => {
+            setVolume(newVolume);
+            console.log(`[HomePage] 🔊 음량 변경 (MoodDashboard에서): ${volume}% → ${newVolume}%`);
+          }}
         />
       )}
 

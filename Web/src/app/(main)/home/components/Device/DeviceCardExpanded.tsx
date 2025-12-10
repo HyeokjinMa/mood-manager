@@ -80,10 +80,8 @@ export default function DeviceCardExpanded({
   const [localScentLevel, setLocalScentLevel] = useState(scentLevel);
   const [localVolume, setLocalVolume] = useState(volume ?? device.output.volume ?? 70);
 
-  // 로컬 색상 기반 배경색 계산 (색상 변경 시 즉시 반영)
-  const backgroundColor = device.power && localLightColor 
-    ? localLightColor 
-    : baseBackgroundColor;
+  // 배경색은 원래대로 유지 (컬러 피커와 바만 색상 연동)
+  const backgroundColor = baseBackgroundColor;
 
   // 디바이스 변경 시 로컬 상태 동기화 (세그먼트 이동 시 즉시 반영)
   useEffect(() => {
@@ -167,10 +165,30 @@ export default function DeviceCardExpanded({
       onClick={(e) => {
         // 컬러 피커나 컨트롤 영역 클릭 시에는 닫히지 않음
         const target = e.target as HTMLElement;
-        if (target.closest('input[type="color"]') || target.closest('input[type="range"]') || target.closest('.space-y-2')) {
+        // 컬러 피커의 팝업 창이 열려있을 때는 카드가 닫히지 않도록
+        if (
+          target.closest('input[type="color"]') || 
+          target.closest('input[type="range"]') || 
+          target.closest('.space-y-2') ||
+          target.closest('label') ||
+          // 컬러 피커 팝업이 열려있는지 확인 (브라우저 기본 컬러 피커)
+          (document.activeElement?.tagName === 'INPUT' && (document.activeElement as HTMLInputElement).type === 'color')
+        ) {
           return;
         }
         onClose();
+      }}
+      onMouseDown={(e) => {
+        // 컬러 피커가 포커스되어 있을 때는 카드가 닫히지 않도록
+        const target = e.target as HTMLElement;
+        if (
+          target.closest('input[type="color"]') || 
+          target.closest('input[type="range"]') || 
+          target.closest('.space-y-2') ||
+          target.closest('label')
+        ) {
+          e.preventDefault(); // mousedown 이벤트 전파 방지
+        }
       }}
     >
       {/* 상단: 아이콘 + 이름 + 배터리 */}
@@ -219,14 +237,7 @@ export default function DeviceCardExpanded({
             }
             // 무드대시보드 색상 즉각 반영을 위해 세그먼트도 즉시 업데이트
             if (onUpdateCurrentSegment && currentSegment?.mood) {
-              const hexToRgb = (hex: string): number[] => {
-                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-                return result ? [
-                  parseInt(result[1], 16),
-                  parseInt(result[2], 16),
-                  parseInt(result[3], 16)
-                ] : [0, 0, 0];
-              };
+              const { hexToRgb } = require("@/lib/utils/colorUtils");
               onUpdateCurrentSegment({
                 mood: {
                   ...currentSegment.mood,
@@ -242,6 +253,10 @@ export default function DeviceCardExpanded({
           } : undefined}
           onUpdateLightBrightness={(brightness) => {
             setLocalLightBrightness(brightness);
+            // 밝기 변경 시 즉시 onDeviceControlChange 호출하여 home으로 전달
+            if (onDeviceControlChange) {
+              onDeviceControlChange({ brightness });
+            }
           }}
           onUpdateScentLevel={(level) => {
             setLocalScentLevel(level);

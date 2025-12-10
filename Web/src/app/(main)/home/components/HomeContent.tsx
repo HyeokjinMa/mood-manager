@@ -48,6 +48,8 @@ interface HomeContentProps {
   moodState: MoodState;
   deviceState: DeviceState;
   backgroundState?: BackgroundState;
+  volume?: number; // 0-100 범위, 외부에서 전달받은 volume
+  onVolumeChange?: (volume: number) => void; // 0-100 범위
   onMoodColorChange?: (color: string) => void; // 홈 컬러 변경 콜백
   // Phase 4: currentSegmentData를 props로 받기
   currentSegmentData: CurrentSegmentData | null;
@@ -79,6 +81,9 @@ export default function HomeContent({
   const { devices, setDevices, expandedId, setExpandedId, onOpenAddModal, onDeleteRequest } = deviceState;
   const onBackgroundParamsChange = backgroundState?.onChange;
   
+  // 외부에서 전달받은 volume 사용 (없으면 기본값 70%)
+  const currentVolume = volume ?? 70;
+  
   // Phase 4: Context 접근 제거, props로 받은 currentSegmentData 사용
   const currentSegment = currentSegmentData?.segment;
   const backgroundParams: BackgroundParams | null = currentSegmentData?.backgroundParams || null;
@@ -103,25 +108,6 @@ export default function HomeContent({
   
   // 저장된 디바이스 설정 불러오기
   const { loadPreferences } = useDevicePreferences();
-
-  // 음량 상태 관리 (0-100 범위)
-  // 기본값 70%, 저장된 설정은 useEffect에서 불러옴
-  const [volume, setVolume] = useState<number>(70);
-
-  // 저장된 설정 불러오기 (앱 시작 시)
-  useEffect(() => {
-    const loadSavedSettings = async () => {
-      const saved = await loadPreferences();
-      if (saved) {
-        if (saved.volume !== undefined) {
-          setVolume(saved.volume);
-        }
-        // TODO: brightness, color, scentType, scentLevel도 적용
-        // (디바이스별로 다르게 적용해야 할 수 있음)
-      }
-    };
-    loadSavedSettings();
-  }, [loadPreferences]);
 
   // LLM 결과 및 무드 변경을 디바이스에 반영
   useDeviceSync({
@@ -253,9 +239,12 @@ export default function HomeContent({
         <div className="flex-shrink-0 relative z-20">
           <MoodDashboard
             onVolumeChange={(newVolume) => {
-              setVolume(newVolume);
+              // 외부로 볼륨 변경 전달
+              if (onVolumeChange) {
+                onVolumeChange(newVolume);
+              }
             }}
-            externalVolume={volume}
+            externalVolume={currentVolume}
             mood={currentMood!}
             onMoodChange={onMoodChange}
             onScentChange={onScentChange}
@@ -291,8 +280,11 @@ export default function HomeContent({
             onUpdateCurrentSegment={onUpdateCurrentSegment}
             currentSegment={currentSegment}
             onDeviceControlChange={(changes) => {
+              console.log("[HomeContent] 디바이스 컨트롤 변경 수신:", changes);
+              
               // 홈 페이지로 전달하여 전구 API 업데이트
               if (onDeviceControlChangeFromHome) {
+                console.log("[HomeContent] 홈 페이지로 변경사항 전달");
                 onDeviceControlChangeFromHome(changes);
               }
 
@@ -303,6 +295,7 @@ export default function HomeContent({
                 
                 // 무드 컬러 변경 (Manager나 Light의 color 변경)
                 if (changes.color && changes.color !== currentMood.color) {
+                  console.log(`[HomeContent] currentMood 색상 업데이트: ${currentMood.color} → ${changes.color}`);
                   updatedMood.color = changes.color;
                   shouldUpdate = true;
                 }
@@ -328,9 +321,10 @@ export default function HomeContent({
               }
               
               // 디바이스 output을 직접 업데이트하여 다른 디바이스 카드에 즉시 반영
-              setDevices((prev) =>
-                prev.map((d) => {
+              setDevices((prev) => {
+                const updated = prev.map((d) => {
                   if (changes.color && (d.type === "manager" || d.type === "light")) {
+                    console.log(`[HomeContent] 디바이스 ${d.id} (${d.type}) 색상 업데이트: ${d.output.color || "N/A"} → ${changes.color}`);
                     return {
                       ...d,
                       output: {
@@ -340,6 +334,7 @@ export default function HomeContent({
                     };
                   }
                   if (changes.brightness !== undefined && (d.type === "manager" || d.type === "light")) {
+                    console.log(`[HomeContent] 디바이스 ${d.id} (${d.type}) 밝기 업데이트: ${d.output.brightness || "N/A"} → ${changes.brightness}%`);
                     return {
                       ...d,
                       output: {
@@ -349,6 +344,7 @@ export default function HomeContent({
                     };
                   }
                   if (changes.scentLevel !== undefined && (d.type === "manager" || d.type === "scent")) {
+                    console.log(`[HomeContent] 디바이스 ${d.id} (${d.type}) 센트 레벨 업데이트: ${d.output.scentLevel || "N/A"} → ${changes.scentLevel}`);
                     return {
                       ...d,
                       output: {
@@ -358,6 +354,7 @@ export default function HomeContent({
                     };
                   }
                   if (changes.volume !== undefined && (d.type === "manager" || d.type === "speaker")) {
+                    console.log(`[HomeContent] 디바이스 ${d.id} (${d.type}) 볼륨 업데이트: ${d.output.volume || "N/A"} → ${changes.volume}%`);
                     return {
                       ...d,
                       output: {
@@ -367,8 +364,10 @@ export default function HomeContent({
                     };
                   }
                   return d;
-                })
-              );
+                });
+                console.log(`[HomeContent] ✅ 총 ${updated.length}개 디바이스 업데이트 완료`);
+                return updated;
+              });
             }}
           />
         </div>

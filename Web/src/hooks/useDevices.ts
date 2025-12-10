@@ -195,6 +195,57 @@ export function useDevices(
 
       const data = await response.json();
 
+      // light 타입 디바이스 추가 시 search_light API의 status를 "search"로 변경하고 전원 켜기
+      if (type === "light") {
+        console.log("[Add Device] 🔍 Light 디바이스 추가 감지 - search 상태로 변경 및 전원 켜기");
+        
+        try {
+          // 1. search_light API: status를 "search"로 변경
+          // 클라이언트에서 호출하므로 API 키는 선택적 (개발 환경에서는 완화)
+          const searchResponse = await fetch("/api/search_light", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({ status: "search" }),
+          });
+          
+          if (searchResponse.ok) {
+            const searchData = await searchResponse.json();
+            console.log("[Add Device] ✅ search_light 상태 변경 성공:", searchData);
+          } else {
+            const errorData = await searchResponse.json().catch(() => ({}));
+            console.error("[Add Device] ❌ search_light 상태 변경 실패:", searchResponse.status, errorData);
+          }
+        } catch (error) {
+          console.error("[Add Device] ❌ search_light API 호출 에러:", error);
+        }
+        
+        try {
+          // 2. light_power API: 전원을 "on"으로 설정
+          // 클라이언트에서 호출하므로 API 키는 선택적 (개발 환경에서는 완화)
+          const powerResponse = await fetch("/api/light_power", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({ power: "on" }),
+          });
+          
+          if (powerResponse.ok) {
+            const powerData = await powerResponse.json();
+            console.log("[Add Device] ✅ light_power 전원 켜기 성공:", powerData);
+          } else {
+            const errorData = await powerResponse.json().catch(() => ({}));
+            console.error("[Add Device] ❌ light_power 전원 켜기 실패:", powerResponse.status, errorData);
+          }
+        } catch (error) {
+          console.error("[Add Device] ❌ light_power API 호출 에러:", error);
+        }
+      }
+
       // 새로 생성된 디바이스를 목록에 추가
       setDevices((prev) => {
         const updated = [...prev, data.device];
