@@ -13,7 +13,7 @@ The system operates based on the following pipeline:
 
 ## 🔗 Links
 - **Tech Blog**: [Mood-manager | Tech Blog](https://www.notion.so/Mood-Manager-2c42a535a226809d9206ef6166f28718?source=copy_link)
-- **PPT**: [Mood-manager | PPT] (https://www.miricanvas.com/login?redirect=%2Fv2%2Fdesign2%2F82bba40d-4ef0-44d6-8108-753343e84517)
+- **PPT**: [Mood-manager | PPT](https://www.miricanvas.com/login?redirect=%2Fv2%2Fdesign2%2F82bba40d-4ef0-44d6-8108-753343e84517)
 - **Deployed Demo**: [moodmanager](https://moodmanager.me)
 
 ---
