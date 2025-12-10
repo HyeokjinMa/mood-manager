@@ -6,50 +6,59 @@
 
 "use client";
 
-import Link from "next/link";
 import { HelpCircle, MessageSquare, Shield, LogOut, Trash2, Key } from "lucide-react";
 
 interface MenuSectionProps {
   onLogout: () => void;
   onDeleteAccount: () => void;
   onChangePassword: () => void;
+  onQnaClick: () => void;
+  onInquiryClick: () => void;
+  onPrivacyClick: () => void;
 }
 
-export default function MenuSection({ onLogout, onDeleteAccount, onChangePassword }: MenuSectionProps) {
+export default function MenuSection({ 
+  onLogout, 
+  onDeleteAccount, 
+  onChangePassword,
+  onQnaClick,
+  onInquiryClick,
+  onPrivacyClick,
+}: MenuSectionProps) {
   return (
     <div className="bg-white mt-4">
-      <Link
-        href="/mypage/qna"
-        className="flex items-center justify-between px-4 py-4 border-b border-gray-200 hover:bg-gray-50 transition"
+      <button
+        onClick={onQnaClick}
+        className="w-full flex items-center justify-between px-4 py-4 border-b border-gray-200 hover:bg-gray-50 transition text-left"
       >
         <div className="flex items-center">
           <HelpCircle size={20} className="text-gray-400 mr-3" />
           <span className="text-gray-700">Q&A</span>
         </div>
         <span className="text-gray-400">›</span>
-      </Link>
+      </button>
 
-      <Link
-        href="/mypage/inquiry"
-        className="flex items-center justify-between px-4 py-4 border-b border-gray-200 hover:bg-gray-50 transition"
+      <button
+        onClick={onInquiryClick}
+        className="w-full flex items-center justify-between px-4 py-4 border-b border-gray-200 hover:bg-gray-50 transition text-left"
       >
         <div className="flex items-center">
           <MessageSquare size={20} className="text-gray-400 mr-3" />
           <span className="text-gray-700">1:1 Inquiry</span>
         </div>
         <span className="text-gray-400">›</span>
-      </Link>
+      </button>
 
-      <Link
-        href="/mypage/privacy"
-        className="flex items-center justify-between px-4 py-4 border-b border-gray-200 hover:bg-gray-50 transition"
+      <button
+        onClick={onPrivacyClick}
+        className="w-full flex items-center justify-between px-4 py-4 border-b border-gray-200 hover:bg-gray-50 transition text-left"
       >
         <div className="flex items-center">
           <Shield size={20} className="text-gray-400 mr-3" />
           <span className="text-gray-700">Privacy Policy</span>
         </div>
         <span className="text-gray-400">›</span>
-      </Link>
+      </button>
 
       <button
         onClick={onChangePassword}

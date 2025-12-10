@@ -16,6 +16,9 @@ import { ADMIN_EMAIL } from "@/lib/auth/mockMode";
 import TopNav from "@/components/navigation/TopNav";
 import BottomNav from "@/components/navigation/BottomNav";
 import MyPageModal from "./components/modals/MyPageModal";
+import MyPageInquiryModal from "./components/modals/MyPageInquiryModal";
+import MyPagePrivacyModal from "./components/modals/MyPagePrivacyModal";
+import MyPageQnaModal from "./components/modals/MyPageQnaModal";
 import MoodModal from "./components/modals/MoodModal";
 import HomeContent from "./components/HomeContent";
 import DeviceAddModal from "./components/Device/DeviceAddModal";
@@ -97,6 +100,9 @@ export default function HomePage() {
   // Phase 8: 모달 상태 관리
   const [showMyPageModal, setShowMyPageModal] = useState(false);
   const [showMoodModal, setShowMoodModal] = useState(false);
+  const [showInquiryModal, setShowInquiryModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showQnaModal, setShowQnaModal] = useState(false);
   
   // Phase 2: 무드스트림 데이터 상태 관리 (home/page.tsx로 이동)
   const [moodStreamData, setMoodStreamData] = useState<MoodStreamData>({

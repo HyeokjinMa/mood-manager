@@ -1,33 +1,37 @@
-// ======================================================
-// File: src/app/(main)/mypage/privacy/page.tsx
-// ======================================================
-
-/*
-  [Privacy Policy Page 역할]
-
-  - 개인정보처리방침 내용 표시
-*/
+/**
+ * MyPagePrivacyModal
+ * 
+ * 개인정보 처리방침 Modal 컴포넌트
+ */
 
 "use client";
 
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { X } from "lucide-react";
 
-export default function PrivacyPage() {
+interface MyPagePrivacyModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function MyPagePrivacyModal({ isOpen, onClose }: MyPagePrivacyModalProps) {
+  if (!isOpen) return null;
+
   return (
-    <div className="flex flex-col h-screen overflow-hidden relative bg-white">
-      <div className="flex-1 overflow-y-auto pb-20">
-        <div className="max-w-[375px] mx-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={onClose}>
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-4 py-4 flex items-center">
-          <Link href="/mypage" className="mr-3">
-            <ArrowLeft size={20} className="text-gray-600" />
-          </Link>
+        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
           <h1 className="text-xl font-semibold">Privacy Policy</h1>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-full transition"
+          >
+            <X size={20} className="text-gray-600" />
+          </button>
         </div>
 
         {/* Content */}
-        <div className="bg-white mt-4 px-4 py-6">
+        <div className="flex-1 overflow-y-auto px-4 py-6">
           <div className="prose prose-sm max-w-none">
             <h2 className="text-lg font-semibold mb-4">1. Information We Collect</h2>
             <p className="text-sm text-gray-600 mb-6">
@@ -59,7 +63,6 @@ export default function PrivacyPage() {
               support@moodmanager.com.
             </p>
           </div>
-        </div>
         </div>
       </div>
     </div>

@@ -21,9 +21,18 @@ import { FaTimes } from "react-icons/fa";
 interface MyPageModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onQnaClick?: () => void;
+  onInquiryClick?: () => void;
+  onPrivacyClick?: () => void;
 }
 
-export default function MyPageModal({ isOpen, onClose }: MyPageModalProps) {
+export default function MyPageModal({ 
+  isOpen, 
+  onClose,
+  onQnaClick,
+  onInquiryClick,
+  onPrivacyClick,
+}: MyPageModalProps) {
   const { status, data: session } = useSession();
   const router = useRouter();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -160,6 +169,9 @@ export default function MyPageModal({ isOpen, onClose }: MyPageModalProps) {
             onLogout={handleLogout}
             onDeleteAccount={() => setShowDeleteConfirm(true)}
             onChangePassword={() => setShowChangePassword(true)}
+            onQnaClick={onQnaClick}
+            onInquiryClick={onInquiryClick}
+            onPrivacyClick={onPrivacyClick}
           />
         </div>
 

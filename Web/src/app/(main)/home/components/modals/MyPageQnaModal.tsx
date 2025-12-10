@@ -1,15 +1,18 @@
 /**
- * Q&A Page
+ * MyPageQnaModal
  * 
- * 자주 묻는 질문 목록 표시
- * 질문 클릭 시 답변 표시/숨김
+ * Q&A Modal 컴포넌트
  */
 
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, ChevronDown, ChevronUp } from "lucide-react";
+import { X, ChevronDown, ChevronUp } from "lucide-react";
+
+interface MyPageQnaModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
 
 interface FAQ {
   id: number;
@@ -68,21 +71,27 @@ const faqs: FAQ[] = [
   },
 ];
 
-export default function QNAPage() {
+export default function MyPageQnaModal({ isOpen, onClose }: MyPageQnaModalProps) {
   const [openId, setOpenId] = useState<number | null>(null);
 
+  if (!isOpen) return null;
+
   return (
-    <div className="flex flex-col h-screen overflow-hidden relative bg-white">
-      <div className="flex-1 overflow-y-auto pb-20">
-        <div className="max-w-[375px] mx-auto">
-        <div className="bg-white border-b border-gray-200 px-4 py-4 flex items-center">
-          <Link href="/mypage" className="mr-3">
-            <ArrowLeft size={20} className="text-gray-600" />
-          </Link>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={onClose}>
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
           <h1 className="text-xl font-semibold">Q&A</h1>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-full transition"
+          >
+            <X size={20} className="text-gray-600" />
+          </button>
         </div>
 
-        <div className="bg-white mt-4">
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto">
           {faqs.map((faq) => (
             <div key={faq.id} className="border-b border-gray-200 last:border-b-0">
               <button
@@ -101,7 +110,6 @@ export default function QNAPage() {
               )}
             </div>
           ))}
-        </div>
         </div>
       </div>
     </div>
