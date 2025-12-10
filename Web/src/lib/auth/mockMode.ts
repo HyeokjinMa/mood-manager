@@ -46,13 +46,17 @@ export async function isAdminUser(userId: string): Promise<boolean> {
 /**
  * 관리자 계정인지 확인 (이메일 기반, 하위 호환성)
  * @deprecated DB 연결 후 isAdminUser 사용 권장
+ * 
+ * 보안: 비밀번호가 제공되지 않으면 항상 false 반환 (이메일만으로는 관리자 모드 진입 불가)
  */
 export function isAdminAccount(email: string, password?: string): boolean {
   if (email === ADMIN_EMAIL) {
+    // 비밀번호가 제공된 경우에만 확인
     if (password !== undefined) {
       return password === ADMIN_PASSWORD;
     }
-    return true; // 이메일만 확인하는 경우
+    // 비밀번호가 없으면 false 반환 (보안상 안전)
+    return false;
   }
   return false;
 }
