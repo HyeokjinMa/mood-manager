@@ -71,7 +71,7 @@ export default function DeviceCardExpanded({
     setLightBrightness,
     scentLevel,
     setScentLevel,
-    backgroundColor,
+    backgroundColor: baseBackgroundColor,
   } = useDeviceCard({ device, currentMood });
 
   // 로컬 상태로 변경사항 추적 (저장 전까지는 반영하지 않음)
@@ -79,6 +79,11 @@ export default function DeviceCardExpanded({
   const [localLightBrightness, setLocalLightBrightness] = useState(lightBrightness);
   const [localScentLevel, setLocalScentLevel] = useState(scentLevel);
   const [localVolume, setLocalVolume] = useState(volume ?? device.output.volume ?? 70);
+
+  // 로컬 색상 기반 배경색 계산 (색상 변경 시 즉시 반영)
+  const backgroundColor = device.power && localLightColor 
+    ? localLightColor 
+    : baseBackgroundColor;
 
   // 디바이스 변경 시 로컬 상태 동기화 (세그먼트 이동 시 즉시 반영)
   useEffect(() => {
@@ -158,8 +163,15 @@ export default function DeviceCardExpanded({
           : "rgba(200, 200, 200, 0.8)",
         borderColor: localLightColor || currentMood?.color || "#E6F3FF", // 로컬 컬러로 테두리 색상 연동
       }}
-      key={`device-${device.id}-${device.power}`} // 전원 상태 변경 시 리렌더링 강제
-      onClick={onClose}
+      key={`device-${device.id}-${device.power}-${localLightColor}`} // 전원 상태 및 색상 변경 시 리렌더링 강제
+      onClick={(e) => {
+        // 컬러 피커나 컨트롤 영역 클릭 시에는 닫히지 않음
+        const target = e.target as HTMLElement;
+        if (target.closest('input[type="color"]') || target.closest('input[type="range"]') || target.closest('.space-y-2')) {
+          return;
+        }
+        onClose();
+      }}
     >
       {/* 상단: 아이콘 + 이름 + 배터리 */}
       <div className="flex items-center justify-between">

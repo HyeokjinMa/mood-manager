@@ -15,8 +15,21 @@
  * RGB와 colortemp는 모두 저장 가능 (라즈베리파이가 판단)
  */
 
-import { NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth/session";
+import { NextRequest, NextResponse } from "next/server";
+
+/**
+ * API 키 인증 헬퍼 함수
+ */
+function validateApiKey(request: NextRequest): boolean {
+  const apiKey = request.headers.get("x-api-key");
+  const serverKey = process.env.LIGHT_API_KEY;
+  
+  if (!apiKey || !serverKey || apiKey !== serverKey) {
+    return false;
+  }
+  
+  return true;
+}
 
 // 전구 정보 상태 저장소 (메모리 기반)
 interface LightInfoState {
@@ -37,12 +50,14 @@ let lightInfoState: LightInfoState = {
  * 
  * 현재 전구 정보 조회
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // 인증 확인
-    const sessionOrError = await requireAuth();
-    if (sessionOrError instanceof NextResponse) {
-      return sessionOrError;
+    // API 키 인증 확인
+    if (!validateApiKey(request)) {
+      return NextResponse.json(
+        { message: "Unauthorized: Invalid API Key" },
+        { status: 401 }
+      );
     }
 
     // 모든 값을 반환 (라즈베리파이가 판단)
@@ -86,12 +101,14 @@ export async function GET() {
  * RGB와 colortemp는 모두 저장 가능 (라즈베리파이가 판단)
  * brightness가 없으면 기존 값 유지
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    // 인증 확인
-    const sessionOrError = await requireAuth();
-    if (sessionOrError instanceof NextResponse) {
-      return sessionOrError;
+    // API 키 인증 확인
+    if (!validateApiKey(request)) {
+      return NextResponse.json(
+        { message: "Unauthorized: Invalid API Key" },
+        { status: 401 }
+      );
     }
 
     let body: { r?: number; g?: number; b?: number; brightness?: number; colortemp?: number } = {};

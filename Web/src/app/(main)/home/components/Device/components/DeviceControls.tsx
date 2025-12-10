@@ -108,7 +108,7 @@ export default function DeviceControls({
               type="range"
               min={0}
               max={100}
-              value={volume !== undefined ? volume : (device.output.volume || 70)}
+              value={volume ?? 70}
               onChange={(e) => {
                 const newVolume = Number(e.target.value);
                 onUpdateVolume?.(newVolume);
@@ -147,7 +147,7 @@ export default function DeviceControls({
               type="range"
               min={0}
               max={100}
-              value={volume !== undefined ? volume : (device.output.volume || 70)}
+              value={volume ?? 70}
               onChange={(e) => {
                 const newVolume = Number(e.target.value);
                 onUpdateVolume?.(newVolume);

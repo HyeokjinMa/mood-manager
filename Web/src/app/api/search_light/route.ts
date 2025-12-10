@@ -17,7 +17,20 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth/session";
+
+/**
+ * API 키 인증 헬퍼 함수
+ */
+function validateApiKey(request: NextRequest): boolean {
+  const apiKey = request.headers.get("x-api-key");
+  const serverKey = process.env.LIGHT_API_KEY;
+  
+  if (!apiKey || !serverKey || apiKey !== serverKey) {
+    return false;
+  }
+  
+  return true;
+}
 
 // 전구 검색 상태 저장소 (메모리 기반)
 interface SearchLightState {
@@ -36,12 +49,14 @@ const searchLightState: SearchLightState = {
  * 
  * 현재 전구 검색 상태 조회
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // 인증 확인
-    const sessionOrError = await requireAuth();
-    if (sessionOrError instanceof NextResponse) {
-      return sessionOrError;
+    // API 키 인증 확인
+    if (!validateApiKey(request)) {
+      return NextResponse.json(
+        { message: "Unauthorized: Invalid API Key" },
+        { status: 401 }
+      );
     }
 
     return NextResponse.json({
@@ -70,10 +85,12 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
   try {
-    // 인증 확인
-    const sessionOrError = await requireAuth();
-    if (sessionOrError instanceof NextResponse) {
-      return sessionOrError;
+    // API 키 인증 확인
+    if (!validateApiKey(request)) {
+      return NextResponse.json(
+        { message: "Unauthorized: Invalid API Key" },
+        { status: 401 }
+      );
     }
 
     let body: { status?: "search" | "wait"; light_off?: boolean } = {};
