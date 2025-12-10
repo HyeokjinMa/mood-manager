@@ -12,6 +12,14 @@ Mood Manager is a multimodal AI service that analyzes users' psychological and p
 
 The system operates based on the following pipeline: **WearOS → Firebase → ML Analysis Server → Next.js Web App → Emotion Prediction (Discrete Markov Chain for Statistical Analysis) → Mood Expansion (LLM) → Output Device Control**.
 
+---
+
+## System Architecture Diagram
+
+![System Architecture](./Web/public/system-architecture.png)
+
+---
+
 ### Key Features
 
 - **Real-time Biometric Data Collection**: Collects heart rate, HRV, and respiratory rate from WearOS devices at 5 minutes intervals
@@ -65,12 +73,6 @@ The system operates based on the following pipeline: **WearOS → Firebase → M
 - **User Management**: Stores user profiles, preferences, and mood sets
 - **Device Management**: Stores connected device information
 - **Session Management**: NextAuth session and JWT token management
-
----
-
-## System Architecture Diagram
-
-![System Architecture](./Web/public/system-architecture.png)
 
 ---
 
