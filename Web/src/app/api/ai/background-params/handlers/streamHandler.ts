@@ -195,7 +195,10 @@ export async function handleStreamMode({
     return NextResponse.json(mockResponse);
   }
 
-  const openai = new OpenAI({ apiKey });
+  const openai = new OpenAI({ 
+    apiKey,
+    timeout: 120000, // 120초 타임아웃 (LLM 호출이 오래 걸릴 수 있음)
+  });
 
   try {
     const completion = await openai.chat.completions.create({
@@ -567,7 +570,10 @@ async function handleStreamModeFallback({
     return NextResponse.json(getMockResponse());
   }
 
-  const openai = new OpenAI({ apiKey });
+  const openai = new OpenAI({ 
+    apiKey,
+    timeout: 120000, // 120초 타임아웃 (LLM 호출이 오래 걸릴 수 있음)
+  });
 
   try {
     const completion = await openai.chat.completions.create({
