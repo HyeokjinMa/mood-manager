@@ -18,7 +18,7 @@ import MenuSection from "./components/MenuSection";
 import DeleteAccountModal from "./components/DeleteAccountModal";
 import ChangePasswordModal from "./components/ChangePasswordModal";
 import { useProfile } from "./hooks/useProfile";
-import { ADMIN_EMAIL } from "@/lib/auth/mockMode";
+// 관리자 모드 확인은 사용자 ID 기반으로만 수행
 
 export default function MyPage() {
   const { status, data: session } = useSession();
