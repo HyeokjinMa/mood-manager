@@ -28,32 +28,43 @@ export interface AuthSession {
  * @returns 세션 객체 또는 401 응답
  */
 export async function requireAuth(): Promise<AuthSession | NextResponse> {
-  const session = await getServerSession(authOptions);
+  try {
+    const session = await getServerSession(authOptions);
 
-  if (!session || !session.user) {
+    if (!session || !session.user) {
+      console.log("[requireAuth] 세션이 없거나 사용자 정보가 없음");
+      return NextResponse.json(
+        { error: "UNAUTHORIZED", message: "인증이 필요합니다." },
+        { status: 401 }
+      );
+    }
+
+    // NextAuth 세션에서 id 추출 (JWT 콜백에서 설정됨)
+    const userId = (session.user as { id?: string }).id;
+    if (!userId) {
+      console.log("[requireAuth] 사용자 ID가 없음", { email: session.user.email });
+      return NextResponse.json(
+        { error: "UNAUTHORIZED", message: "인증이 필요합니다." },
+        { status: 401 }
+      );
+    }
+
+    console.log("[requireAuth] 인증 성공", { userId, email: session.user.email });
+    return {
+      user: {
+        id: userId,
+        email: session.user.email || "",
+        name: session.user.name || null,
+        image: session.user.image || null,
+      },
+    };
+  } catch (error) {
+    console.error("[requireAuth] 세션 확인 중 오류:", error);
     return NextResponse.json(
-      { error: "UNAUTHORIZED", message: "인증이 필요합니다." },
+      { error: "UNAUTHORIZED", message: "인증 확인 중 오류가 발생했습니다." },
       { status: 401 }
     );
   }
-
-  // NextAuth 세션에서 id 추출 (JWT 콜백에서 설정됨)
-  const userId = (session.user as { id?: string }).id;
-  if (!userId) {
-    return NextResponse.json(
-      { error: "UNAUTHORIZED", message: "인증이 필요합니다." },
-      { status: 401 }
-    );
-  }
-
-  return {
-    user: {
-      id: userId,
-      email: session.user.email || "",
-      name: session.user.name || null,
-      image: session.user.image || null,
-    },
-  };
 }
 
 /**

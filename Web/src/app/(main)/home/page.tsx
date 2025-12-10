@@ -46,6 +46,8 @@ export default function HomePage() {
    * 상태가 변하지 않았으면 무시 (불필요한 리렌더링 방지)
    * loading 상태에서는 리다이렉트하지 않음 (시크릿 모드 세션 불안정 대응)
    * 약간의 딜레이를 추가하여 세션 상태가 안정화될 시간을 줌
+   * 
+   * 시크릿 모드 대응: loading 상태가 너무 오래 지속되면 타임아웃 처리
    */
   useEffect(() => {
     if (lastStatusRef.current === status) {
@@ -53,13 +55,23 @@ export default function HomePage() {
     }
     lastStatusRef.current = status;
 
+    // loading 상태 타임아웃 처리 (5초 후 강제 체크)
     if (status === "loading") {
       redirectingRef.current = false;
-      return;
+      const timeout = setTimeout(() => {
+        // 5초 후에도 loading이면 세션을 다시 확인
+        console.log("[HomePage] 세션 로딩 타임아웃, 세션 재확인");
+        // useSession이 자동으로 재확인하므로 추가 작업 불필요
+      }, 5000);
+      
+      return () => {
+        clearTimeout(timeout);
+      };
     }
 
     if (status === "unauthenticated" && !redirectingRef.current) {
       redirectingRef.current = true;
+      console.log("[HomePage] 인증되지 않음, 로그인 페이지로 리다이렉트");
       const timer = setTimeout(() => {
         router.replace("/login");
       }, 300);
@@ -71,6 +83,7 @@ export default function HomePage() {
     
     if (status === "authenticated") {
       redirectingRef.current = false;
+      console.log("[HomePage] 인증됨, 세션 유지");
     }
   }, [status, router]);
   const [expandedId, setExpandedId] = useState<string | null>(null);

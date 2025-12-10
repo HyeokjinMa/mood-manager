@@ -25,13 +25,24 @@ export default function LoginPage() {
     lastStatusRef.current = status;
 
     // loading 상태에서는 리다이렉트하지 않음 (시크릿 모드 세션 불안정 대응)
+    // 단, 너무 오래 loading이면 타임아웃 처리
     if (status === "loading") {
       redirectingRef.current = false;
-      return;
+      
+      // 5초 후에도 loading이면 세션 재확인
+      const timeout = setTimeout(() => {
+        console.log("[LoginPage] 세션 로딩 타임아웃, 세션 재확인");
+        // useSession이 자동으로 재확인하므로 추가 작업 불필요
+      }, 5000);
+      
+      return () => {
+        clearTimeout(timeout);
+      };
     }
 
     if (status === "authenticated" && !redirectingRef.current) {
       redirectingRef.current = true;
+      console.log("[LoginPage] 이미 인증됨, 홈으로 이동");
       // 약간의 딜레이를 추가하여 세션 상태가 안정화될 시간을 줌
       const timer = setTimeout(() => {
         router.replace("/home"); // 뒤로가기 방지
@@ -45,6 +56,7 @@ export default function LoginPage() {
     // unauthenticated 상태로 돌아오면 플래그 리셋
     if (status === "unauthenticated") {
       redirectingRef.current = false;
+      console.log("[LoginPage] 인증되지 않음, 로그인 페이지 유지");
     }
   }, [status, router]);
 

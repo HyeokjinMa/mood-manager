@@ -27,9 +27,22 @@ export default function SplashPage() {
     lastStatusRef.current = status;
 
     // loading 상태에서는 리다이렉트하지 않음 (시크릿 모드 세션 불안정 대응)
+    // 단, 너무 오래 loading이면 타임아웃 처리
     if (status === "loading") {
       redirectingRef.current = false;
-      return; // 세션 체크 중 → 스플래시 유지
+      
+      // 5초 후에도 loading이면 unauthenticated로 간주
+      const timeout = setTimeout(() => {
+        console.log("[SplashPage] 세션 로딩 타임아웃, 로그인 페이지로 이동");
+        if (!redirectingRef.current) {
+          redirectingRef.current = true;
+          router.replace("/login");
+        }
+      }, 5000);
+      
+      return () => {
+        clearTimeout(timeout);
+      };
     }
 
     // 이미 리다이렉트 중이면 무시
@@ -40,8 +53,10 @@ export default function SplashPage() {
     // 약간의 딜레이를 추가하여 세션 상태가 안정화될 시간을 줌
     const timer = setTimeout(() => {
       if (status === "authenticated") {
+        console.log("[SplashPage] 인증됨, 홈으로 이동");
         router.replace("/home"); // 로그인 되어있음 → 홈으로 이동
       } else {
+        console.log("[SplashPage] 인증되지 않음, 로그인 페이지로 이동");
         router.replace("/login"); // 로그인 안됨 → 로그인 페이지로 이동
       }
     }, 300);

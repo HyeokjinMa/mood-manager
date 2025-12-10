@@ -59,9 +59,11 @@ export const authOptions: NextAuthOptions = {
       name: `next-auth.session-token`,
       options: {
         httpOnly: true,
-        sameSite: "lax",
+        sameSite: process.env.NODE_ENV === "production" ? "lax" : "lax", // 개발/프로덕션 모두 lax
         path: "/",
-        secure: process.env.NODE_ENV === "production",
+        secure: process.env.NODE_ENV === "production", // 프로덕션에서만 secure
+        // 쿠키 만료 시간 명시 (세션 maxAge와 동일)
+        maxAge: 30 * 24 * 60 * 60, // 30일
       },
     },
   },
