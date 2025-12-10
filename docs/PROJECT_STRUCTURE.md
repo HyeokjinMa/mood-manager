@@ -1,6 +1,6 @@
 # 프로젝트 구조
 
-**작성일**: 2025년
+**작성일**: 2025.12.10
 
 ---
 
@@ -56,7 +56,7 @@ mood-manager/
 ### WearOS 앱 (Kotlin)
 - **위치**: `Watch/`
 - **구조**: Android/Kotlin 표준 구조
-- **상태**: v4 버전, 정상 작동 중
+- **상태**: v4 버전, 정상 작동 중이다.
 - **역할**: 생체 데이터 및 오디오 이벤트 수집 후 Firestore로 전송
 
 ---
@@ -67,7 +67,7 @@ mood-manager/
 - **언어**: Kotlin
 - **플랫폼**: Android / Wear OS SDK
 - **주요 API**: Firebase SDK, Health Services
-- **상태**: 완성된 v4 버전, 정상 작동
+- **상태**: 완성된 v4 버전, 정상 작동한다.
 
 ### Firebase 연동
 - ✅ `google-services.json` 파일 존재

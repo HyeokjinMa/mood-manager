@@ -1,6 +1,6 @@
 # Development Guide
 
-개발 환경 설정 및 개발 가이드입니다.
+개발 환경 설정 및 개발 가이드이다.
 
 ---
 
@@ -48,7 +48,7 @@ npm install -g npm@latest
 
 ### 3. Git
 
-Git must be installed for cloning the repository.
+저장소를 클론하기 위해 Git이 설치되어 있어야 한다.
 
 ### 4. PostgreSQL (for Production)
 
@@ -73,7 +73,7 @@ cd Web
 npm install
 ```
 
-**Important**: All commands must be run from the `Web/` directory.
+**중요**: 모든 명령어는 `Web/` 디렉토리에서 실행해야 한다.
 
 ### 3. Configure Environment Variables
 
@@ -183,7 +183,7 @@ cd Web
 npm run dev
 ```
 
-The application will be available at `http://localhost:3000`.
+애플리케이션은 `http://localhost:3000`에서 접근할 수 있다.
 
 ### Production Build
 
@@ -197,11 +197,11 @@ npm start
 
 ## Admin Mode (Mock Mode)
 
-For development and testing, you can use Admin mode:
+개발 및 테스트를 위해 Admin 모드를 사용할 수 있다:
 
-1. Register or login with an admin account
-2. Admin mode automatically enables mock data
-3. All features work with localStorage-based storage
+1. 관리자 계정으로 등록하거나 로그인한다.
+2. Admin 모드는 자동으로 목업 데이터를 활성화한다.
+3. 모든 기능은 localStorage 기반 저장소로 작동한다.
 
 ---
 

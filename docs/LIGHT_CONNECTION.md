@@ -4,7 +4,7 @@
 
 ## 개요
 
-Mood Manager의 무드 스트림 데이터를 실제 전구 디바이스에 전달하여 조명을 제어하는 기능 구현 가이드입니다.
+Mood Manager의 무드 스트림 데이터를 실제 전구 디바이스에 전달하여 조명을 제어하는 기능 구현 가이드이다.
 
 ---
 
@@ -22,7 +22,7 @@ lighting: {
 }
 ```
 
-**현재 상태**: LLM은 RGB와 temperature를 모두 생성합니다.
+**현재 상태**: LLM은 RGB와 temperature를 모두 생성한다.
 
 ### 1.2 데이터 흐름
 
@@ -48,8 +48,8 @@ GET /api/light/control (라즈베리파이 polling)
 
 ### 2.1 제약사항
 
-- **RGB와 Color Temperature는 양립 불가능**: 전구 API에서 둘 중 하나만 선택 가능
-- **우선순위**: RGB가 존재하면 RGB 우선, 없으면 Color Temperature 사용
+- **RGB와 Color Temperature는 양립 불가능하다**: 전구 API에서 둘 중 하나만 선택 가능하다.
+- **우선순위**: RGB가 존재하면 RGB를 우선 사용하고, 없으면 Color Temperature를 사용한다.
 
 ### 2.2 처리 로직
 
@@ -72,7 +72,7 @@ if (lighting.rgb && lighting.rgb[0] !== null && lighting.rgb[1] !== null && ligh
 }
 ```
 
-**현재 구현**: RGB 우선 전략 사용. 모든 값을 함께 전달하며, 라즈베리파이가 RGB/colortemp 판단을 수행합니다.
+**현재 구현**: RGB 우선 전략을 사용한다. 모든 값을 함께 전달하며, 라즈베리파이가 RGB/colortemp 판단을 수행한다.
 
 ---
 
@@ -80,7 +80,7 @@ if (lighting.rgb && lighting.rgb[0] !== null && lighting.rgb[1] !== null && ligh
 
 ### 3.1 POST /api/light/control
 
-조명 제어 상태를 저장합니다.
+조명 제어 상태를 저장한다.
 
 **요청**:
 ```json
@@ -111,7 +111,7 @@ if (lighting.rgb && lighting.rgb[0] !== null && lighting.rgb[1] !== null && ligh
 
 ### 3.2 GET /api/light/control
 
-라즈베리파이가 주기적으로 조회하는 엔드포인트입니다.
+라즈베리파이가 주기적으로 조회하는 엔드포인트이다.
 
 **응답**:
 ```json
@@ -124,7 +124,7 @@ if (lighting.rgb && lighting.rgb[0] !== null && lighting.rgb[1] !== null && ligh
 }
 ```
 
-**인증**: 개발 환경에서는 인증을 우회하며, 프로덕션에서는 API Key 또는 IP Whitelisting을 사용합니다.
+**인증**: 개발 환경에서는 인증을 우회하며, 프로덕션에서는 API Key 또는 IP Whitelisting을 사용한다.
 
 ---
 
@@ -138,12 +138,12 @@ RASPBERRY_PI_URL=http://192.168.0.100:8000
 ```
 
 **장점**:
-- 가장 확실하고 빠름
-- 모든 네트워크에서 작동
+- 가장 확실하고 빠르다.
+- 모든 네트워크에서 작동한다.
 
 **단점**:
-- IP 주소가 변경될 수 있음 (DHCP)
-- 고정 IP 설정 필요
+- IP 주소가 변경될 수 있다 (DHCP).
+- 고정 IP 설정이 필요하다.
 
 #### 방법 2: mDNS 호스트명 사용 (권장)
 ```env
@@ -151,12 +151,12 @@ RASPBERRY_PI_URL=http://raspberrypi.local:8000
 ```
 
 **장점**:
-- IP 변경에 영향 없음
-- 설정 간단
+- IP 변경에 영향이 없다.
+- 설정이 간단하다.
 
 **단점**:
-- mDNS 지원 필요
-- 일부 네트워크에서 작동하지 않을 수 있음
+- mDNS 지원이 필요하다.
+- 일부 네트워크에서 작동하지 않을 수 있다.
 
 ### 4.2 통신 구조
 
@@ -209,10 +209,10 @@ RASPBERRY_PI_URL=http://raspberrypi.local:8000
 
 ### 5.2 EC2의 장점
 
-1. **메모리 상태 유지**: 서버리스가 아니므로 `lightControlState`가 유지됨
-2. **고정 IP**: Elastic IP로 고정 공인 IP 할당 가능
-3. **완전한 제어**: 서버 환경 완전 제어 가능
-4. **직접 통신**: 라즈베리파이가 EC2 공인 IP로 직접 접근 가능
+1. **메모리 상태 유지**: 서버리스가 아니므로 `lightControlState`가 유지된다.
+2. **고정 IP**: Elastic IP로 고정 공인 IP를 할당할 수 있다.
+3. **완전한 제어**: 서버 환경을 완전히 제어할 수 있다.
+4. **직접 통신**: 라즈베리파이가 EC2 공인 IP로 직접 접근할 수 있다.
 
 ### 5.3 EC2 설정
 
@@ -230,7 +230,7 @@ RASPBERRY_PI_URL=http://raspberrypi.local:8000
 
 ### 5.4 라즈베리파이 인증
 
-프로덕션 환경에서는 라즈베리파이 인증이 필요합니다:
+프로덕션 환경에서는 라즈베리파이 인증이 필요하다:
 
 **방법 1: API Key**
 ```typescript
@@ -247,8 +247,8 @@ export async function GET(request: NextRequest) {
 ```
 
 **방법 2: IP Whitelisting**
-- Security Groups에서 라즈베리파이 IP만 허용
-- 추가 인증 불필요
+- Security Groups에서 라즈베리파이 IP만 허용한다.
+- 추가 인증이 불필요하다.
 
 ---
 
@@ -271,7 +271,7 @@ export async function GET(request: NextRequest) {
 
 ## 7. 참고사항
 
-- **Polling 간격**: 0.5초 권장 (너무 짧으면 서버 부하 증가)
-- **상태 유지**: EC2 배포 시 메모리 상태가 유지되므로 서버리스보다 유리
-- **보안**: 프로덕션에서는 반드시 인증 메커니즘 구현 필요
+- **Polling 간격**: 0.5초를 권장한다 (너무 짧으면 서버 부하가 증가한다).
+- **상태 유지**: EC2 배포 시 메모리 상태가 유지되므로 서버리스보다 유리하다.
+- **보안**: 프로덕션에서는 반드시 인증 메커니즘을 구현해야 한다.
 

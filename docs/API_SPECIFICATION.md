@@ -2,17 +2,17 @@
 
 ## 개요
 
-프론트엔드에서 사용하는 API 엔드포인트 명세입니다.
+프론트엔드에서 사용하는 API 엔드포인트 명세이다.
 
 ---
 
 ## 1. GET /api/preprocessing
 
 ### 설명
-오늘 날짜의 전처리된 데이터 조회
+오늘 날짜의 전처리된 데이터를 조회한다.
 
 ### 인증
-- NextAuth 세션 필요 (현재는 목업 모드)
+- NextAuth 세션이 필요하다 (현재는 목업 모드).
 
 ### 요청
 - Method: `GET`
@@ -70,10 +70,10 @@
 ## 2. GET /api/moods/current
 
 ### 설명
-현재 예약된 무드스트림 조회 (읽기 전용)
+현재 예약된 무드스트림을 조회한다 (읽기 전용).
 
 ### 인증
-- NextAuth 세션 필요 (현재는 목업 모드)
+- NextAuth 세션이 필요하다 (현재는 목업 모드).
 
 ### 요청
 - Method: `GET`
@@ -138,10 +138,10 @@
 ## 2-1. POST /api/moods/current/generate
 
 ### 설명
-무드스트림 재생성 (10개 세그먼트 생성)
+무드스트림을 재생성한다 (10개 세그먼트 생성).
 
 ### 인증
-- NextAuth 세션 필요 (현재는 목업 모드)
+- NextAuth 세션이 필요하다 (현재는 목업 모드).
 
 ### 요청
 - Method: `POST`
@@ -197,17 +197,17 @@
 4. **각 세그먼트에 음악 장르/향 매핑** (무드는 동일, 장르/향은 세그먼트별로 다양)
 5. **반환** (LLM 정보는 별도 API에서 추가)
 
-**중요**: 하나의 무드스트림 내에서는 동일한 무드를 기반으로 하며, 음악 장르와 향은 세그먼트별로 다양할 수 있습니다.
+**중요**: 하나의 무드스트림 내에서는 동일한 무드를 기반으로 하며, 음악 장르와 향은 세그먼트별로 다양할 수 있다.
 
 ---
 
 ## 3. POST /api/ai/background-params
 
 ### 설명
-LLM으로 동적 배경 파라미터 생성 (10개 세그먼트 전체에 대한 정보)
+LLM으로 동적 배경 파라미터를 생성한다 (10개 세그먼트 전체에 대한 정보).
 
 ### 인증
-- NextAuth 세션 필요 (현재는 목업 모드)
+- NextAuth 세션이 필요하다 (현재는 목업 모드).
 
 ### 요청
 - Method: `POST`
@@ -292,19 +292,19 @@ LLM으로 동적 배경 파라미터 생성 (10개 세그먼트 전체에 대한
 ## 현재 상태
 
 ### 목업 모드
-- 모든 API는 현재 목업 데이터를 반환합니다
-- 실제 백엔드 연동은 코드 내 `TODO` 주석으로 표시되어 있습니다
+- 모든 API는 현재 목업 데이터를 반환한다.
+- 실제 백엔드 연동은 코드 내 `TODO` 주석으로 표시되어 있다.
 
 ### 구현 상태
-- ✅ **무드스트림 생성 로직**: 1분 단위 예측값을 3분 단위로 분절하여 10개 세그먼트 생성 (동일한 무드 기반)
-- ✅ **자동 재생성 로직**: 예약된 세그먼트가 3개 이하가 되면 자동으로 재생성
-- ✅ **LLM 통합**: OpenAI API 호출 및 배경 파라미터 생성 (캐싱 포함)
-- ⏳ **백엔드 연동**: 시계열 + 마르코프 체인 예측값 받기 (TODO)
+- ✅ **무드스트림 생성 로직**: 1분 단위 예측값을 3분 단위로 분절하여 10개 세그먼트를 생성한다 (동일한 무드 기반).
+- ✅ **자동 재생성 로직**: 예약된 세그먼트가 3개 이하가 되면 자동으로 재생성한다.
+- ✅ **LLM 통합**: OpenAI API를 호출하고 배경 파라미터를 생성한다 (캐싱 포함).
+- ⏳ **백엔드 연동**: 시계열 + 마르코프 체인 예측값을 받는다 (TODO).
 
 ### 다음 단계
-1. 백엔드 API 연동 브랜치 병합 후 `/api/preprocessing` 실제 구현 사용
-2. 시계열 + 마르코프 체인으로 `/api/moods/current/generate` 실제 구현
-3. OpenAI API 연동 완료 (`OPENAI_API_KEY` 환경 변수 설정 필요)
+1. 백엔드 API 연동 브랜치 병합 후 `/api/preprocessing` 실제 구현을 사용한다.
+2. 시계열 + 마르코프 체인으로 `/api/moods/current/generate` 실제 구현을 완료한다.
+3. OpenAI API 연동을 완료한다 (`OPENAI_API_KEY` 환경 변수 설정이 필요하다).
 
 ---
 
@@ -312,7 +312,7 @@ LLM으로 동적 배경 파라미터 생성 (10개 세그먼트 전체에 대한
 
 ### Overview
 
-Firestore는 WearOS 디바이스와 ML 서버, Web 앱 간의 실시간 데이터 브리지 역할을 합니다.
+Firestore는 WearOS 디바이스와 ML 서버, Web 앱 간의 실시간 데이터 브리지 역할을 한다.
 
 ### 컬렉션 구조
 
@@ -335,10 +335,10 @@ Firestore는 WearOS 디바이스와 ML 서버, Web 앱 간의 실시간 데이�
 - `audio_base64`: Base64로 인코딩된 WAV 오디오 데이터 (문자열)
 - `timestamp`: UNIX timestamp 또는 ISO 8601 (문자열 또는 숫자)
 - `ml_processed`: ML 처리 상태 (문자열)
-  - `"pending"`: ML 처리가 필요한 상태
-  - `"processing"`: 현재 ML 처리 중
-  - `"completed"`: ML 처리 완료
-  - `"failed"`: ML 처리 실패
+  - `"pending"`: ML 처리가 필요한 상태이다.
+  - `"processing"`: 현재 ML 처리 중이다.
+  - `"completed"`: ML 처리가 완료되었다.
+  - `"failed"`: ML 처리가 실패했다.
 
 ### ML 서버 데이터 처리 플로우
 
@@ -357,7 +357,7 @@ docs = db.collection("users").document("testUser").collection("raw_events").wher
 
 #### 3. 결과 업데이트
 
-처리 완료 후 Firestore 문서 업데이트:
+처리 완료 후 Firestore 문서를 업데이트한다:
 
 ```python
 doc.reference.update({
@@ -370,11 +370,11 @@ doc.reference.update({
 
 ### Firestore 연결 상태
 
-- **Watch 앱 (WearOS)**: ✅ Firestore 연결됨 (`google-services.json` 설정 완료)
-- **Web 앱 (Next.js)**: ❌ Firestore 연결 안 됨 (현재 TODO 상태, V1 Mock 모드 사용 중)
-- **ML Python 서버**: ✅ Firestore 연결됨 (서비스 계정 키로 접근)
+- **Watch 앱 (WearOS)**: ✅ Firestore가 연결되어 있다 (`google-services.json` 설정 완료).
+- **Web 앱 (Next.js)**: ❌ Firestore가 연결되어 있지 않다 (현재 TODO 상태, V1 Mock 모드 사용 중).
+- **ML Python 서버**: ✅ Firestore가 연결되어 있다 (서비스 계정 키로 접근).
 
 ---
 
-이 문서는 프론트엔드 개발 시 참고하는 API 명세입니다.
+이 문서는 프론트엔드 개발 시 참고하는 API 명세이다.
 
