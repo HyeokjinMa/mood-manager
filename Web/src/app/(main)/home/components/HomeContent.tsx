@@ -68,6 +68,8 @@ export default function HomeContent({
   moodState,
   deviceState,
   backgroundState,
+  volume,
+  onVolumeChange,
   onMoodColorChange,
   currentSegmentData,
   onSegmentIndexChange,
