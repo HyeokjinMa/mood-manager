@@ -14,9 +14,10 @@ import { useRouter } from "next/navigation";
 
 export default function SplashPage() {
   const router = useRouter();
-  const { status } = useSession(); 
+  const { status, data: session } = useSession(); 
   const redirectingRef = useRef(false); // 리다이렉트 중복 방지
   const lastStatusRef = useRef<string | null>(null); // 이전 상태 추적
+  const hasCheckedSessionRef = useRef(false); // 세션 체크 완료 여부
   // status = "loading" | "authenticated" | "unauthenticated"
 
   useEffect(() => {
@@ -30,15 +31,17 @@ export default function SplashPage() {
     // 단, 너무 오래 loading이면 타임아웃 처리
     if (status === "loading") {
       redirectingRef.current = false;
+      hasCheckedSessionRef.current = false;
       
-      // 5초 후에도 loading이면 unauthenticated로 간주
+      // 3초 후에도 loading이면 unauthenticated로 간주하고 로그인 페이지로 이동
       const timeout = setTimeout(() => {
         console.log("[SplashPage] 세션 로딩 타임아웃, 로그인 페이지로 이동");
-        if (!redirectingRef.current) {
+        if (!redirectingRef.current && !hasCheckedSessionRef.current) {
           redirectingRef.current = true;
+          hasCheckedSessionRef.current = true;
           router.replace("/login");
         }
-      }, 5000);
+      }, 3000); // 5초에서 3초로 단축
       
       return () => {
         clearTimeout(timeout);
@@ -46,26 +49,46 @@ export default function SplashPage() {
     }
 
     // 이미 리다이렉트 중이면 무시
-    if (redirectingRef.current) return;
+    if (redirectingRef.current || hasCheckedSessionRef.current) return;
 
-    redirectingRef.current = true;
-
-    // 약간의 딜레이를 추가하여 세션 상태가 안정화될 시간을 줌
-    const timer = setTimeout(() => {
-      if (status === "authenticated") {
-        console.log("[SplashPage] 인증됨, 홈으로 이동");
-        router.replace("/home"); // 로그인 되어있음 → 홈으로 이동
-      } else if (status === "unauthenticated") {
-        console.log("[SplashPage] 인증되지 않음, 로그인 페이지로 이동");
-        router.replace("/login"); // 로그인 안됨 → 로그인 페이지로 이동
+    // authenticated 상태일 때 세션 데이터 확인
+    if (status === "authenticated") {
+      // 세션에 실제 사용자 정보가 있는지 확인
+      if (!session?.user) {
+        console.log("[SplashPage] 세션 데이터 없음, 로그인 페이지로 이동");
+        redirectingRef.current = true;
+        hasCheckedSessionRef.current = true;
+        router.replace("/login");
+        return;
       }
-      // loading 상태는 위에서 처리되므로 여기서는 무시
-    }, 1000); // 딜레이를 500ms에서 1000ms로 증가하여 세션 체크가 완료될 시간 확보 (쿠키 검증 시간 확보)
+      
+      // 관리자 모드가 자동으로 활성화되는 것을 방지하기 위해
+      // 실제로 로그인한 사용자인지 확인 (세션에 id가 있어야 함)
+      const userId = (session.user as { id?: string })?.id;
+      if (!userId) {
+        console.log("[SplashPage] 사용자 ID 없음, 로그인 페이지로 이동");
+        redirectingRef.current = true;
+        hasCheckedSessionRef.current = true;
+        router.replace("/login");
+        return;
+      }
+      
+      console.log("[SplashPage] 인증됨, 홈으로 이동", { userId, email: session.user.email });
+      redirectingRef.current = true;
+      hasCheckedSessionRef.current = true;
+      router.replace("/home");
+      return;
+    }
 
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [status, router]);
+    // unauthenticated 상태
+    if (status === "unauthenticated") {
+      console.log("[SplashPage] 인증되지 않음, 로그인 페이지로 이동");
+      redirectingRef.current = true;
+      hasCheckedSessionRef.current = true;
+      router.replace("/login");
+      return;
+    }
+  }, [status, session, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">
