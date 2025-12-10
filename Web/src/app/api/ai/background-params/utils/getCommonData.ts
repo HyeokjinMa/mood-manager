@@ -60,8 +60,14 @@ export async function getCommonData(
       return getMockCommonData();
     }
 
-    const preprocessed = await preprocessedRes.json();
-    const moodStream = await moodStreamRes.json();
+    let preprocessed, moodStream;
+    try {
+      preprocessed = await preprocessedRes.json();
+      moodStream = await moodStreamRes.json();
+    } catch (jsonError) {
+      console.error("[getCommonData] JSON 파싱 실패, 목업 데이터 사용:", jsonError);
+      return getMockCommonData();
+    }
 
     return {
       preprocessed,
