@@ -12,6 +12,7 @@ The system operates based on the following pipeline:
 ---
 
 ## 🔗 Links
+[Mood-manager | Tech Blog](https://www.notion.so/Mood-Manager-2c42a535a226809d9206ef6166f28718?source=copy_link)
 
 ---
 
