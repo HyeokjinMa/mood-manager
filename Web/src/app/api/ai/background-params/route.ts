@@ -5,6 +5,9 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+
+// AWS EC2에서 긴 실행 시간을 허용하기 위해 maxDuration 설정 (최대 300초 = 5분)
+export const maxDuration = 300;
 import { requireAuth, checkMockMode } from "@/lib/auth/session";
 import { getCommonData } from "./utils/getCommonData";
 import { getMockResponse } from "./utils/mockResponse";
