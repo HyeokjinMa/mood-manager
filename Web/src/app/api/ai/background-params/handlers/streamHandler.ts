@@ -780,7 +780,7 @@ CRITICAL: Icon Diversity & Music Diversity
       }
     } else {
       const segment = validatedResponse as BackgroundParamsResponse;
-      const originalSegment = segments?.[0];
+      // const originalSegment = segments?.[0]; // 사용되지 않음
       
       try {
         // musicSelection이 musicID (숫자)로 전달됨
