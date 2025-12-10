@@ -8,7 +8,7 @@ import type { Mood } from "@/types/mood";
 import { MOODS } from "@/types/mood";
 import type { MoodStreamSegment } from "@/hooks/useMoodStream/types";
 import { saveMood, deleteSavedMood, getSavedMoods, type SavedMood } from "@/lib/mock/savedMoodsStorage";
-import { ADMIN_EMAIL } from "@/lib/auth/mockMode";
+// 관리자 모드 확인은 사용자 ID 기반으로만 수행
 
 interface UseMoodDashboardProps {
   mood: Mood;
