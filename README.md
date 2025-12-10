@@ -11,6 +11,10 @@ The system operates based on the following pipeline:
 > **WearOS** → **Firebase** → **ML Analysis Server** → **Next.js Web App** → **Emotion Prediction** *(Discrete Markov Chain)* → **Mood Expansion** *(LLM)* → **Output Device Control**
 ---
 
+## 🔗 Links
+
+---
+
 ## System Architecture Diagram
 
 ![System Architecture](./Web/public/system-architecture.png)
