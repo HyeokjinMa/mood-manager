@@ -34,6 +34,7 @@ import type { Mood } from "@/types/mood";
 import type { MoodStreamData, CurrentSegmentData } from "@/types/moodStream";
 import { convertSegmentMoodToMood } from "./components/MoodDashboard/utils/moodStreamConverter";
 import { getLastSegmentEndTime } from "@/lib/utils/segmentUtils";
+import { hexToRgb } from "@/lib/utils/colorUtils";
 
 export default function HomePage() {
   const router = useRouter();
@@ -354,7 +355,6 @@ export default function HomePage() {
 
           // 색상 변경 시 RGB 변환
           if (changes.color) {
-            const { hexToRgb } = require("@/lib/utils/colorUtils");
             const rgb = hexToRgb(changes.color);
             requestBody.r = rgb[0];
             requestBody.g = rgb[1];

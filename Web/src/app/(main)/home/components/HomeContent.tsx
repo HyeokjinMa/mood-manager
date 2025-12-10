@@ -275,9 +275,12 @@ export default function HomeContent({
             currentMood={deviceGridMood}
             onDeleteRequest={onDeleteRequest}
             isLoading={isLoadingMoodStream}
-            volume={volume}
+            volume={currentVolume}
             onUpdateVolume={(newVolume) => {
-              setVolume(newVolume);
+              // 외부로 볼륨 변경 전달
+              if (onVolumeChange) {
+                onVolumeChange(newVolume);
+              }
             }}
             onUpdateCurrentSegment={onUpdateCurrentSegment}
             currentSegment={currentSegment}

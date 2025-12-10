@@ -30,6 +30,7 @@ import DeviceNameEditor from "./components/DeviceNameEditor";
 import DeviceControls from "./components/DeviceControls";
 import { getDeviceIcon, getDeviceStatusDescription } from "./utils/deviceUtils";
 import type { MoodStreamSegment } from "@/hooks/useMoodStream/types";
+import { hexToRgb } from "@/lib/utils/colorUtils";
 
 export default function DeviceCardExpanded({
   device,
@@ -237,7 +238,6 @@ export default function DeviceCardExpanded({
             }
             // 무드대시보드 색상 즉각 반영을 위해 세그먼트도 즉시 업데이트
             if (onUpdateCurrentSegment && currentSegment?.mood) {
-              const { hexToRgb } = require("@/lib/utils/colorUtils");
               onUpdateCurrentSegment({
                 mood: {
                   ...currentSegment.mood,
