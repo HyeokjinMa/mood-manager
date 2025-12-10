@@ -55,11 +55,12 @@ export default function SplashPage() {
       if (status === "authenticated") {
         console.log("[SplashPage] 인증됨, 홈으로 이동");
         router.replace("/home"); // 로그인 되어있음 → 홈으로 이동
-      } else {
+      } else if (status === "unauthenticated") {
         console.log("[SplashPage] 인증되지 않음, 로그인 페이지로 이동");
         router.replace("/login"); // 로그인 안됨 → 로그인 페이지로 이동
       }
-    }, 300);
+      // loading 상태는 위에서 처리되므로 여기서는 무시
+    }, 500); // 딜레이를 300ms에서 500ms로 증가하여 세션 체크가 완료될 시간 확보
 
     return () => {
       clearTimeout(timer);
