@@ -29,6 +29,7 @@ import { useDeviceCard } from "./hooks/useDeviceCard";
 import DeviceNameEditor from "./components/DeviceNameEditor";
 import DeviceControls from "./components/DeviceControls";
 import { getDeviceIcon, getDeviceStatusDescription } from "./utils/deviceUtils";
+import type { MoodStreamSegment } from "@/hooks/useMoodStream/types";
 
 export default function DeviceCardExpanded({
   device,
@@ -60,8 +61,8 @@ export default function DeviceCardExpanded({
   onUpdateVolume?: (volume: number) => void; // 0-100 범위
   onDeviceUpdate?: (updatedDevice: Device) => void; // 디바이스 업데이트 콜백
   onDeviceControlChange?: (changes: { color?: string; brightness?: number; scentLevel?: number; volume?: number }) => void; // 디바이스 컨트롤 변경 콜백
-  onUpdateCurrentSegment?: (updates: { mood?: { color?: string; lighting?: { color?: string; rgb?: number[]; brightness?: number } } }) => void; // 현재 세그먼트 업데이트 콜백
-  currentSegment?: any; // 현재 세그먼트 데이터
+  onUpdateCurrentSegment?: (updates: Partial<MoodStreamSegment>) => void; // 현재 세그먼트 업데이트 콜백
+  currentSegment?: MoodStreamSegment | null; // 현재 세그먼트 데이터
 }) {
   const {
     lightColor,
@@ -172,18 +173,22 @@ export default function DeviceCardExpanded({
             ] : [0, 0, 0];
           };
           
-          onUpdateCurrentSegment({
-            mood: {
+          if (onUpdateCurrentSegment && currentSegment?.mood) {
+            const updatedMood = {
               ...currentSegment.mood,
               color: localLightColor,
               lighting: {
-                ...currentSegment.mood.lighting,
+                ...(currentSegment.mood.lighting || {}),
                 color: localLightColor,
                 rgb: hexToRgb(localLightColor),
                 brightness: localLightBrightness,
               },
-            },
-          });
+            };
+            // Partial<MoodStreamSegment>로 타입 단언 (mood만 업데이트하는 경우)
+            onUpdateCurrentSegment({
+              mood: updatedMood,
+            } as unknown as Partial<MoodStreamSegment>);
+          }
         }
       }
     } catch (error) {

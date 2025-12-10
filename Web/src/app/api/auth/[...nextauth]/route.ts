@@ -559,16 +559,16 @@ export const authOptions: NextAuthOptions = {
         token.email = user.email;
         token.name = user.name;
       }
-      // user가 없고 token.id도 없으면 null 반환하여 세션 무효화
+      // user가 없고 token.id도 없으면 빈 토큰 반환 (세션 무효화)
       if (!user && !token.id) {
-        return null as any;
+        return {} as typeof token;
       }
       return token;
     },
     async session({ session, token }) {
-      // token이 null이거나 token.id가 없으면 세션 무효화
+      // token이 없거나 token.id가 없으면 빈 세션 반환 (세션 무효화)
       if (!token || !token.id) {
-        return null as any;
+        return { ...session, user: { ...session.user, id: undefined } };
       }
       if (session.user) {
         (session.user as { id?: string }).id = token.id as string;

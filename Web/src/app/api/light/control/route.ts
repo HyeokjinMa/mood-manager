@@ -54,13 +54,13 @@ export async function POST(request: NextRequest) {
       return sessionOrError;
     }
 
-    let body: any = {};
+    let body: { r?: number; g?: number; b?: number; colortemp?: number; brightness?: number } = {};
     try {
       const bodyText = await request.text();
       if (bodyText) {
-        body = JSON.parse(bodyText);
+        body = JSON.parse(bodyText) as { r?: number; g?: number; b?: number; colortemp?: number; brightness?: number };
       }
-    } catch (error) {
+    } catch {
       // 빈 body이거나 JSON 파싱 실패 시 기본값 사용
       console.log("[Light Control] Empty body or JSON parse error, using defaults");
     }

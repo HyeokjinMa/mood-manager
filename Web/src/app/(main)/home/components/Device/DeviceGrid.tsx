@@ -49,8 +49,8 @@ export default function DeviceGrid({
   volume?: number; // 0-100 범위
   onUpdateVolume?: (volume: number) => void; // 0-100 범위
   onDeviceControlChange?: (changes: { color?: string; brightness?: number; scentLevel?: number; volume?: number }) => void; // 디바이스 컨트롤 변경 콜백
-  onUpdateCurrentSegment?: (updates: { mood?: { color?: string; lighting?: { color?: string; rgb?: number[]; brightness?: number } } }) => void; // 현재 세그먼트 업데이트 콜백
-  currentSegment?: MoodStreamSegment; // 현재 세그먼트 데이터
+  onUpdateCurrentSegment?: (updates: Partial<MoodStreamSegment>) => void; // 현재 세그먼트 업데이트 콜백
+  currentSegment?: MoodStreamSegment | null; // 현재 세그먼트 데이터
 }) {
 
   // 확장 카드가 있으면 그 카드를 먼저 앞으로 정렬
