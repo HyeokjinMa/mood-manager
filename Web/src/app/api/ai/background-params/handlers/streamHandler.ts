@@ -155,6 +155,18 @@ export async function handleStreamMode({
   // 세션 정보를 전달하여 목업 모드 확인
   const prompt = await generatePromptFromPythonResponse(llmInput, pythonResponse, userId, segments, session);
 
+  // ===== 프롬프트 로깅 (LLM 입력 확인) =====
+  console.log("\n" + "=".repeat(100));
+  console.log("📝 [LLM 프롬프트]");
+  console.log("=".repeat(100));
+  console.log("프롬프트 길이:", prompt.length, "자");
+  console.log("프롬프트 토큰 추정:", Math.ceil(prompt.length / 4), "토큰 (대략적 추정)");
+  console.log("\n[프롬프트 내용 - 처음 1000자]");
+  console.log(prompt.substring(0, 1000));
+  console.log("\n[프롬프트 내용 - 마지막 500자]");
+  console.log(prompt.substring(Math.max(0, prompt.length - 500)));
+  console.log("=".repeat(100) + "\n");
+
   // 캐시 확인 (Python 응답 포함)
   const cacheKey = {
     moodName: llmInput.moodName,
@@ -303,6 +315,16 @@ CRITICAL: Icon Diversity & Music Diversity
       max_tokens: 8000, // JSON Schema + 10개 세그먼트 = 많은 토큰 필요
     });
 
+    // ===== LLM API 응답 정보 로깅 =====
+    console.log("\n" + "=".repeat(100));
+    console.log("📊 [LLM API 응답 정보]");
+    console.log("=".repeat(100));
+    console.log("사용된 토큰:", completion.usage?.total_tokens || "N/A");
+    console.log("  - 입력 토큰:", completion.usage?.prompt_tokens || "N/A");
+    console.log("  - 출력 토큰:", completion.usage?.completion_tokens || "N/A");
+    console.log("완료 이유:", completion.choices[0].finish_reason || "N/A");
+    console.log("=".repeat(100) + "\n");
+
     const rawResponse = JSON.parse(completion.choices[0].message.content || "{}");
     
     // ===== LLM 원본 응답 로깅 =====
@@ -319,13 +341,36 @@ CRITICAL: Icon Diversity & Music Diversity
     console.log("✅ [검증된 LLM 응답]");
     console.log("=".repeat(100));
     if ('segments' in validatedResponse && Array.isArray(validatedResponse.segments)) {
-      console.log(`총 ${validatedResponse.segments.length}개 세그먼트`);
+      console.log(`총 ${validatedResponse.segments.length}개 세그먼트 생성됨`);
+      
+      // 선호도 반영 확인
+      const musicIDs = validatedResponse.segments.map(seg => {
+        const musicID = typeof seg.musicSelection === 'number' 
+          ? seg.musicSelection 
+          : parseInt(String(seg.musicSelection), 10);
+        return musicID;
+      }).filter(id => !isNaN(id));
+      
+      const uniqueMusicIDs = new Set(musicIDs);
+      console.log(`\n[음악 다양성 확인]`);
+      console.log(`  - 총 음악 ID: ${musicIDs.length}개`);
+      console.log(`  - 고유 음악 ID: ${uniqueMusicIDs.size}개`);
+      console.log(`  - 중복 여부: ${musicIDs.length !== uniqueMusicIDs.size ? "⚠️ 중복 발견" : "✅ 중복 없음"}`);
+      
+      const allIconKeys = validatedResponse.segments.flatMap(seg => seg.iconKeys || []);
+      const uniqueIconKeys = new Set(allIconKeys);
+      console.log(`\n[아이콘 다양성 확인]`);
+      console.log(`  - 총 아이콘 키: ${allIconKeys.length}개`);
+      console.log(`  - 고유 아이콘 키: ${uniqueIconKeys.size}개`);
+      console.log(`  - 다양성: ${uniqueIconKeys.size >= 8 ? "✅ 좋음 (8개 이상)" : "⚠️ 부족 (8개 미만)"}`);
+      
       validatedResponse.segments.forEach((seg, idx) => {
         console.log(`\n[Segment ${idx}]`);
         console.log(`  moodAlias: "${seg.moodAlias}"`);
         console.log(`  musicSelection: ${seg.musicSelection} (type: ${typeof seg.musicSelection})`);
         console.log(`  moodColor: "${seg.moodColor}"`);
         console.log(`  lighting: brightness=${seg.lighting?.brightness}, temperature=${seg.lighting?.temperature}K`);
+        console.log(`  scent: type=${seg.scent?.type}, name=${seg.scent?.name}, level=${seg.scent?.level}`);
         console.log(`  backgroundIcon: ${seg.backgroundIcon?.name} (${seg.backgroundIcon?.category})`);
         console.log(`  backgroundIcons: [${seg.iconKeys?.join(", ") || ""}]`);
         console.log(`  backgroundWind: direction=${seg.backgroundWind?.direction}°, speed=${seg.backgroundWind?.speed}`);
@@ -666,6 +711,36 @@ CRITICAL: Icon Diversity & Music Diversity
     }
     
     const validatedResponse = validateAndNormalizeResponse(rawResponse as Parameters<typeof validateAndNormalizeResponse>[0]);
+    
+    // ===== 검증된 응답 로깅 (Fallback) =====
+    console.log("\n" + "=".repeat(100));
+    console.log("✅ [검증된 LLM 응답 - Fallback 모드]");
+    console.log("=".repeat(100));
+    if ('segments' in validatedResponse && Array.isArray(validatedResponse.segments)) {
+      console.log(`총 ${validatedResponse.segments.length}개 세그먼트 생성됨`);
+      
+      // 선호도 반영 확인
+      const musicIDs = validatedResponse.segments.map(seg => {
+        const musicID = typeof seg.musicSelection === 'number' 
+          ? seg.musicSelection 
+          : parseInt(String(seg.musicSelection), 10);
+        return musicID;
+      }).filter(id => !isNaN(id));
+      
+      const uniqueMusicIDs = new Set(musicIDs);
+      console.log(`\n[음악 다양성 확인]`);
+      console.log(`  - 총 음악 ID: ${musicIDs.length}개`);
+      console.log(`  - 고유 음악 ID: ${uniqueMusicIDs.size}개`);
+      console.log(`  - 중복 여부: ${musicIDs.length !== uniqueMusicIDs.size ? "⚠️ 중복 발견" : "✅ 중복 없음"}`);
+      
+      const allIconKeys = validatedResponse.segments.flatMap(seg => seg.iconKeys || []);
+      const uniqueIconKeys = new Set(allIconKeys);
+      console.log(`\n[아이콘 다양성 확인]`);
+      console.log(`  - 총 아이콘 키: ${allIconKeys.length}개`);
+      console.log(`  - 고유 아이콘 키: ${uniqueIconKeys.size}개`);
+      console.log(`  - 다양성: ${uniqueIconKeys.size >= 8 ? "✅ 좋음 (8개 이상)" : "⚠️ 부족 (8개 미만)"}`);
+    }
+    console.log("=".repeat(100) + "\n");
     
     // ===== musicSelection을 musicTracks로 변환 (Fallback) =====
     if ('segments' in validatedResponse && Array.isArray(validatedResponse.segments)) {

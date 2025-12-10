@@ -30,7 +30,7 @@ export function useMoodDashboard({
 }: UseMoodDashboardProps) {
   const { data: session } = useSession();
   // 관리자 모드 확인 (사용자 ID 기반으로만 확인, 이메일만으로는 판단하지 않음)
-  const isAdminMode = session?.user?.id === "admin-mock-user-id";
+  const isAdminMode = (session?.user as { id?: string })?.id === "admin-mock-user-id";
   
   const [isLoading, setIsLoading] = useState(true);
   const [playing, setPlaying] = useState(true);
