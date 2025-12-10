@@ -12,9 +12,9 @@ interface MenuSectionProps {
   onLogout: () => void;
   onDeleteAccount: () => void;
   onChangePassword: () => void;
-  onQnaClick: () => void;
-  onInquiryClick: () => void;
-  onPrivacyClick: () => void;
+  onQnaClick?: () => void;
+  onInquiryClick?: () => void;
+  onPrivacyClick?: () => void;
 }
 
 export default function MenuSection({ 
@@ -30,6 +30,7 @@ export default function MenuSection({
       <button
         onClick={onQnaClick}
         className="w-full flex items-center justify-between px-4 py-4 border-b border-gray-200 hover:bg-gray-50 transition text-left"
+        disabled={!onQnaClick}
       >
         <div className="flex items-center">
           <HelpCircle size={20} className="text-gray-400 mr-3" />
@@ -41,6 +42,7 @@ export default function MenuSection({
       <button
         onClick={onInquiryClick}
         className="w-full flex items-center justify-between px-4 py-4 border-b border-gray-200 hover:bg-gray-50 transition text-left"
+        disabled={!onInquiryClick}
       >
         <div className="flex items-center">
           <MessageSquare size={20} className="text-gray-400 mr-3" />
@@ -52,6 +54,7 @@ export default function MenuSection({
       <button
         onClick={onPrivacyClick}
         className="w-full flex items-center justify-between px-4 py-4 border-b border-gray-200 hover:bg-gray-50 transition text-left"
+        disabled={!onPrivacyClick}
       >
         <div className="flex items-center">
           <Shield size={20} className="text-gray-400 mr-3" />

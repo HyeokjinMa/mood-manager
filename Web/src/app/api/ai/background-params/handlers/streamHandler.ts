@@ -373,7 +373,7 @@ CRITICAL: Icon Diversity & Music Diversity
         console.log(`  musicSelection: ${seg.musicSelection} (type: ${typeof seg.musicSelection})`);
         console.log(`  moodColor: "${seg.moodColor}"`);
         console.log(`  lighting: brightness=${seg.lighting?.brightness}, temperature=${seg.lighting?.temperature}K`);
-        console.log(`  scent: type=${seg.scent?.type}, name=${seg.scent?.name}, level=${seg.scent?.level}`);
+        console.log(`  scent: type=${seg.scent?.type}, name=${seg.scent?.name}`);
         console.log(`  backgroundIcon: ${seg.backgroundIcon?.name} (${seg.backgroundIcon?.category})`);
         console.log(`  backgroundIcons: [${seg.iconKeys?.join(", ") || ""}]`);
         console.log(`  backgroundWind: direction=${seg.backgroundWind?.direction}°, speed=${seg.backgroundWind?.speed}`);

@@ -94,11 +94,7 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 
 // Validate ../src/app/(main)/mypage/inquiry/page.tsx
 {
-  type __IsExpected<Specific extends AppPageConfig<"/mypage/inquiry">> = Specific
-  const handler = {} as typeof import("../src/app/(main)/mypage/inquiry/page.js")
-  type __Check = __IsExpected<typeof handler>
-  // @ts-ignore
-  type __Unused = __Check
+  // Removed: /mypage/inquiry page (converted to modal)
 }
 
 // Validate ../src/app/(main)/mypage/page.tsx
@@ -112,20 +108,12 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 
 // Validate ../src/app/(main)/mypage/privacy/page.tsx
 {
-  type __IsExpected<Specific extends AppPageConfig<"/mypage/privacy">> = Specific
-  const handler = {} as typeof import("../src/app/(main)/mypage/privacy/page.js")
-  type __Check = __IsExpected<typeof handler>
-  // @ts-ignore
-  type __Unused = __Check
+  // Removed: /mypage/privacy page (converted to modal)
 }
 
 // Validate ../src/app/(main)/mypage/qna/page.tsx
 {
-  type __IsExpected<Specific extends AppPageConfig<"/mypage/qna">> = Specific
-  const handler = {} as typeof import("../src/app/(main)/mypage/qna/page.js")
-  type __Check = __IsExpected<typeof handler>
-  // @ts-ignore
-  type __Unused = __Check
+  // Removed: /mypage/qna page (converted to modal)
 }
 
 // Validate ../src/app/page.tsx
