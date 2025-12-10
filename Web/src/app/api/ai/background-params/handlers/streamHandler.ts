@@ -331,6 +331,9 @@ CRITICAL: Icon Diversity & Music Diversity
     console.log("\n" + "=".repeat(100));
     console.log("📋 [LLM 원본 응답]");
     console.log("=".repeat(100));
+    console.log("응답 타입:", typeof rawResponse);
+    console.log("세그먼트 개수:", Array.isArray(rawResponse.segments) ? rawResponse.segments.length : "N/A");
+    console.log("\n[전체 응답 JSON]");
     console.log(JSON.stringify(rawResponse, null, 2));
     console.log("=".repeat(100) + "\n");
     
