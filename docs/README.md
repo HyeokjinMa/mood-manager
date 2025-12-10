@@ -1,100 +1,84 @@
 # Documentation
 
-This directory contains essential documentation for the Mood Manager project.
+**최종 업데이트**: 2025.12.10
+
+이 디렉토리는 Mood Manager 프로젝트의 필수 문서를 포함합니다.
 
 ---
 
-## Document List
+## 문서 목록
 
-### Essential Documents
+### 필수 문서
 
-1. **[API_SPECIFICATION.md](./API_SPECIFICATION.md)**: Complete API specification and Firestore data structure
-2. **[DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)**: Setup guide and development guidelines
-3. **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)**: Deployment checklist and guide
-4. **[PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md)**: Project structure and organization
-5. **[TECHNOLOGY_STACK.md](./TECHNOLOGY_STACK.md)**: 기술 스택 및 실제 적용된 기술 상세 설명
-6. **[LIGHT_CONNECTION_PLAN.md](./LIGHT_CONNECTION_PLAN.md)**: 전구 연결 구현 계획 및 라즈베리파이 통신 구조
-
----
-
-## Quick Reference
-
-### Frontend Developers
-1. **API Usage**: `API_SPECIFICATION.md` - API endpoint specifications
-2. **Setup**: `DEVELOPMENT_GUIDE.md` - Installation and configuration
-3. **Project Structure**: `PROJECT_STRUCTURE.md` - Overall structure
-
-### Backend Developers
-1. **API Specification**: `API_SPECIFICATION.md` - All API endpoints and Firestore structure
-2. **Database**: `DEVELOPMENT_GUIDE.md` - Database setup and migration
-3. **Deployment**: `DEPLOYMENT_GUIDE.md` - Deployment procedures
-
-### Project Managers
-1. **Project Structure**: `PROJECT_STRUCTURE.md` - Overall project structure
-2. **Deployment**: `DEPLOYMENT_GUIDE.md` - Deployment checklist
+1. **[API_SPECIFICATION.md](./API_SPECIFICATION.md)**: API 명세서 및 Firestore 데이터 구조
+2. **[DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)**: 개발 환경 설정 및 개발 가이드
+3. **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)**: 배포 체크리스트 및 가이드
+4. **[PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md)**: 프로젝트 구조 및 조직
+5. **[TECHNOLOGY_STACK.md](./TECHNOLOGY_STACK.md)**: 기술 스택 및 적용 기술 상세 설명
+6. **[LIGHT_CONNECTION.md](./LIGHT_CONNECTION.md)**: 전구 연결 구현 가이드 및 라즈베리파이 통신 구조
 
 ---
 
-## Current Project Status
+## 빠른 참조
 
-### Frontend
-- ✅ All pages implemented (9 pages)
-- ✅ API Routes implemented (21 endpoints, mock mode)
-- ✅ Toast Notification, Error Boundary applied
-- ✅ Loading skeleton UI added
-- ✅ Code separation completed
-- ✅ TypeScript type safety improved
-- ✅ Admin mode fully implemented (localStorage-based mood set management)
-- ⚠️ Database integration pending (Prisma schema ready, actual data save/retrieve not implemented)
-- ⚠️ Time-series + Markov chain model implementation pending (currently using LLM 2-stage processing)
+### 프론트엔드 개발자
+1. **API 사용**: `API_SPECIFICATION.md` - API 엔드포인트 명세
+2. **설정**: `DEVELOPMENT_GUIDE.md` - 설치 및 설정
+3. **프로젝트 구조**: `PROJECT_STRUCTURE.md` - 전체 구조
 
-### WearOS App
-- ✅ Completed v4 version
-- ✅ Firebase integration complete
-- ✅ Firestore data transmission working
-- ✅ Health Services integration
-- ✅ Audio Event collection
+### 백엔드 개발자
+1. **API 명세**: `API_SPECIFICATION.md` - 모든 API 엔드포인트 및 Firestore 구조
+2. **데이터베이스**: `DEVELOPMENT_GUIDE.md` - 데이터베이스 설정 및 마이그레이션
+3. **배포**: `DEPLOYMENT_GUIDE.md` - 배포 절차
 
-### Development Environment
-- ✅ Next.js 15.5.6
-- ✅ React 19.1.0
-- ✅ TypeScript 5.9.3
-- ✅ Prisma 6.19.0
-- ✅ OpenAI API integration (gpt-4o-mini)
+### 프로젝트 매니저
+1. **프로젝트 구조**: `PROJECT_STRUCTURE.md` - 전체 프로젝트 구조
+2. **배포**: `DEPLOYMENT_GUIDE.md` - 배포 체크리스트
 
 ---
 
-## Document Summary
+## 문서 요약
 
 ### API_SPECIFICATION.md
-Complete API specification and Firestore data structure
-- All API endpoints
-- Request/response formats
-- Authentication requirements
-- Firestore collection structure
-- ML processing flow
+- 모든 API 엔드포인트
+- 요청/응답 형식
+- 인증 요구사항
+- Firestore 컬렉션 구조
+- ML 처리 플로우
 
 ### DEVELOPMENT_GUIDE.md
-Complete installation and development guide
-- Requirements (Node.js, npm, PostgreSQL)
-- Installation steps
-- Environment variable configuration
-- Database setup (local and production)
-- Database migration guide
-- Code style guide
-- Troubleshooting
+- 요구사항 (Node.js, npm, PostgreSQL)
+- 설치 단계
+- 환경 변수 설정
+- 데이터베이스 설정 (로컬 및 프로덕션)
+- 데이터베이스 마이그레이션 가이드
+- 코드 스타일 가이드
+- 문제 해결
 
 ### DEPLOYMENT_GUIDE.md
-Deployment checklist and guide
-- Pre-deployment code review
-- Deployment steps
-- Post-deployment verification
-- Known issues and limitations
-- Rollback plan
-- Monitoring
+- 배포 전 코드 리뷰
+- 배포 단계
+- 배포 후 검증
+- 알려진 이슈 및 제한사항
+- 롤백 계획
+- 모니터링
 
 ### PROJECT_STRUCTURE.md
-Project structure and organization
-- Web app structure (Next.js)
-- WearOS app details
-- Directory organization
+- 웹 앱 구조 (Next.js)
+- WearOS 앱 상세
+- 디렉토리 조직
+
+### TECHNOLOGY_STACK.md
+- 디스크릿 마르코프 체인 (통계 분석)
+- LLM 기반 무드 생성 (GPT-4o-mini)
+- Wav2Vec2 기반 오디오 분류
+- Health Services API
+- AudioRecord API
+
+### LIGHT_CONNECTION.md
+- LLM 출력 구조
+- RGB vs Color Temperature 처리
+- API 엔드포인트
+- 네트워크 통신 방법
+- AWS EC2 배포
+- 구현 상태
