@@ -97,6 +97,7 @@ export default function DeviceCardExpanded({
   // 단, 사용자가 직접 변경 중인 경우는 덮어쓰지 않음
   const prevDeviceIdRef = useRef<string | null>(null);
   const prevMoodIdRef = useRef<string | null>(null);
+  const isUserChangingRef = useRef({ brightness: false, scent: false, volume: false });
   
   useEffect(() => {
     const deviceChanged = prevDeviceIdRef.current !== device.id;
@@ -104,6 +105,7 @@ export default function DeviceCardExpanded({
     
     // 디바이스가 변경되었을 때만 로컬 상태를 초기화
     if (deviceChanged) {
+      console.log("[DeviceCardExpanded] 🔄 디바이스 변경 감지:", device.id);
       prevDeviceIdRef.current = device.id;
       // 새 디바이스 선택 시 props 값으로 로컬 상태 초기화
       const effectiveColor = device.output.color || currentMood?.color || lightColor;
@@ -111,11 +113,14 @@ export default function DeviceCardExpanded({
       setLocalLightBrightness(lightBrightness);
       setLocalScentLevel(scentLevel);
       setLocalVolume(volume ?? device.output.volume ?? 70);
+      // 사용자 변경 플래그 리셋
+      isUserChangingRef.current = { brightness: false, scent: false, volume: false };
       return;
     }
     
-    // 무드가 변경되었을 때만 색상 업데이트
-    if (moodChanged) {
+    // 무드가 변경되었을 때만 색상 업데이트 (사용자가 변경 중이 아닐 때만)
+    if (moodChanged && !isUserChangingRef.current.brightness) {
+      console.log("[DeviceCardExpanded] 🎨 무드 변경 감지:", currentMood?.id);
       prevMoodIdRef.current = currentMood?.id || null;
       const effectiveColor = device.output.color || currentMood?.color || lightColor;
       if (effectiveColor && effectiveColor !== localLightColor) {
@@ -126,7 +131,7 @@ export default function DeviceCardExpanded({
         setLocalLightBrightness(lightBrightness);
       }
     }
-  }, [device.id, currentMood?.id, lightColor, device.output.color, currentMood?.color, lightBrightness, scentLevel, volume, device.output.volume]);
+  }, [device.id, currentMood?.id]); // 의존성 배열을 최소화하여 불필요한 실행 방지
 
   // 즉시 저장 함수 (변경 시 자동 저장, 디바운스 적용)
   useEffect(() => {
@@ -290,7 +295,8 @@ export default function DeviceCardExpanded({
             }
           } : undefined}
           onUpdateLightBrightness={(brightness) => {
-            console.log("[DeviceCardExpanded] 🔆 Brightness 변경:", brightness);
+            console.log("[DeviceCardExpanded] 🔆 Brightness 변경:", brightness, "→ localLightBrightness 업데이트");
+            isUserChangingRef.current.brightness = true; // 사용자가 변경 중임을 표시
             setLocalLightBrightness(brightness);
             // 밝기 변경 시 즉시 onDeviceControlChange 호출하여 home으로 전달
             if (onDeviceControlChange) {
@@ -299,15 +305,29 @@ export default function DeviceCardExpanded({
             } else {
               console.warn("[DeviceCardExpanded] ⚠️ onDeviceControlChange가 없음");
             }
+            // 짧은 시간 후 플래그 리셋 (디바운스)
+            setTimeout(() => {
+              isUserChangingRef.current.brightness = false;
+            }, 1000);
           }}
           onUpdateScentLevel={(level) => {
+            console.log("[DeviceCardExpanded] 🌸 Scent Level 변경:", level, "→ localScentLevel 업데이트");
+            isUserChangingRef.current.scent = true;
             setLocalScentLevel(level);
             // 센트 레벨 변경 시 즉시 onDeviceControlChange 호출하여 home으로 전달
             if (onDeviceControlChange) {
+              console.log("[DeviceCardExpanded] 📤 onDeviceControlChange 호출 (scentLevel):", level);
               onDeviceControlChange({ scentLevel: level });
+            } else {
+              console.warn("[DeviceCardExpanded] ⚠️ onDeviceControlChange가 없음");
             }
+            setTimeout(() => {
+              isUserChangingRef.current.scent = false;
+            }, 1000);
           }}
           onUpdateVolume={(newVolume) => {
+            console.log("[DeviceCardExpanded] 🔊 Volume 변경:", newVolume, "→ localVolume 업데이트");
+            isUserChangingRef.current.volume = true;
             setLocalVolume(newVolume);
             // 볼륨 즉각 반영
             if (onUpdateVolume) {
@@ -315,8 +335,14 @@ export default function DeviceCardExpanded({
             }
             // currentMood에도 즉시 반영
             if (onDeviceControlChange) {
+              console.log("[DeviceCardExpanded] 📤 onDeviceControlChange 호출 (volume):", newVolume);
               onDeviceControlChange({ volume: newVolume });
+            } else {
+              console.warn("[DeviceCardExpanded] ⚠️ onDeviceControlChange가 없음");
             }
+            setTimeout(() => {
+              isUserChangingRef.current.volume = false;
+            }, 1000);
           }}
         />
       </div>

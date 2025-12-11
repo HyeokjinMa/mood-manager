@@ -66,6 +66,7 @@ export default function DeviceControls({
               value={lightBrightness}
               onChange={(e) => {
                 const newBrightness = Number(e.target.value);
+                console.log("[DeviceControls] 🔆 Brightness 슬라이더 변경 (Light):", newBrightness);
                 onUpdateLightBrightness?.(newBrightness);
               }}
               className="w-full"
@@ -89,6 +90,7 @@ export default function DeviceControls({
               value={scentLevel}
               onChange={(e) => {
                 const newLevel = Number(e.target.value);
+                console.log("[DeviceControls] 🌸 Scent Level 슬라이더 변경 (Scent):", newLevel);
                 onUpdateScentLevel?.(newLevel);
               }}
               className="w-full"
@@ -116,6 +118,7 @@ export default function DeviceControls({
               value={volume ?? 70}
               onChange={(e) => {
                 const newVolume = Number(e.target.value);
+                console.log("[DeviceControls] 🔊 Volume 슬라이더 변경 (Speaker):", newVolume);
                 onUpdateVolume?.(newVolume);
               }}
               className="w-full"
@@ -161,6 +164,7 @@ export default function DeviceControls({
               value={volume ?? 70}
               onChange={(e) => {
                 const newVolume = Number(e.target.value);
+                console.log("[DeviceControls] 🔊 Volume 슬라이더 변경 (Manager):", newVolume);
                 onUpdateVolume?.(newVolume);
               }}
               className="w-full"
@@ -179,6 +183,7 @@ export default function DeviceControls({
               value={lightBrightness}
               onChange={(e) => {
                 const newBrightness = Number(e.target.value);
+                console.log("[DeviceControls] 🔆 Brightness 슬라이더 변경 (Manager):", newBrightness);
                 onUpdateLightBrightness?.(newBrightness);
               }}
               className="w-full"
@@ -197,6 +202,7 @@ export default function DeviceControls({
               value={scentLevel}
               onChange={(e) => {
                 const newLevel = Number(e.target.value);
+                console.log("[DeviceControls] 🌸 Scent Level 슬라이더 변경 (Manager):", newLevel);
                 onUpdateScentLevel?.(newLevel);
               }}
               className="w-full"
