@@ -59,7 +59,7 @@ export default function AddDeviceCard({
 
   return (
     <div
-      className={`h-[100px] p-3 rounded-xl shadow-sm cursor-pointer transition-all duration-150 flex flex-col justify-center items-center backdrop-blur-sm ${
+      className={`h-[85px] p-2.5 rounded-xl shadow-sm cursor-pointer transition-all duration-150 flex flex-col justify-center items-center backdrop-blur-sm ${
         isClicked ? "scale-95" : "scale-100"
       }`}
       style={{

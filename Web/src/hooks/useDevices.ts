@@ -70,7 +70,7 @@ export function useDevices(
         });
 
         // devices가 배열이면 설정, 아니면 빈 배열
-        if (Array.isArray(data.devices)) {
+        if (Array.isArray(data.devices) && data.devices.length > 0) {
           // 우선순위 + ID 순 정렬
           const sortedDevices = data.devices.sort((a: Device, b: Device) => {
             if (PRIORITY[a.type] !== PRIORITY[b.type])
@@ -84,6 +84,76 @@ export function useDevices(
             }
             return a.id.localeCompare(b.id);
           });
+          
+          // ✅ Phase 3-2: Device 로드 직후 segments prop이 있으면 즉시 초기 세그먼트 값으로 업데이트
+          if (segments && segments.length > 0) {
+            const currentSegment = segments[currentSegmentIndex] || segments[0];
+            if (currentSegment?.mood) {
+              const segmentBrightness = currentBrightness ?? currentSegment.backgroundParams?.lighting?.brightness ?? 50;
+              const moodFromSegment = convertSegmentMoodToMood(
+                currentSegment.mood,
+                currentMood,
+                currentSegment
+              );
+              const moodToUse = currentMood || moodFromSegment;
+              
+              const updatedDevices = sortedDevices.map((d: Device) => {
+                if (d.type === "manager") {
+                  return {
+                    ...d,
+                    output: {
+                      ...d.output,
+                      color: moodToUse.color,
+                      brightness: segmentBrightness,
+                      scentType: moodToUse.scent.name,
+                      nowPlaying: moodToUse.song.title,
+                      scentLevel: d.output.scentLevel ?? 5,
+                    },
+                  };
+                }
+                if (d.type === "light") {
+                  return {
+                    ...d,
+                    output: {
+                      ...d.output,
+                      color: moodToUse.color,
+                      brightness: segmentBrightness,
+                    },
+                  };
+                }
+                if (d.type === "scent") {
+                  return {
+                    ...d,
+                    output: {
+                      ...d.output,
+                      scentType: moodToUse.scent.name,
+                      scentLevel: d.output.scentLevel ?? 5,
+                    },
+                  };
+                }
+                if (d.type === "speaker") {
+                  return {
+                    ...d,
+                    output: {
+                      ...d.output,
+                      nowPlaying: moodToUse.song.title,
+                    },
+                  };
+                }
+                return d;
+              });
+              
+              setDevices(updatedDevices);
+              const totalTime = Date.now() - startTime;
+              console.log(`[useDevices] ✅ 디바이스 정보 로드 완료 (초기 세그먼트 적용) (총 ${totalTime}ms):`, {
+                devicesCount: updatedDevices.length,
+              });
+              setIsLoading(false);
+              return;
+            }
+          }
+          
+          // segments가 없으면 정렬된 디바이스만 설정 (다음 useEffect에서 업데이트됨)
           setDevices(sortedDevices);
           const totalTime = Date.now() - startTime;
           console.log(`[useDevices] ✅ 디바이스 정보 로드 완료 (총 ${totalTime}ms):`, {
@@ -91,7 +161,9 @@ export function useDevices(
           });
         } else {
           setDevices([]);
-          console.warn("[useDevices] ⚠️ devices가 배열이 아님:", data);
+          if (!Array.isArray(data.devices)) {
+            console.warn("[useDevices] ⚠️ devices가 배열이 아님:", data);
+          }
         }
       } catch (error) {
         const errorTime = Date.now() - startTime;
@@ -106,7 +178,7 @@ export function useDevices(
     };
 
     fetchDevices();
-  }, []);
+  }, [segments, currentSegmentIndex, currentMood, currentBrightness]); // ✅ segments prop을 의존성에 추가
 
   // Phase 6: 현재 세그먼트 정보를 디바이스에 동기화
   // 핵심: segments 배열의 현재 세그먼트를 단일 소스로 사용하여 모든 디바이스에 일관되게 반영

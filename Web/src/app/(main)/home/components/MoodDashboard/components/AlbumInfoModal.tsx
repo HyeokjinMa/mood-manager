@@ -65,7 +65,8 @@ export default function AlbumInfoModal({
       <div
         className="relative bg-white rounded-xl shadow-2xl p-6 w-[calc(100%-2rem)] max-w-[320px] mx-4 overflow-y-auto"
         style={{
-          maxHeight: "calc(100vh - 4rem)",
+          maxHeight: "calc(100vh - 4rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))",
+          marginTop: "calc(2rem + env(safe-area-inset-top, 0px))",
           boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
         }}
         onClick={(e) => e.stopPropagation()}
@@ -73,7 +74,7 @@ export default function AlbumInfoModal({
         {/* 닫기 버튼 */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-1 rounded-full hover:bg-gray-100 transition-colors"
+          className="absolute top-4 right-4 p-1 rounded-full hover:bg-gray-100 transition-colors z-10"
           aria-label="Close"
         >
           <X size={20} className="text-gray-600" />

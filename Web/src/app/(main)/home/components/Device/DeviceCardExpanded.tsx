@@ -70,11 +70,19 @@ export default function DeviceCardExpanded({
   // device.output.color 또는 currentMood.color 우선 사용
   const lightColor = device.output.color || currentMood?.color || hookLightColor;
 
-  // 로컬 상태로 변경사항 추적 (저장 전까지는 반영하지 않음)
-  const [localLightColor, setLocalLightColor] = useState(lightColor);
-  const [localLightBrightness, setLocalLightBrightness] = useState(lightBrightness);
-  const [localScentLevel, setLocalScentLevel] = useState(scentLevel);
-  const [localVolume, setLocalVolume] = useState(volume ?? device.output.volume ?? 70);
+  // 로컬 상태 초기값: device.output에서 직접 가져오거나 기본값 사용
+  const [localLightColor, setLocalLightColor] = useState(() => 
+    device.output.color || currentMood?.color || hookLightColor
+  );
+  const [localLightBrightness, setLocalLightBrightness] = useState(() => 
+    device.output.brightness ?? 50
+  );
+  const [localScentLevel, setLocalScentLevel] = useState(() => 
+    device.output.scentLevel ?? 5
+  );
+  const [localVolume, setLocalVolume] = useState(() => 
+    volume ?? device.output.volume ?? 70
+  );
 
   // 배경색은 localLightColor가 있으면 우선 사용, 없으면 baseBackgroundColor 사용
   // 컬러피커로 색을 변경했을 때 즉시 반영되도록
@@ -115,13 +123,17 @@ export default function DeviceCardExpanded({
   }, [device.output.scentLevel, localScentLevel]);
   
   useEffect(() => {
-    if (!isUserChangingRef.current.volume) {
-      const newVolume = volume ?? device.output.volume ?? 70;
-      if (newVolume !== localVolume) {
-        setLocalVolume(newVolume);
-      }
+    // 사용자가 변경 중이 아닐 때만 props 동기화
+    if (isUserChangingRef.current.volume) {
+      return; // ✅ 사용자 변경 중에는 props 무시
     }
-  }, [volume, device.output.volume, localVolume]);
+    
+    const newVolume = volume ?? device.output.volume ?? 70;
+    // ✅ 차이가 있을 때만 업데이트 (불필요한 리렌더링 방지)
+    if (newVolume !== localVolume) {
+      setLocalVolume(newVolume);
+    }
+  }, [volume, device.output.volume]); // ✅ localVolume을 의존성에서 제거하여 무한 루프 방지
   
   useEffect(() => {
     const effectiveColor = device.output.color || currentMood?.color || lightColor;

@@ -35,7 +35,12 @@ export default function BottomNav({ currentMood, moodColor, onMyPageClick, onMoo
 
   return (
     <div className="fixed bottom-0 left-0 right-0 flex justify-center z-30">
-      <div className="w-full max-w-[375px] backdrop-blur-sm border-t border-gray-200 flex justify-around py-2">
+      <div 
+        className="w-full max-w-[375px] backdrop-blur-sm border-t border-gray-200 flex justify-around py-2"
+        style={{
+          paddingBottom: "calc(0.5rem + env(safe-area-inset-bottom, 0px))",
+        }}
+      >
         {navItem("MYPAGE", <FaUser />, "/mypage", path, homeColor, onMyPageClick)}
         {navItem("HOME", <FaHome />, "/home", path, homeColor)}
         {navItem("MOOD", <FaPalette />, "/mood", path, homeColor, onMoodClick)}

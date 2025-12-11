@@ -234,6 +234,50 @@ export default function HomePage() {
     return currentSegmentData?.backgroundParams?.lighting?.brightness || 50;
   }, [currentSegmentData?.backgroundParams?.lighting?.brightness]);
   
+  // Phase 3-1: localStorage에서 저장된 색상 복원 (초기 로드 시)
+  useEffect(() => {
+    if (!moodStreamData.segments || moodStreamData.segments.length === 0) return;
+    
+    try {
+      const restoredSegments = moodStreamData.segments.map((segment, index) => {
+        const storageKey = `mood-segment-${index}-color`;
+        const savedColor = localStorage.getItem(storageKey);
+        if (savedColor && segment.mood) {
+          console.log(`[HomePage] 🔄 세그먼트 ${index} 색상 복원:`, savedColor);
+          return {
+            ...segment,
+            mood: {
+              ...segment.mood,
+              color: savedColor,
+              // lighting이 있으면 color 업데이트, 없으면 기존 구조 유지
+              ...(segment.mood.lighting && {
+                lighting: {
+                  ...segment.mood.lighting,
+                  color: savedColor,
+                },
+              }),
+            },
+          };
+        }
+        return segment;
+      });
+      
+      // 복원된 색상이 있으면 세그먼트 업데이트
+      const hasChanges = restoredSegments.some((seg, idx) => 
+        seg.mood?.color !== moodStreamData.segments[idx]?.mood?.color
+      );
+      
+      if (hasChanges) {
+        setMoodStreamData(prev => ({ 
+          ...prev, 
+          segments: restoredSegments as typeof prev.segments 
+        }));
+      }
+    } catch (error) {
+      console.warn("[HomePage] Failed to restore colors from localStorage:", error);
+    }
+  }, [moodStreamData.segments.length]); // 세그먼트 개수만 추적하여 초기 로드 시 한 번만 실행
+
   // Phase 3: currentSegmentData 변경 시 currentMood 업데이트 (무한 루프 방지)
   const prevMoodIdRef = useRef<string | null>(null);
   useEffect(() => {
@@ -441,6 +485,17 @@ export default function HomePage() {
                   ...currentSegment,
                   ...updates,
                 };
+                
+                // ✅ 색상 변경 시 localStorage에 저장 (웹앱 재시작 시 복원)
+                if (updates.mood?.color) {
+                  try {
+                    const storageKey = `mood-segment-${prev.currentIndex}-color`;
+                    localStorage.setItem(storageKey, updates.mood.color);
+                    console.log(`[HomePage] 💾 세그먼트 ${prev.currentIndex} 색상 저장:`, updates.mood.color);
+                  } catch (error) {
+                    console.warn("[HomePage] Failed to save color to localStorage:", error);
+                  }
+                }
               }
               return {
                 ...prev,

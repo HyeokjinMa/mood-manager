@@ -63,7 +63,7 @@ export default function DeviceControls({
               type="range"
               min={0}
               max={100}
-              value={lightBrightness}
+              value={lightBrightness ?? 50}
               onChange={(e) => {
                 const newBrightness = Number(e.target.value);
                 console.log("[DeviceControls] 🔆 Brightness 슬라이더 변경 (Light):", newBrightness);
@@ -87,7 +87,7 @@ export default function DeviceControls({
               type="range"
               min={1}
               max={10}
-              value={scentLevel}
+              value={scentLevel ?? 5}
               onChange={(e) => {
                 const newLevel = Number(e.target.value);
                 console.log("[DeviceControls] 🌸 Scent Level 슬라이더 변경 (Scent):", newLevel);
@@ -180,7 +180,7 @@ export default function DeviceControls({
               type="range"
               min={0}
               max={100}
-              value={lightBrightness}
+              value={lightBrightness ?? 50}
               onChange={(e) => {
                 const newBrightness = Number(e.target.value);
                 console.log("[DeviceControls] 🔆 Brightness 슬라이더 변경 (Manager):", newBrightness);
@@ -199,7 +199,7 @@ export default function DeviceControls({
               type="range"
               min={1}
               max={10}
-              value={scentLevel}
+              value={scentLevel ?? 5}
               onChange={(e) => {
                 const newLevel = Number(e.target.value);
                 console.log("[DeviceControls] 🌸 Scent Level 슬라이더 변경 (Manager):", newLevel);
