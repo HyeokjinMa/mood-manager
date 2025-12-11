@@ -11,6 +11,7 @@ import { mapMusicIDToTrack } from "@/lib/music/mapMusicIDToTrack";
 import { mapIconCategory } from "../validateResponse";
 import { SCENT_DEFINITIONS } from "@/types/mood";
 import type { ScentType } from "@/types/mood";
+import { hexToRgb } from "@/lib/utils/color";
 
 /**
  * CompleteSegmentOutput를 MoodStreamSegment로 변환
@@ -68,7 +69,8 @@ export async function mapCompleteOutputToMoodStreamSegment(
       },
       lighting: {
         color: completeOutput.moodColor,
-        rgb: completeOutput.lighting.rgb,
+        // lighting.rgb가 없으면 moodColor에서 변환 (스키마에서 rgb 제거됨)
+        rgb: completeOutput.lighting.rgb || hexToRgb(completeOutput.moodColor),
       },
     },
     musicTracks: musicTracks.map(track => ({
@@ -144,7 +146,7 @@ export function generateDeviceOutputFromCompleteOutput(
       scentInterval: completeOutput.scent.interval,
     },
     speaker: {
-      volume: completeOutput.music.volume,
+      volume: completeOutput.music.volume ?? 70, // 기본값 70 사용
       nowPlaying: musicTrack?.title || "Unknown",
     },
   };

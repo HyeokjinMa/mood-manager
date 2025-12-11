@@ -244,7 +244,7 @@ export async function handleStreamMode({
           role: "system", 
           content: `Generate 10 mood segments. JSON Schema enforces structure.
 
-Required: segments[].{moodAlias, moodColor, lighting{rgb[], brightness, temperature}, scent{type, name, level, interval}, music{musicID:10-69, volume, fadeIn, fadeOut}, background{icons[], wind{}, animation{}}}
+Required: segments[].{moodAlias, moodColor, lighting{brightness, temperature}, scent{type, name, level, interval}, music{musicID:10-69, fadeIn, fadeOut}, background{icons[], wind{}, animation{}}}
 
 Use music.musicID (not musicSelection). Use background.icons (not backgroundIcons).
 
@@ -280,14 +280,8 @@ CRITICAL: Icon Diversity & Music Diversity & Scent Diversity
                     moodColor: { type: "string", pattern: "^#[A-Fa-f0-9]{6}$" },
                     lighting: {
                       type: "object",
-                      required: ["rgb", "brightness", "temperature"],
+                      required: ["brightness", "temperature"],
                       properties: {
-                        rgb: {
-                          type: "array",
-                          minItems: 3,
-                          maxItems: 3,
-                          items: { type: "integer", minimum: 0, maximum: 255 }
-                        },
                         brightness: { type: "integer", minimum: 0, maximum: 100 },
                         temperature: { type: "integer", minimum: 2000, maximum: 6500 }
                       },
@@ -306,10 +300,9 @@ CRITICAL: Icon Diversity & Music Diversity & Scent Diversity
                     },
                     music: {
                       type: "object",
-                      required: ["musicID", "volume", "fadeIn", "fadeOut"],
+                      required: ["musicID", "fadeIn", "fadeOut"],
                       properties: {
                         musicID: { type: "integer", minimum: 10, maximum: 69 },
-                        volume: { type: "integer", minimum: 0, maximum: 100 },
                         fadeIn: { type: "integer", minimum: 0, maximum: 5000 },
                         fadeOut: { type: "integer", minimum: 0, maximum: 5000 }
                       },
@@ -651,7 +644,7 @@ async function handleStreamModeFallback({
           role: "system", 
           content: `Generate 10 mood segments. JSON Schema enforces structure.
 
-Required: segments[].{moodAlias, moodColor, lighting{rgb[], brightness, temperature}, scent{type, name, level, interval}, music{musicID:10-69, volume, fadeIn, fadeOut}, background{icons[], wind{}, animation{}}}
+Required: segments[].{moodAlias, moodColor, lighting{brightness, temperature}, scent{type, name, level, interval}, music{musicID:10-69, fadeIn, fadeOut}, background{icons[], wind{}, animation{}}}
 
 Use music.musicID (not musicSelection). Use background.icons (not backgroundIcons).
 
@@ -687,14 +680,8 @@ CRITICAL: Icon Diversity & Music Diversity & Scent Diversity
                     moodColor: { type: "string", pattern: "^#[A-Fa-f0-9]{6}$" },
                     lighting: {
                       type: "object",
-                      required: ["rgb", "brightness", "temperature"],
+                      required: ["brightness", "temperature"],
                       properties: {
-                        rgb: {
-                          type: "array",
-                          minItems: 3,
-                          maxItems: 3,
-                          items: { type: "integer", minimum: 0, maximum: 255 }
-                        },
                         brightness: { type: "integer", minimum: 0, maximum: 100 },
                         temperature: { type: "integer", minimum: 2000, maximum: 6500 }
                       },
@@ -713,10 +700,9 @@ CRITICAL: Icon Diversity & Music Diversity & Scent Diversity
                     },
                     music: {
                       type: "object",
-                      required: ["musicID", "volume", "fadeIn", "fadeOut"],
+                      required: ["musicID", "fadeIn", "fadeOut"],
                       properties: {
                         musicID: { type: "integer", minimum: 10, maximum: 69 },
-                        volume: { type: "integer", minimum: 0, maximum: 100 },
                         fadeIn: { type: "integer", minimum: 0, maximum: 5000 },
                         fadeOut: { type: "integer", minimum: 0, maximum: 5000 }
                       },

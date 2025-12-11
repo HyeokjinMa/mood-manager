@@ -256,34 +256,39 @@ export default function HomePage() {
   // 의도: mood.id만 추적하여 무한 루프 방지 (prevMoodIdRef로 id 변경 시에만 업데이트)
   
   // 전구 제어: currentMood 또는 currentSegmentData 변경 시 조명 정보를 저장 (라즈베리파이가 GET으로 가져감)
-  // 단, light_power가 "on"일 때만 전달
-  // currentMood.color가 있으면 우선 사용 (사용자가 변경한 색상), 없으면 segment.mood.lighting.rgb 사용
+  // 세그먼트 변경 시 자동으로 light_power를 "on"으로 설정하고 light_info 전달
+  // currentMood.color가 있으면 우선 사용 (사용자가 변경한 색상), 없으면 segment.mood.color에서 변환
   useEffect(() => {
-    if (!currentSegmentData?.segment?.mood?.lighting) {
+    if (!currentSegmentData?.segment?.mood) {
+      console.log("[HomePage] ⚠️ currentSegmentData.segment.mood가 없음, light_info 전달 스킵");
       return;
     }
     
-    // light_power 상태 확인 (on일 때만 전달)
+    console.log("[HomePage] 🔍 세그먼트 변경 감지 → light_info 업데이트 시작", {
+      segmentIndex: currentSegmentData.index,
+      moodColor: currentSegmentData.segment.mood.color,
+      currentMoodColor: currentMood?.color,
+      brightness: currentSegmentData.backgroundParams?.lighting?.brightness,
+    });
+    
+    // ✅ 세그먼트 변경 시 자동으로 light_power를 "on"으로 설정
     fetch("/api/light_power", {
-      method: "GET",
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       credentials: "include",
+      body: JSON.stringify({ power: "on" }),
     })
       .then((response) => {
         if (!response.ok) {
-          console.log("[HomePage] light_power 상태 확인 실패, 전달 건너뜀");
+          console.log("[HomePage] ⚠️ light_power 설정 실패, light_info 전달 건너뜀");
           return null;
         }
         return response.json();
       })
       .then((powerData) => {
-        // power가 "on"이 아니면 전달하지 않음
-        if (!powerData || powerData.power !== "on") {
-          console.log("[HomePage] light_power가 off 상태, light_info 전달 건너뜀");
-          return;
-        }
+        console.log("[HomePage] ✅ light_power 자동 설정: on", powerData);
         
         // brightness와 temperature는 backgroundParams에서 가져오기
         const brightness = currentSegmentData.backgroundParams?.lighting?.brightness || 50; // 0-100 범위
@@ -303,17 +308,21 @@ export default function HomePage() {
           requestBody.brightness = Math.round((brightness / 100) * 255); // 0-100 → 0-255 변환
         }
         
-        // RGB 값 결정: currentMood.color 우선 (사용자 변경 값), 없으면 segment.mood.lighting.rgb 사용
+        // RGB 값 결정: currentMood.color 우선 (사용자 변경 값), 없으면 segment.mood.color에서 변환
         let rgb: number[] | null = null;
         if (currentMood?.color) {
           // currentMood.color (hex)를 RGB로 변환
           rgb = hexToRgb(currentMood.color);
           console.log("[HomePage] currentMood.color 사용 (사용자 변경 값):", currentMood.color, "→ RGB:", rgb);
         } else {
-          // segment의 원본 RGB 사용
-          const lighting = currentSegmentData.segment.mood.lighting;
-          rgb = lighting.rgb;
-          console.log("[HomePage] segment.mood.lighting.rgb 사용 (원본 값):", rgb);
+          // segment의 moodColor를 RGB로 변환 (스키마에서 lighting.rgb 제거됨)
+          const segmentColor = currentSegmentData.segment.mood.color;
+          if (segmentColor) {
+            rgb = hexToRgb(segmentColor);
+            console.log("[HomePage] segment.mood.color 사용 (원본 값):", segmentColor, "→ RGB:", rgb);
+          } else {
+            console.warn("[HomePage] ⚠️ 색상 값이 없음, RGB 변환 스킵");
+          }
         }
         
         // RGB 값이 있으면 추가
@@ -328,21 +337,31 @@ export default function HomePage() {
           requestBody.colortemp = Math.round(temperature);
         }
         
-        // API 호출: 전구 정보 업데이트 (메모리에 저장)
-        console.log("[HomePage] ✅ light_power가 on 상태, light_info 전달:", requestBody);
-        fetch("/api/light_info", {
+        // ✅ API 호출: 전구 정보 업데이트 (메모리에 저장)
+        console.log("[HomePage] ✅ 세그먼트 변경 → light_info 전달:", requestBody);
+        return fetch("/api/light_info", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           credentials: "include",
           body: JSON.stringify(requestBody),
-        }).catch((error) => {
-          console.error("[HomePage] Failed to update light info:", error);
         });
       })
+      .then((response) => {
+        if (response && response.ok) {
+          console.log("[HomePage] ✅ light_info 업데이트 완료");
+          return response.json();
+        }
+        return null;
+      })
+      .then((data) => {
+        if (data) {
+          console.log("[HomePage] ✅ light_info 응답:", data);
+        }
+      })
       .catch((error) => {
-        console.error("[HomePage] light_power 상태 확인 에러:", error);
+        console.error("[HomePage] ❌ light_info 업데이트 에러:", error);
       });
   }, [currentSegmentData, currentMood?.color]); // currentMood.color도 의존성에 추가
 

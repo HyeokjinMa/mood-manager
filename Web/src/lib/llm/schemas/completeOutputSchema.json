@@ -21,18 +21,8 @@
           },
           "lighting": {
             "type": "object",
-            "required": ["rgb", "brightness", "temperature"],
+            "required": ["brightness", "temperature"],
             "properties": {
-              "rgb": {
-                "type": "array",
-                "minItems": 3,
-                "maxItems": 3,
-                "items": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 255
-                }
-              },
               "brightness": {
                 "type": "integer",
                 "minimum": 0,
@@ -72,17 +62,12 @@
           },
           "music": {
             "type": "object",
-            "required": ["musicID", "volume", "fadeIn", "fadeOut"],
+            "required": ["musicID", "fadeIn", "fadeOut"],
             "properties": {
               "musicID": {
                 "type": "integer",
                 "minimum": 10,
                 "maximum": 69
-              },
-              "volume": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 100
               },
               "fadeIn": {
                 "type": "integer",

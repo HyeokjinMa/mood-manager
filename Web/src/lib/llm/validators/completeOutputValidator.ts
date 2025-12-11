@@ -112,11 +112,10 @@ export function validateCompleteSegmentOutput(
     throw new Error(`Invalid response: music.musicID must be a number between 10-69, got: ${musicIDRaw}`);
   }
 
-  const volume = clamp(
-    Math.round(Number(music?.volume) || 70),
-    0,
-    100
-  );
+  // volume은 선택적 (기본값 70, 사용자가 직접 조절하므로 LLM에서 제거됨)
+  const volume = music?.volume !== undefined
+    ? clamp(Math.round(Number(music.volume)), 0, 100)
+    : undefined;
   // fadeIn/fadeOut: LLM이 초 단위로 반환할 수 있으므로 밀리초로 변환
   const fadeInRaw = Number(music?.fadeIn) || 750;
   const fadeIn = fadeInRaw < 100 ? fadeInRaw * 1000 : clamp(Math.round(fadeInRaw), 0, 5000);
@@ -170,11 +169,14 @@ export function validateCompleteSegmentOutput(
     1
   );
 
+  // rgb는 항상 생성 (moodColor에서 변환, LLM 응답에 없어도 됨)
+  const finalRgb = rgb as [number, number, number];
+  
   return {
     moodAlias,
     moodColor,
     lighting: {
-      rgb: rgb as [number, number, number],
+      rgb: finalRgb, // moodColor에서 변환하여 항상 포함
       brightness,
       temperature,
     },
@@ -186,9 +188,9 @@ export function validateCompleteSegmentOutput(
     },
     music: {
       musicID,
-      volume,
       fadeIn,
       fadeOut,
+      ...(volume !== undefined && { volume }), // volume이 있으면 포함
     },
     background: {
       icons,

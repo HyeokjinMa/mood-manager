@@ -21,7 +21,7 @@ export interface CompleteSegmentOutput {
   
   // 조명 제어 (Lighting Device)
   lighting: {
-    /** RGB 값 [0-255, 0-255, 0-255] */
+    /** RGB 값 [0-255, 0-255, 0-255] - LLM 스키마에는 없으나 validator에서 moodColor로부터 생성 */
     rgb: [number, number, number];
     
     /** 밝기 (0-100, 권장: 30-80) */
@@ -51,14 +51,14 @@ export interface CompleteSegmentOutput {
     /** 음악 ID (10-69) - 매핑용 */
     musicID: number;
     
-    /** 볼륨 (0-100, 기본값: 70) */
-    volume: number;
-    
     /** 페이드 인 시간 (ms, 기본값: 750) */
     fadeIn: number;
     
     /** 페이드 아웃 시간 (ms, 기본값: 750) */
     fadeOut: number;
+    
+    /** 볼륨 (0-100, 기본값: 70) - 선택적 (사용자가 직접 조절하므로 LLM에서 제거됨) */
+    volume?: number;
   };
   
   // 배경 효과 제어 (UI/Visual Effects)

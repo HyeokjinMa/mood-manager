@@ -85,7 +85,6 @@ ${iconCatalogText}
   "moodAlias": "2-4단어 영어 별칭",
   "moodColor": "#HEX (너무 밝지 않게)",
   "lighting": {
-    "rgb": [r, g, b],
     "brightness": 0-100,
     "temperature": 2000-6500
   },
@@ -97,7 +96,6 @@ ${iconCatalogText}
   },
   "music": {
     "musicID": 10-69,
-    "volume": 0-100,
     "fadeIn": 750,  // 밀리초 (ms) 단위, 750ms = 0.75초
     "fadeOut": 750  // 밀리초 (ms) 단위, 750ms = 0.75초
   },
