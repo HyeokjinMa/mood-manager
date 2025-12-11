@@ -63,7 +63,7 @@ export default function DeviceGrid({
         ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 mt-4">
+    <div className="grid grid-cols-2 gap-2.5 mt-4">
       {sortedDevices.map((device) => {
         const isExpanded = expandedId === device.id;
 

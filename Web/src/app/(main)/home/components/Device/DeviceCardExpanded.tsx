@@ -21,7 +21,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Device } from "@/types/device";
 import { type Mood } from "@/types/mood";
 import { Power } from "lucide-react";
@@ -94,19 +94,39 @@ export default function DeviceCardExpanded({
   const backgroundColor = getBackgroundColor();
 
   // 디바이스 변경 시 로컬 상태 동기화 (세그먼트 이동 시 즉시 반영)
+  // 단, 사용자가 직접 변경 중인 경우는 덮어쓰지 않음
+  const prevDeviceIdRef = useRef<string | null>(null);
+  const prevMoodIdRef = useRef<string | null>(null);
+  
   useEffect(() => {
-    // device.output.color 또는 currentMood.color 변경 시 로컬 상태 업데이트
-    // 단, 로컬에서 방금 변경한 경우는 제외 (컬러피커 변경과 구분)
-    const effectiveColor = device.output.color || currentMood?.color || lightColor;
-    if (effectiveColor && effectiveColor !== localLightColor) {
-      // 세그먼트 전환이나 디바이스 변경으로 인한 색상 변경은 즉시 반영
+    const deviceChanged = prevDeviceIdRef.current !== device.id;
+    const moodChanged = prevMoodIdRef.current !== (currentMood?.id || null);
+    
+    // 디바이스가 변경되었을 때만 로컬 상태를 초기화
+    if (deviceChanged) {
+      prevDeviceIdRef.current = device.id;
+      // 새 디바이스 선택 시 props 값으로 로컬 상태 초기화
+      const effectiveColor = device.output.color || currentMood?.color || lightColor;
       setLocalLightColor(effectiveColor);
+      setLocalLightBrightness(lightBrightness);
+      setLocalScentLevel(scentLevel);
+      setLocalVolume(volume ?? device.output.volume ?? 70);
+      return;
     }
     
-    setLocalLightBrightness(lightBrightness);
-    setLocalScentLevel(scentLevel);
-    setLocalVolume(volume ?? device.output.volume ?? 70);
-  }, [lightColor, lightBrightness, scentLevel, volume, device.output.volume, device.id, currentMood?.id, currentMood?.color, device.output.color]); // color 관련 의존성 추가
+    // 무드가 변경되었을 때만 색상 업데이트
+    if (moodChanged) {
+      prevMoodIdRef.current = currentMood?.id || null;
+      const effectiveColor = device.output.color || currentMood?.color || lightColor;
+      if (effectiveColor && effectiveColor !== localLightColor) {
+        setLocalLightColor(effectiveColor);
+      }
+      // brightness는 세그먼트 변경 시 업데이트 (1% 이상 차이일 때만)
+      if (lightBrightness !== undefined && Math.abs(lightBrightness - localLightBrightness) > 1) {
+        setLocalLightBrightness(lightBrightness);
+      }
+    }
+  }, [device.id, currentMood?.id, lightColor, device.output.color, currentMood?.color, lightBrightness, scentLevel, volume, device.output.volume]);
 
   // 즉시 저장 함수 (변경 시 자동 저장, 디바운스 적용)
   useEffect(() => {
@@ -169,7 +189,7 @@ export default function DeviceCardExpanded({
 
   return (
     <div
-      className={`p-4 rounded-xl shadow-md border-2 relative animate-expand cursor-pointer transition-all duration-300 min-h-[200px] backdrop-blur-sm hover:shadow-lg
+      className={`p-3.5 rounded-xl shadow-md border-2 relative animate-expand cursor-pointer transition-all duration-300 min-h-[180px] backdrop-blur-sm hover:shadow-lg
         ${device.power ? "" : "opacity-60"}
       `}
       style={{
@@ -270,14 +290,22 @@ export default function DeviceCardExpanded({
             }
           } : undefined}
           onUpdateLightBrightness={(brightness) => {
+            console.log("[DeviceCardExpanded] 🔆 Brightness 변경:", brightness);
             setLocalLightBrightness(brightness);
             // 밝기 변경 시 즉시 onDeviceControlChange 호출하여 home으로 전달
             if (onDeviceControlChange) {
+              console.log("[DeviceCardExpanded] 📤 onDeviceControlChange 호출 (brightness):", brightness);
               onDeviceControlChange({ brightness });
+            } else {
+              console.warn("[DeviceCardExpanded] ⚠️ onDeviceControlChange가 없음");
             }
           }}
           onUpdateScentLevel={(level) => {
             setLocalScentLevel(level);
+            // 센트 레벨 변경 시 즉시 onDeviceControlChange 호출하여 home으로 전달
+            if (onDeviceControlChange) {
+              onDeviceControlChange({ scentLevel: level });
+            }
           }}
           onUpdateVolume={(newVolume) => {
             setLocalVolume(newVolume);

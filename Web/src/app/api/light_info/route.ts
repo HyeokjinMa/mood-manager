@@ -126,15 +126,18 @@ export async function POST(request: NextRequest) {
     let body: { r?: number; g?: number; b?: number; brightness?: number; colortemp?: number } = {};
     try {
       const bodyText = await request.text();
+      console.log("[Light Info] POST 요청 body (raw):", bodyText);
       if (bodyText) {
         body = JSON.parse(bodyText) as { r?: number; g?: number; b?: number; brightness?: number; colortemp?: number };
+        console.log("[Light Info] POST 요청 body (parsed):", body);
       }
-    } catch {
+    } catch (error) {
       // 빈 body이거나 JSON 파싱 실패 시 기본값 사용
-      console.log("[Light Info] Empty body or JSON parse error, using defaults");
+      console.error("[Light Info] JSON parse error:", error);
     }
 
     const { r, g, b, brightness, colortemp } = body;
+    console.log("[Light Info] 현재 상태 (업데이트 전):", { ...lightInfoState });
 
     // 상태 업데이트 (부분 업데이트 지원)
     const newState: LightInfoState = {
@@ -148,22 +151,29 @@ export async function POST(request: NextRequest) {
 
     // RGB 값이 있으면 업데이트
     if (r !== undefined && g !== undefined && b !== undefined) {
+      const oldRgb = { r: newState.r, g: newState.g, b: newState.b };
       newState.r = Math.max(0, Math.min(255, Math.round(r)));
       newState.g = Math.max(0, Math.min(255, Math.round(g)));
       newState.b = Math.max(0, Math.min(255, Math.round(b)));
+      console.log(`[Light Info] ✅ RGB 업데이트: (${oldRgb.r}, ${oldRgb.g}, ${oldRgb.b}) → (${newState.r}, ${newState.g}, ${newState.b})`);
     }
 
     // Color Temperature 값이 있으면 업데이트
     if (colortemp !== undefined) {
+      const oldColortemp = newState.colortemp;
       newState.colortemp = Math.max(2000, Math.min(7000, Math.round(colortemp)));
+      console.log(`[Light Info] ✅ colortemp 업데이트: ${oldColortemp} → ${newState.colortemp}`);
     }
 
     // Brightness 값이 있으면 업데이트
     if (brightness !== undefined && brightness !== null) {
+      const oldBrightness = newState.brightness;
       newState.brightness = Math.max(0, Math.min(255, Math.round(brightness)));
+      console.log(`[Light Info] ✅ brightness 업데이트: ${oldBrightness} → ${newState.brightness}`);
     }
 
     lightInfoState = newState;
+    console.log("[Light Info] 현재 상태 (업데이트 후):", { ...lightInfoState });
 
     return NextResponse.json({
       success: true,

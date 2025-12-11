@@ -108,24 +108,34 @@ export async function POST(request: NextRequest) {
     let body: { status?: "search" | "wait"; light_off?: boolean } = {};
     try {
       const bodyText = await request.text();
+      console.log("[Search Light] POST 요청 body (raw):", bodyText);
       if (bodyText) {
         body = JSON.parse(bodyText) as { status?: "search" | "wait"; light_off?: boolean };
+        console.log("[Search Light] POST 요청 body (parsed):", body);
       }
-    } catch {
+    } catch (error) {
       // 빈 body이거나 JSON 파싱 실패 시 기본값 사용
-      console.log("[Search Light] Empty body or JSON parse error, using defaults");
+      console.error("[Search Light] JSON parse error:", error);
     }
+
+    console.log("[Search Light] 현재 상태 (업데이트 전):", { status: searchLightState.status, light_off: searchLightState.light_off });
 
     // 상태 업데이트
     if (body.status !== undefined) {
       if (body.status === "search" || body.status === "wait") {
+        const oldStatus = searchLightState.status;
         searchLightState.status = body.status;
+        console.log(`[Search Light] ✅ 상태 업데이트: ${oldStatus} → ${searchLightState.status}`);
       }
     }
 
     if (body.light_off !== undefined) {
+      const oldLightOff = searchLightState.light_off;
       searchLightState.light_off = Boolean(body.light_off);
+      console.log(`[Search Light] ✅ light_off 업데이트: ${oldLightOff} → ${searchLightState.light_off}`);
     }
+
+    console.log("[Search Light] 현재 상태 (업데이트 후):", { status: searchLightState.status, light_off: searchLightState.light_off });
 
     return NextResponse.json({
       success: true,

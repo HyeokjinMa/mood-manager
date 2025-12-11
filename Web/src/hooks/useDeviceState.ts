@@ -113,16 +113,19 @@ export function useDeviceState({
 
       if (changes.scentLevel !== undefined) {
         console.log(
-          `[useDeviceState] ℹ️ 센트 레벨 변경 (디바이스 output에 저장): ${changes.scentLevel}`
+          `[useDeviceState] ℹ️ 센트 레벨 변경: ${changes.scentLevel} (디바이스 output 업데이트 필요)`
         );
+        // 센트 레벨은 디바이스 output에 저장되어야 함
+        // 디바이스 업데이트는 상위 컴포넌트(HomeContent)에서 처리
       }
 
       // Light/Manager 타입 디바이스의 색상/밝기 변경 시 route.ts 업데이트
-      // home의 useEffect가 currentSegmentData 변경 시 자동으로 처리하므로,
-      // 여기서는 currentMood만 업데이트하고 route.ts는 home에서 처리
-      // 단, search_light는 즉시 "search"로 변경 필요 (라즈베리파이 풀링 활성화)
+      // brightness 변경 시 직접 light_info API 호출 (색상과 동일하게)
       if (changes.color || changes.brightness !== undefined) {
+        console.log("[useDeviceState] 🔆 색상/밝기 변경 감지:", { color: changes.color, brightness: changes.brightness });
+        
         // search_light 상태를 "search"로 변경 (라즈베리파이 풀링 활성화)
+        console.log("[useDeviceState] 📡 POST /api/search_light 호출 시작");
         fetch("/api/search_light", {
           method: "POST",
           headers: {
@@ -130,14 +133,102 @@ export function useDeviceState({
           },
           credentials: "include",
           body: JSON.stringify({ status: "search" }),
-        }).catch((error) => {
-          console.error("[useDeviceState] Failed to update search_light status:", error);
-        });
+        })
+          .then((response) => {
+            console.log("[useDeviceState] 📡 POST /api/search_light 응답:", response.status);
+            if (response.ok) {
+              return response.json();
+            }
+            throw new Error(`Search light failed: ${response.status}`);
+          })
+          .then((data) => {
+            console.log("[useDeviceState] ✅ POST /api/search_light 성공:", data);
+          })
+          .catch((error) => {
+            console.error("[useDeviceState] ❌ Failed to update search_light status:", error);
+          });
 
-        // light_info는 home의 useEffect에서 currentMood 변경 후 처리
-        console.log(
-          "[useDeviceState] ℹ️ 색상/밝기 변경 (light_info 업데이트는 home의 useEffect에서 처리)"
-        );
+        // light_power 상태 확인 후 light_info 업데이트
+        fetch("/api/light_power", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        })
+          .then((response) => {
+            if (!response.ok) {
+              console.log("[useDeviceState] light_power 상태 확인 실패, light_info 전달 건너뜀");
+              return null;
+            }
+            return response.json();
+          })
+          .then((powerData) => {
+            // power가 "on"이 아니면 전달하지 않음
+            if (!powerData || powerData.power !== "on") {
+              console.log("[useDeviceState] light_power가 off 상태, light_info 전달 건너뜀");
+              return;
+            }
+
+            const requestBody: {
+              r?: number;
+              g?: number;
+              b?: number;
+              brightness?: number;
+            } = {};
+
+            // 색상 변경 시 RGB 변환
+            if (changes.color) {
+              const rgb = hexToRgb(changes.color);
+              requestBody.r = rgb[0];
+              requestBody.g = rgb[1];
+              requestBody.b = rgb[2];
+              console.log(
+                `[useDeviceState] 🔄 RGB 변환: ${changes.color} → r:${rgb[0]}, g:${rgb[1]}, b:${rgb[2]}`
+              );
+            }
+
+            // 밝기 변경 시 (0-100 → 0-255 변환)
+            if (changes.brightness !== undefined) {
+              requestBody.brightness = Math.round((changes.brightness / 100) * 255);
+              console.log(
+                `[useDeviceState] 🔄 밝기 변환: ${changes.brightness}% → ${requestBody.brightness} (0-255)`
+              );
+            }
+
+            // API 호출: 전구 정보 업데이트 (메모리에 저장)
+            console.log(
+              "[useDeviceState] 📡 POST /api/light_info 업데이트 요청 시작 (power: on):",
+              requestBody
+            );
+            fetch("/api/light_info", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              credentials: "include",
+              body: JSON.stringify(requestBody),
+            })
+              .then((response) => {
+                console.log("[useDeviceState] 📡 POST /api/light_info 응답:", response.status);
+                if (response.ok) {
+                  return response.json();
+                }
+                throw new Error(`Light info failed: ${response.status}`);
+              })
+              .then((data) => {
+                console.log("[useDeviceState] ✅ POST /api/light_info 업데이트 성공:", data);
+              })
+              .catch((error) => {
+                console.error(
+                  "[useDeviceState] ❌ /api/light_info 업데이트 에러:",
+                  error
+                );
+              });
+          })
+          .catch((error) => {
+            console.error("[useDeviceState] light_power 상태 확인 에러:", error);
+          });
       }
 
       console.log("=".repeat(80) + "\n");

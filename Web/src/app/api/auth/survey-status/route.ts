@@ -42,12 +42,17 @@ export async function GET() {
       return NextResponse.json({ hasSurvey: false, mock: true });
     }
 
-    // 3. 사용자 조회
+    // 3. 사용자 조회 (hasSurvey와 preferences 존재 여부 함께 확인)
     let user;
     try {
       user = await prisma.user.findUnique({
         where: { id: session.user.id },
-        select: { hasSurvey: true },
+        select: { 
+          hasSurvey: true,
+          preferences: {
+            select: { id: true }, // preferences 존재 여부만 확인
+          },
+        },
       });
     } catch (dbError) {
       console.error("[GET /api/auth/survey-status] DB 조회 실패, 목업 모드로 처리:", dbError);
@@ -62,8 +67,19 @@ export async function GET() {
       );
     }
 
-    // 4. 설문 상태 반환
-    return NextResponse.json({ hasSurvey: user.hasSurvey });
+    // 4. 설문 상태 결정:
+    // - hasSurvey가 false면 설문 표시
+    // - hasSurvey가 true이지만 preferences가 없으면 (선호도 데이터 삭제됨) 설문 표시
+    // - hasSurvey가 true이고 preferences가 있으면 설문 표시 안함
+    const hasSurvey = user.hasSurvey && user.preferences !== null;
+
+    console.log("[GET /api/auth/survey-status] 설문 상태:", {
+      userHasSurvey: user.hasSurvey,
+      hasPreferences: user.preferences !== null,
+      finalHasSurvey: hasSurvey,
+    });
+
+    return NextResponse.json({ hasSurvey });
   } catch (error) {
     console.error(
       "[GET /api/auth/survey-status] 설문 상태 조회 실패:",
