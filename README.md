@@ -1,7 +1,7 @@
 # 🏠 Mood Manager
 
 #### AI-Based Personalized Mood Management System for Smart Homes
-(https://github.com/HyeokjinMa/mood-manager/issues/3#issue-3717509281)
+![Image](https://github.com/user-attachments/assets/fe05dbaa-cffc-431b-a821-131aa32b7844)
 ---
 
 ## 📝 Overview
