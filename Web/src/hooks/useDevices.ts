@@ -211,7 +211,7 @@ export function useDevices(
             scentType: currentMood.scent.type,
             scentName: currentMood.scent.name,
             songTitle: currentMood.song.title,
-            brightness: (currentMood as any).brightness, // brightness 정보 전달 (타입 확장 필요)
+            brightness: 'brightness' in currentMood ? (currentMood as Mood & { brightness: number }).brightness : undefined,
           } : undefined,
         }),
       });
