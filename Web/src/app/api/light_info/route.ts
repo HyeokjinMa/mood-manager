@@ -19,23 +19,23 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * API 키 인증 헬퍼 함수
- * 클라이언트에서 호출하는 경우 (브라우저) API 키 검증을 완화
- * 서버에서 호출하는 경우 (Next.js 서버) API 키 검증
+ * - GET 요청: 라즈베리파이에서 호출하므로 API 키 필수
+ * - POST 요청: 클라이언트(브라우저)에서 호출하므로 API 키 없이 허용
  */
-function validateApiKey(request: NextRequest): boolean {
+function validateApiKey(request: NextRequest, method: string): boolean {
   const apiKey = request.headers.get("x-api-key");
   const serverKey = process.env.LIGHT_API_KEY;
   
-  // 개발 환경에서는 API 키 검증 완화 (클라이언트에서 호출 가능)
-  if (process.env.NODE_ENV === "development") {
-    // API 키가 제공되면 검증, 없으면 허용 (개발 편의성)
+  // POST 요청은 클라이언트에서 호출하므로 API 키 없이 허용
+  if (method === "POST") {
+    // API 키가 제공되면 검증 (잘못된 키는 거부)
     if (apiKey && serverKey && apiKey !== serverKey) {
       return false;
     }
     return true;
   }
   
-  // 프로덕션 환경에서는 API 키 필수
+  // GET 요청은 라즈베리파이에서 호출하므로 API 키 필수
   if (!apiKey || !serverKey || apiKey !== serverKey) {
     return false;
   }
@@ -64,8 +64,8 @@ let lightInfoState: LightInfoState = {
  */
 export async function GET(request: NextRequest) {
   try {
-    // API 키 인증 확인
-    if (!validateApiKey(request)) {
+    // API 키 인증 확인 (GET은 라즈베리파이 호출, API 키 필수)
+    if (!validateApiKey(request, "GET")) {
       return NextResponse.json(
         { message: "Unauthorized: Invalid API Key" },
         { status: 401 }
@@ -115,8 +115,8 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    // API 키 인증 확인
-    if (!validateApiKey(request)) {
+    // API 키 인증 확인 (POST는 클라이언트 호출, API 키 없이 허용)
+    if (!validateApiKey(request, "POST")) {
       return NextResponse.json(
         { message: "Unauthorized: Invalid API Key" },
         { status: 401 }

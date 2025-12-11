@@ -249,40 +249,8 @@ export default function DeviceCardExpanded({
           onUpdateLightColor={device.type === "light" || device.type === "manager" ? (color) => {
             setLocalLightColor(color); // 즉시 로컬 상태 업데이트
             
-            // hex 색상을 RGB로 변환 (이미 import된 hexToRgb 사용)
-            const rgb = hexToRgb(color);
-            
-            // 1. search_light 상태를 "search"로 변경 (라즈베리파이 풀링 활성화)
-            fetch("/api/search_light", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              credentials: "include",
-              body: JSON.stringify({ status: "search" }),
-            }).catch((error) => {
-              console.error("[DeviceCardExpanded] Failed to update search_light status:", error);
-            });
-            
-            // 2. light_info API에 RGB 값 전달
-            const currentBrightness = localLightBrightness ?? 50;
-            fetch("/api/light_info", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              credentials: "include",
-              body: JSON.stringify({
-                r: rgb[0],
-                g: rgb[1],
-                b: rgb[2],
-                brightness: Math.round((currentBrightness / 100) * 255), // 0-100 → 0-255 변환
-              }),
-            }).catch((error) => {
-              console.error("[DeviceCardExpanded] Failed to update light_info:", error);
-            });
-            
-            // RGB 변경 시 즉시 onDeviceControlChange 호출하여 currentMood 업데이트
+            // RGB 변경 시 즉시 onDeviceControlChange 호출하여 home으로 전달
+            // route.ts 업데이트는 home에서 handleDeviceControlChange를 통해 처리됨
             if (onDeviceControlChange) {
               onDeviceControlChange({ color });
             }

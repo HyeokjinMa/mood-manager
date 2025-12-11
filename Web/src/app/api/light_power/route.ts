@@ -13,23 +13,23 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * API 키 인증 헬퍼 함수
- * 클라이언트에서 호출하는 경우 (브라우저) API 키 검증을 완화
- * 서버에서 호출하는 경우 (Next.js 서버) API 키 검증
+ * - GET 요청: 라즈베리파이에서 호출하므로 API 키 필수
+ * - POST 요청: 클라이언트(브라우저)에서 호출하므로 API 키 없이 허용
  */
-function validateApiKey(request: NextRequest): boolean {
+function validateApiKey(request: NextRequest, method: string): boolean {
   const apiKey = request.headers.get("x-api-key");
   const serverKey = process.env.LIGHT_API_KEY;
   
-  // 개발 환경에서는 API 키 검증 완화 (클라이언트에서 호출 가능)
-  if (process.env.NODE_ENV === "development") {
-    // API 키가 제공되면 검증, 없으면 허용 (개발 편의성)
+  // POST 요청은 클라이언트에서 호출하므로 API 키 없이 허용
+  if (method === "POST") {
+    // API 키가 제공되면 검증 (잘못된 키는 거부)
     if (apiKey && serverKey && apiKey !== serverKey) {
       return false;
     }
     return true;
   }
   
-  // 프로덕션 환경에서는 API 키 필수
+  // GET 요청은 라즈베리파이에서 호출하므로 API 키 필수
   if (!apiKey || !serverKey || apiKey !== serverKey) {
     return false;
   }
@@ -50,16 +50,12 @@ let lightPowerState: PowerState = "on";
  */
 export async function GET(request: NextRequest) {
   try {
-    // 클라이언트에서 호출하는 경우 (브라우저) API 키 검증 완화
-    // 개발 환경에서는 API 키 검증 완화
-    if (process.env.NODE_ENV === "production") {
-      // 프로덕션 환경에서만 API 키 검증
-      if (!validateApiKey(request)) {
-        return NextResponse.json(
-          { message: "Unauthorized: Invalid API Key" },
-          { status: 401 }
-        );
-      }
+    // API 키 인증 확인 (GET은 라즈베리파이 호출, API 키 필수)
+    if (!validateApiKey(request, "GET")) {
+      return NextResponse.json(
+        { message: "Unauthorized: Invalid API Key" },
+        { status: 401 }
+      );
     }
 
     return NextResponse.json({
@@ -86,8 +82,8 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    // API 키 인증 확인
-    if (!validateApiKey(request)) {
+    // API 키 인증 확인 (POST는 클라이언트 호출, API 키 없이 허용)
+    if (!validateApiKey(request, "POST")) {
       return NextResponse.json(
         { message: "Unauthorized: Invalid API Key" },
         { status: 401 }
@@ -97,20 +93,30 @@ export async function POST(request: NextRequest) {
     let body: { power?: "on" | "off" } = {};
     try {
       const bodyText = await request.text();
+      console.log("[Light Power] POST 요청 body (raw):", bodyText);
       if (bodyText) {
         body = JSON.parse(bodyText) as { power?: "on" | "off" };
+        console.log("[Light Power] POST 요청 body (parsed):", body);
       }
-    } catch {
+    } catch (error) {
       // 빈 body이거나 JSON 파싱 실패 시 기본값 사용
-      console.log("[Light Power] Empty body or JSON parse error, using defaults");
+      console.error("[Light Power] JSON parse error:", error);
     }
+
+    console.log("[Light Power] 현재 상태 (업데이트 전):", { power: lightPowerState });
 
     // 전원 상태 업데이트
     if (body.power !== undefined) {
       if (body.power === "on" || body.power === "off") {
+        const oldPower = lightPowerState;
         lightPowerState = body.power;
+        console.log(`[Light Power] ✅ 전원 상태 업데이트: ${oldPower} → ${lightPowerState}`);
+      } else {
+        console.warn("[Light Power] ⚠️ 유효하지 않은 power 값:", body.power);
       }
     }
+
+    console.log("[Light Power] 현재 상태 (업데이트 후):", { power: lightPowerState });
 
     return NextResponse.json({
       success: true,

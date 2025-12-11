@@ -117,94 +117,27 @@ export function useDeviceState({
         );
       }
 
-      // Light/Manager 타입 디바이스의 색상/밝기 변경 시 light_info 업데이트
-      // 단, light_power가 "on"일 때만 전달
+      // Light/Manager 타입 디바이스의 색상/밝기 변경 시 route.ts 업데이트
+      // home의 useEffect가 currentSegmentData 변경 시 자동으로 처리하므로,
+      // 여기서는 currentMood만 업데이트하고 route.ts는 home에서 처리
+      // 단, search_light는 즉시 "search"로 변경 필요 (라즈베리파이 풀링 활성화)
       if (changes.color || changes.brightness !== undefined) {
-        // light_power 상태 확인 (on일 때만 전달)
-        fetch("/api/light_power", {
-          method: "GET",
+        // search_light 상태를 "search"로 변경 (라즈베리파이 풀링 활성화)
+        fetch("/api/search_light", {
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           credentials: "include",
-        })
-          .then((response) => {
-            if (!response.ok) {
-              console.log(
-                "[useDeviceState] light_power 상태 확인 실패, light_info 전달 건너뜀"
-              );
-              return null;
-            }
-            return response.json();
-          })
-          .then((powerData) => {
-            // power가 "on"이 아니면 전달하지 않음
-            if (!powerData || powerData.power !== "on") {
-              console.log(
-                "[useDeviceState] light_power가 off 상태, light_info 전달 건너뜀"
-              );
-              return;
-            }
+          body: JSON.stringify({ status: "search" }),
+        }).catch((error) => {
+          console.error("[useDeviceState] Failed to update search_light status:", error);
+        });
 
-            const requestBody: {
-              r?: number;
-              g?: number;
-              b?: number;
-              brightness?: number;
-            } = {};
-
-            // 색상 변경 시 RGB 변환
-            if (changes.color) {
-              const rgb = hexToRgb(changes.color);
-              requestBody.r = rgb[0];
-              requestBody.g = rgb[1];
-              requestBody.b = rgb[2];
-              console.log(
-                `[useDeviceState] 🔄 RGB 변환: ${changes.color} → r:${rgb[0]}, g:${rgb[1]}, b:${rgb[2]}`
-              );
-            }
-
-            // 밝기 변경 시 (0-100 → 0-255 변환)
-            if (changes.brightness !== undefined) {
-              requestBody.brightness = Math.round((changes.brightness / 100) * 255);
-              console.log(
-                `[useDeviceState] 🔄 밝기 변환: ${changes.brightness}% → ${requestBody.brightness} (0-255)`
-              );
-            }
-
-            // API 호출: 전구 정보 업데이트 (메모리에 저장)
-            console.log(
-              "[useDeviceState] 📡 /api/light_info 업데이트 요청 (power: on):",
-              requestBody
-            );
-            fetch("/api/light_info", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              credentials: "include",
-              body: JSON.stringify(requestBody),
-            })
-              .then((response) => {
-                if (response.ok) {
-                  console.log("[useDeviceState] ✅ /api/light_info 업데이트 성공");
-                } else {
-                  console.error(
-                    "[useDeviceState] ❌ /api/light_info 업데이트 실패:",
-                    response.status
-                  );
-                }
-              })
-              .catch((error) => {
-                console.error(
-                  "[useDeviceState] ❌ /api/light_info 업데이트 에러:",
-                  error
-                );
-              });
-          })
-          .catch((error) => {
-            console.error("[useDeviceState] light_power 상태 확인 에러:", error);
-          });
+        // light_info는 home의 useEffect에서 currentMood 변경 후 처리
+        console.log(
+          "[useDeviceState] ℹ️ 색상/밝기 변경 (light_info 업데이트는 home의 useEffect에서 처리)"
+        );
       }
 
       console.log("=".repeat(80) + "\n");

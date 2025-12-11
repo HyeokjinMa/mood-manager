@@ -33,6 +33,7 @@ import type { BackgroundParams } from "@/hooks/useBackgroundParams";
 import { convertSegmentMoodToMood } from "./components/MoodDashboard/utils/moodStreamConverter";
 import { useMoodStreamManager } from "@/hooks/useMoodStreamManager";
 import { useDeviceState } from "@/hooks/useDeviceState";
+import { hexToRgb } from "@/lib/utils/color";
 
 export default function HomePage() {
   const router = useRouter();
@@ -254,9 +255,9 @@ export default function HomePage() {
   }, [currentSegmentData?.mood?.id, setCurrentMood]);
   // 의도: mood.id만 추적하여 무한 루프 방지 (prevMoodIdRef로 id 변경 시에만 업데이트)
   
-  // 전구 제어: currentSegmentData 변경 시 조명 정보를 저장 (라즈베리파이가 GET으로 가져감)
+  // 전구 제어: currentMood 또는 currentSegmentData 변경 시 조명 정보를 저장 (라즈베리파이가 GET으로 가져감)
   // 단, light_power가 "on"일 때만 전달
-  // 라즈베리파이가 RGB/colortemp 판단을 하므로 모든 값을 함께 전달
+  // currentMood.color가 있으면 우선 사용 (사용자가 변경한 색상), 없으면 segment.mood.lighting.rgb 사용
   useEffect(() => {
     if (!currentSegmentData?.segment?.mood?.lighting) {
       return;
@@ -284,8 +285,6 @@ export default function HomePage() {
           return;
         }
         
-        const lighting = currentSegmentData.segment.mood.lighting;
-        const rgb = lighting.rgb;
         // brightness와 temperature는 backgroundParams에서 가져오기
         const brightness = currentSegmentData.backgroundParams?.lighting?.brightness || 50; // 0-100 범위
         const temperature = currentSegmentData.backgroundParams?.lighting?.temperature;
@@ -302,6 +301,19 @@ export default function HomePage() {
         // Brightness 값이 있으면 추가
         if (brightness !== undefined) {
           requestBody.brightness = Math.round((brightness / 100) * 255); // 0-100 → 0-255 변환
+        }
+        
+        // RGB 값 결정: currentMood.color 우선 (사용자 변경 값), 없으면 segment.mood.lighting.rgb 사용
+        let rgb: number[] | null = null;
+        if (currentMood?.color) {
+          // currentMood.color (hex)를 RGB로 변환
+          rgb = hexToRgb(currentMood.color);
+          console.log("[HomePage] currentMood.color 사용 (사용자 변경 값):", currentMood.color, "→ RGB:", rgb);
+        } else {
+          // segment의 원본 RGB 사용
+          const lighting = currentSegmentData.segment.mood.lighting;
+          rgb = lighting.rgb;
+          console.log("[HomePage] segment.mood.lighting.rgb 사용 (원본 값):", rgb);
         }
         
         // RGB 값이 있으면 추가
@@ -332,7 +344,7 @@ export default function HomePage() {
       .catch((error) => {
         console.error("[HomePage] light_power 상태 확인 에러:", error);
       });
-  }, [currentSegmentData]);
+  }, [currentSegmentData, currentMood?.color]); // currentMood.color도 의존성에 추가
 
   // Phase 2 단순화: 디바이스 컨트롤 변경 로직은 useDeviceState 훅에서 처리
   
