@@ -178,7 +178,7 @@ export function initializeSampleMoods(): void {
       moodName: "Spicy Autumn Spice",
       moodColor: "#CD5C5C",
       music: { genre: "world", title: "Spice Market" },
-      scent: { type: "Spicy", name: "Cinnamon Spice" },
+      scent: { type: "Spicy", name: "Cinnamon Stick" },
       preferenceCount: 0,
       savedAt: now - 3 * 60000,
     },

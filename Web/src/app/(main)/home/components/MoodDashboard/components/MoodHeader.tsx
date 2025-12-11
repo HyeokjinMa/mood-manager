@@ -10,7 +10,7 @@ import type { Mood } from "@/types/mood";
 import HeartAnimation from "./HeartAnimation";
 
 interface MoodHeaderProps {
-  mood: Mood;
+  mood: Mood | null; // null 허용 (초기 로딩 시)
   isSaved: boolean;
   onSaveToggle: () => void;
   onRefresh: () => void;
@@ -33,6 +33,19 @@ export default function MoodHeader({
   const [showHeartAnimation, setShowHeartAnimation] = useState(false);
   const [heartPosition, setHeartPosition] = useState<{ x: number; y: number } | null>(null);
   const [lastClickTime, setLastClickTime] = useState(0);
+  
+  // mood가 null일 때 기본값 제공
+  if (!mood) {
+    return (
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex flex-col flex-1">
+          <div className="text-base font-semibold text-gray-400 select-none">
+            Loading...
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // 더블클릭 감지
   const handleDoubleClick = (e: React.MouseEvent) => {

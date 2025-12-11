@@ -37,7 +37,7 @@ function extractTitleFromFileName(fileName: string): string {
  */
 export function findImageFileByTitle(title: string, genre: string): string | null {
   try {
-    const imageDir = path.join(process.cwd(), "public", "musics_img", genre);
+    const imageDir = path.join(process.cwd(), "public", "album", genre);
     
     // 디렉토리가 없으면 null 반환
     if (!fs.existsSync(imageDir)) {
@@ -98,7 +98,7 @@ export function findImageUrlFromFileUrl(fileUrl: string): string | null {
     const actualFileName = findImageFileByTitle(title, genre);
     
     if (actualFileName) {
-      return `/musics_img/${genre}/${actualFileName}`;
+      return `/album/${genre}/${actualFileName}`;
     }
     
     return null;

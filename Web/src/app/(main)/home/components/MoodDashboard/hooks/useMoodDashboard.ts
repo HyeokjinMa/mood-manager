@@ -11,7 +11,7 @@ import { saveMood, deleteSavedMood, getSavedMoods, type SavedMood } from "@/lib/
 // 관리자 모드 확인은 사용자 ID 기반으로만 수행
 
 interface UseMoodDashboardProps {
-  mood: Mood;
+  mood: Mood | null | undefined; // null/undefined 허용: 초기 세그먼트 로드 전에는 null일 수 있음
   onMoodChange: (mood: Mood) => void;
   onScentChange: (mood: Mood) => void;
   onSongChange: (mood: Mood) => void;
@@ -43,8 +43,11 @@ export function useMoodDashboard({
    * 추후 실제 DB 연동 시, 이 로직을 다시 활성화할 수 있음.
    */
   useEffect(() => {
+    if (!mood) return; // mood가 null이면 스킵
     setIsSaved(false);
-  }, [mood.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mood?.id]); // optional chaining 사용
+  // 의도: mood.id만 추적하여 id 변경 시에만 저장 상태 초기화
 
   // 초기 로딩 시뮬레이션 (실제로는 API 호출 시 사용)
   useEffect(() => {
@@ -56,6 +59,7 @@ export function useMoodDashboard({
 
   // 무드 변경 시 선호도 카운트 조회
   useEffect(() => {
+    if (!mood) return; // mood가 null이면 스킵
     const fetchPreferenceCount = async () => {
       try {
         const response = await fetch("/api/moods/preference");
@@ -70,10 +74,13 @@ export function useMoodDashboard({
       }
     };
     fetchPreferenceCount();
-  }, [mood.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mood?.id]); // optional chaining 사용
+  // 의도: mood.id만 추적하여 id 변경 시에만 API 호출 (무한 루프 방지)
 
   // 선호도 클릭 핸들러 (더블클릭 시 호출)
   const handlePreferenceClick = async () => {
+    if (!mood) return; // mood가 null이면 스킵
     if (maxReached || preferenceCount >= 3) {
       return;
     }
@@ -123,6 +130,7 @@ export function useMoodDashboard({
    * - 2순위: 실패 시 기존 목업 로직(MOODS 기반 순환) 사용
    */
   const handleScentClick = async () => {
+    if (!mood) return; // mood가 null이면 스킵
     // 1) LLM 기반 향/아이콘 재추천 (현재 세그먼트 기반)
     if (currentSegment) {
       try {
@@ -204,6 +212,7 @@ export function useMoodDashboard({
    * - 동작: 음악이 변경하면서 무드 듀레이션 내에서의 변경 (지속 시간 유지)
    */
   const handlePreviousSong = () => {
+    if (!mood) return; // mood가 null이면 스킵
     const sameNameMoods = getMoodsWithSameName(mood.name);
     const currentIndex = sameNameMoods.findIndex((m) => m.id === mood.id);
     const prevIndex = currentIndex === 0 ? sameNameMoods.length - 1 : currentIndex - 1;
@@ -212,6 +221,7 @@ export function useMoodDashboard({
   };
 
   const handleNextSong = () => {
+    if (!mood) return; // mood가 null이면 스킵
     const sameNameMoods = getMoodsWithSameName(mood.name);
     const currentIndex = sameNameMoods.findIndex((m) => m.id === mood.id);
     const nextIndex = (currentIndex + 1) % sameNameMoods.length;
@@ -231,6 +241,7 @@ export function useMoodDashboard({
    * - 동작: 같은 무드 패턴 내에서 다른 조합(음악/향/조명) 선택 또는 무드 패턴 이동 (-1이면 0으로, 0이면 +1로)
    */
   const handleRefreshClick = () => {
+    if (!mood) return; // mood가 null이면 스킵
     // [MOCK] 목업 모드: 같은 이름의 무드 중 랜덤 선택 (무드 클러스터 내에서 변경)
     const sameNameMoods = getMoodsWithSameName(mood.name);
     if (sameNameMoods.length > 1) {
@@ -274,6 +285,7 @@ export function useMoodDashboard({
    * - 2순위: 실패 시 기존 목업 로직(랜덤 무드) 사용
    */
   const handleAlbumClick = async () => {
+    if (!mood) return; // mood가 null이면 스킵
     if (currentSegment) {
       try {
         const response = await fetch("/api/ai/background-params", {
@@ -314,6 +326,7 @@ export function useMoodDashboard({
 
   // 무드 저장/삭제 핸들러 (Optimistic Update: 즉시 UI 반영)
   const handleSaveToggle = async () => {
+    if (!mood) return; // mood가 null이면 스킵
     if (isSaved) {
       // 저장 취소 (무드셋에서 제거)
       // Optimistic: 즉시 UI 업데이트

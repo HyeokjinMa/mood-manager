@@ -5,21 +5,12 @@
  */
 
 import musicTracksData from "./musicTracks.json";
-
-interface MusicTrack {
-  genre: string; // "Balad_1", "Pop_5" 등
-  title: string;
-  mp3Url: string;
-  imageUrl: string;
-  artist: string;
-  description: string;
-  duration: number; // seconds
-}
+import type { JsonMusicTrack } from "@/types/music";
 
 interface MusicTracksJSON {
   version: string;
   lastUpdated: string;
-  tracks: MusicTrack[];
+  tracks: JsonMusicTrack[];
 }
 
 const musicTracks = musicTracksData as MusicTracksJSON;
@@ -30,7 +21,7 @@ const musicTracks = musicTracksData as MusicTracksJSON;
  * @param genre - "Balad_1", "Pop_5" 등
  * @returns MusicTrack 또는 null
  */
-export function getMusicTrackByGenre(genre: string): MusicTrack | null {
+export function getMusicTrackByGenre(genre: string): JsonMusicTrack | null {
   const track = musicTracks.tracks.find(t => t.genre === genre);
   return track || null;
 }
@@ -41,14 +32,14 @@ export function getMusicTrackByGenre(genre: string): MusicTrack | null {
  * @param genreBase - "Balad", "Pop" 등 (번호 제외)
  * @returns 해당 장르의 모든 트랙
  */
-export function getMusicTracksByGenreBase(genreBase: string): MusicTrack[] {
+export function getMusicTracksByGenreBase(genreBase: string): JsonMusicTrack[] {
   return musicTracks.tracks.filter(t => t.genre.startsWith(genreBase + "_"));
 }
 
 /**
  * 모든 트랙 가져오기
  */
-export function getAllMusicTracks(): MusicTrack[] {
+export function getAllMusicTracks(): JsonMusicTrack[] {
   return musicTracks.tracks;
 }
 

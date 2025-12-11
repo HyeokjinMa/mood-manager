@@ -10,17 +10,7 @@ import { NextResponse } from "next/server";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { isMockMode } from "./mockMode";
 
-/**
- * 세션 타입 정의
- */
-export interface AuthSession {
-  user: {
-    id: string;
-    email: string;
-    name?: string | null;
-    image?: string | null;
-  };
-}
+import type { AuthSession } from "@/types/auth";
 
 /**
  * 인증이 필요한 API에서 세션을 가져오고 검증

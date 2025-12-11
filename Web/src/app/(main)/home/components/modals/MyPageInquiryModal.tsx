@@ -77,8 +77,8 @@ export default function MyPageInquiryModal({ isOpen, onClose }: MyPageInquiryMod
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={handleClose}>
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col pointer-events-auto border border-gray-200">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
           <h1 className="text-xl font-semibold">1:1 Inquiry</h1>

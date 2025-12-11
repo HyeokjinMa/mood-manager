@@ -19,11 +19,23 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * API 키 인증 헬퍼 함수
+ * 클라이언트에서 호출하는 경우 (브라우저) API 키 검증을 완화
+ * 서버에서 호출하는 경우 (Next.js 서버) API 키 검증
  */
 function validateApiKey(request: NextRequest): boolean {
   const apiKey = request.headers.get("x-api-key");
   const serverKey = process.env.LIGHT_API_KEY;
   
+  // 개발 환경에서는 API 키 검증 완화 (클라이언트에서 호출 가능)
+  if (process.env.NODE_ENV === "development") {
+    // API 키가 제공되면 검증, 없으면 허용 (개발 편의성)
+    if (apiKey && serverKey && apiKey !== serverKey) {
+      return false;
+    }
+    return true;
+  }
+  
+  // 프로덕션 환경에서는 API 키 필수
   if (!apiKey || !serverKey || apiKey !== serverKey) {
     return false;
   }

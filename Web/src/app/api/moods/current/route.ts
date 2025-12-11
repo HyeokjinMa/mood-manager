@@ -5,6 +5,8 @@ import { hexToRgb } from "@/lib/utils";
 import { validateRequiredFields } from "@/lib/utils/validation";
 import { parseFragranceComponents, parseSoundComponents } from "@/types/preset";
 import { getMockMoodStream } from "@/lib/mock/mockData";
+import { withAuth, withAuthAndMock, createErrorResponse } from "@/lib/api/routeHandler";
+import { ERROR_CODES } from "@/lib/api/errorCodes";
 
 /**
  * GET /api/moods/current
@@ -51,26 +53,9 @@ import { getMockMoodStream } from "@/lib/mock/mockData";
  * - 자세한 로직은 MOOD_GENERATION_LOGIC.md 참고
  */
 export async function GET() {
-  // 1. 세션 검증
-  const sessionOrError = await requireAuth();
-  if (sessionOrError instanceof NextResponse) {
-    return sessionOrError;
-  }
-  const session = sessionOrError;
-
-  // 2. 목업 모드 확인 (관리자 계정) → 계속 목업 스트림 유지
-  if (await checkMockMode(session)) {
-    console.log("[GET /api/moods/current] 목업 모드: 관리자 계정 → mock 스트림 사용");
-    const mockData = getMockMoodStream();
-    return NextResponse.json({
-      currentMood: mockData.currentMood,
-      moodStream: mockData.segments,
-      userDataCount: mockData.userDataCount,
-      source: "mock-admin",
-    });
-  }
-
-  try {
+  return withAuthAndMock(
+    async (session) => {
+      try {
     // 3. 일반 유저: 실데이터 기반 스트림을 우선 시도
     try {
       const userId = session.user.id;
@@ -183,18 +168,31 @@ export async function GET() {
       currentMood: mockData.currentMood,
       moodStream: mockData.segments,
       userDataCount: mockData.userDataCount,
-      source: "mock-fallback",
-    });
-  } catch (error) {
-    console.error("[GET /api/moods/current] Error (global), mock fallback:", error);
-    const mockData = getMockMoodStream();
-    return NextResponse.json({
-      currentMood: mockData.currentMood,
-      moodStream: mockData.segments,
-      userDataCount: mockData.userDataCount,
-      source: "mock-error",
-    });
-  }
+        source: "mock-fallback",
+      });
+    } catch (error) {
+      console.error("[GET /api/moods/current] Error (global), mock fallback:", error);
+      const mockData = getMockMoodStream();
+      return NextResponse.json({
+        currentMood: mockData.currentMood,
+        moodStream: mockData.segments,
+        userDataCount: mockData.userDataCount,
+        source: "mock-error",
+      });
+    }
+    },
+    (session) => {
+      // 목업 모드: 관리자 계정 → 계속 목업 스트림 유지
+      console.log("[GET /api/moods/current] 목업 모드: 관리자 계정 → mock 스트림 사용");
+      const mockData = getMockMoodStream();
+      return NextResponse.json({
+        currentMood: mockData.currentMood,
+        moodStream: mockData.segments,
+        userDataCount: mockData.userDataCount,
+        source: "mock-admin",
+      });
+    }
+  );
 }
 
 /**
@@ -221,50 +219,44 @@ export async function GET() {
  * - 색상, 음악, 향 모두 변경
  */
 export async function PUT(request: NextRequest) {
-  // 1. 세션 검증
-  const sessionOrError = await requireAuth();
-  if (sessionOrError instanceof NextResponse) {
-    return sessionOrError;
-  }
-  const session = sessionOrError;
+  return withAuth(async (session) => {
+    try {
+      // 요청 본문 검증
+      const body = await request.json();
+      const validation = validateRequiredFields(body, ["moodId"]);
+      if (!validation.valid) {
+        return createErrorResponse(
+          ERROR_CODES.INVALID_INPUT,
+          "moodId is required"
+        );
+      }
 
-  try {
-    // 2. 요청 본문 검증
-    const body = await request.json();
-    const validation = validateRequiredFields(body, ["moodId"]);
-    if (!validation.valid) {
-      return NextResponse.json(
-        { error: "INVALID_INPUT", message: "moodId is required" },
-        { status: 400 }
-      );
-    }
+      const { moodId } = body;
 
-    const { moodId } = body;
+      // Preset 존재 여부 확인
+      const preset = await prisma.preset.findUnique({
+        where: { id: moodId },
+        include: {
+          fragrance: true,
+          light: true,
+          sound: true,
+        },
+      });
 
-    // 3. Preset 존재 여부 확인
-    const preset = await prisma.preset.findUnique({
-      where: { id: moodId },
-      include: {
-        fragrance: true,
-        light: true,
-        sound: true,
-      },
-    });
+      if (!preset) {
+        return createErrorResponse(
+          ERROR_CODES.MOOD_NOT_FOUND,
+          "Mood not found"
+        );
+      }
 
-    if (!preset) {
-      return NextResponse.json(
-        { error: "MOOD_NOT_FOUND", message: "Mood not found" },
-        { status: 404 }
-      );
-    }
-
-    // 4. Preset 소유자 확인
-    if (preset.userId !== session.user.id) {
-      return NextResponse.json(
-        { error: "UNAUTHORIZED", message: "You do not own this mood" },
-        { status: 403 }
-      );
-    }
+      // Preset 소유자 확인
+      if (preset.userId !== session.user.id) {
+        return createErrorResponse(
+          ERROR_CODES.FORBIDDEN,
+          "You do not own this mood"
+        );
+      }
 
     // 5. 사용자의 모든 디바이스에 Preset 적용
     const devices = await prisma.device.findMany({
@@ -368,12 +360,13 @@ export async function PUT(request: NextRequest) {
         },
       })),
     });
-  } catch (error) {
-    console.error("[PUT /api/moods/current] Error:", error);
-    return NextResponse.json(
-      { error: "INTERNAL_ERROR", message: "Failed to update mood" },
-      { status: 500 }
-    );
-  }
+    } catch (error) {
+      console.error("[PUT /api/moods/current] Error:", error);
+      return createErrorResponse(
+        "INTERNAL_ERROR",
+        "Failed to update mood"
+      );
+    }
+  });
 }
 

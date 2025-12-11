@@ -1,0 +1,102 @@
+/**
+ * API 에러 코드 상수 정의
+ * 
+ * Phase 4 리팩토링: 에러 코드를 상수로 정의하여 일관성 확보
+ * 
+ * 사용 예시:
+ * ```typescript
+ * import { ERROR_CODES } from "@/lib/api/errorCodes";
+ * return createErrorResponse(ERROR_CODES.UNAUTHORIZED, "인증이 필요합니다", 401);
+ * ```
+ */
+
+/**
+ * 에러 코드 상수
+ * 
+ * 각 에러 코드는 HTTP 상태 코드와 매핑됩니다:
+ * - 400: 클라이언트 요청 오류 (INVALID_INPUT, VALIDATION_ERROR)
+ * - 401: 인증 오류 (UNAUTHORIZED)
+ * - 403: 권한 오류 (FORBIDDEN)
+ * - 404: 리소스 없음 (NOT_FOUND, MOOD_NOT_FOUND, DEVICE_NOT_FOUND)
+ * - 409: 충돌 (CONFLICT, ALREADY_EXISTS)
+ * - 500: 서버 오류 (INTERNAL_ERROR, INTERNAL_SERVER_ERROR)
+ */
+export const ERROR_CODES = {
+  // 인증/권한 관련 (401, 403)
+  UNAUTHORIZED: "UNAUTHORIZED",
+  FORBIDDEN: "FORBIDDEN",
+  
+  // 입력 검증 관련 (400)
+  INVALID_INPUT: "INVALID_INPUT",
+  VALIDATION_ERROR: "VALIDATION_ERROR",
+  MISSING_REQUIRED_FIELD: "MISSING_REQUIRED_FIELD",
+  
+  // 리소스 관련 (404)
+  NOT_FOUND: "NOT_FOUND",
+  MOOD_NOT_FOUND: "MOOD_NOT_FOUND",
+  DEVICE_NOT_FOUND: "DEVICE_NOT_FOUND",
+  USER_NOT_FOUND: "USER_NOT_FOUND",
+  
+  // 충돌 관련 (409)
+  CONFLICT: "CONFLICT",
+  ALREADY_EXISTS: "ALREADY_EXISTS",
+  
+  // 서버 오류 (500)
+  INTERNAL_ERROR: "INTERNAL_ERROR",
+  INTERNAL_SERVER_ERROR: "INTERNAL_SERVER_ERROR",
+  DATABASE_ERROR: "DATABASE_ERROR",
+  
+  // 외부 서비스 오류 (502, 503)
+  EXTERNAL_SERVICE_ERROR: "EXTERNAL_SERVICE_ERROR",
+  SERVICE_UNAVAILABLE: "SERVICE_UNAVAILABLE",
+} as const;
+
+/**
+ * 에러 코드 타입
+ */
+export type ErrorCode = typeof ERROR_CODES[keyof typeof ERROR_CODES];
+
+/**
+ * 에러 코드에 따른 기본 HTTP 상태 코드 매핑
+ */
+export const ERROR_STATUS_MAP: Record<ErrorCode, number> = {
+  [ERROR_CODES.UNAUTHORIZED]: 401,
+  [ERROR_CODES.FORBIDDEN]: 403,
+  [ERROR_CODES.INVALID_INPUT]: 400,
+  [ERROR_CODES.VALIDATION_ERROR]: 400,
+  [ERROR_CODES.MISSING_REQUIRED_FIELD]: 400,
+  [ERROR_CODES.NOT_FOUND]: 404,
+  [ERROR_CODES.MOOD_NOT_FOUND]: 404,
+  [ERROR_CODES.DEVICE_NOT_FOUND]: 404,
+  [ERROR_CODES.USER_NOT_FOUND]: 404,
+  [ERROR_CODES.CONFLICT]: 409,
+  [ERROR_CODES.ALREADY_EXISTS]: 409,
+  [ERROR_CODES.INTERNAL_ERROR]: 500,
+  [ERROR_CODES.INTERNAL_SERVER_ERROR]: 500,
+  [ERROR_CODES.DATABASE_ERROR]: 500,
+  [ERROR_CODES.EXTERNAL_SERVICE_ERROR]: 502,
+  [ERROR_CODES.SERVICE_UNAVAILABLE]: 503,
+};
+
+/**
+ * 에러 코드에 따른 기본 메시지 매핑
+ */
+export const ERROR_MESSAGES: Record<ErrorCode, string> = {
+  [ERROR_CODES.UNAUTHORIZED]: "인증이 필요합니다",
+  [ERROR_CODES.FORBIDDEN]: "권한이 없습니다",
+  [ERROR_CODES.INVALID_INPUT]: "잘못된 입력입니다",
+  [ERROR_CODES.VALIDATION_ERROR]: "입력 검증에 실패했습니다",
+  [ERROR_CODES.MISSING_REQUIRED_FIELD]: "필수 필드가 누락되었습니다",
+  [ERROR_CODES.NOT_FOUND]: "리소스를 찾을 수 없습니다",
+  [ERROR_CODES.MOOD_NOT_FOUND]: "무드를 찾을 수 없습니다",
+  [ERROR_CODES.DEVICE_NOT_FOUND]: "디바이스를 찾을 수 없습니다",
+  [ERROR_CODES.USER_NOT_FOUND]: "사용자를 찾을 수 없습니다",
+  [ERROR_CODES.CONFLICT]: "요청이 충돌했습니다",
+  [ERROR_CODES.ALREADY_EXISTS]: "이미 존재하는 리소스입니다",
+  [ERROR_CODES.INTERNAL_ERROR]: "내부 서버 오류가 발생했습니다",
+  [ERROR_CODES.INTERNAL_SERVER_ERROR]: "서버 오류가 발생했습니다",
+  [ERROR_CODES.DATABASE_ERROR]: "데이터베이스 오류가 발생했습니다",
+  [ERROR_CODES.EXTERNAL_SERVICE_ERROR]: "외부 서비스 오류가 발생했습니다",
+  [ERROR_CODES.SERVICE_UNAVAILABLE]: "서비스를 사용할 수 없습니다",
+};
+

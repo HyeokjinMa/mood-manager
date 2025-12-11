@@ -74,6 +74,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       status: searchLightState.status,
       light_off: searchLightState.light_off,
+      light_off_flag: searchLightState.light_off, // Phase 4: 라즈베리파이 호환성 (light_off_flag 별칭 추가)
     });
   } catch (error) {
     console.error("[Search Light] Error:", error);

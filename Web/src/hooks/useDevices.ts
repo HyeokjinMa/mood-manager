@@ -28,18 +28,28 @@ function _getDefaultOutput(_type: Device["type"]): Device["output"] {
 export function useDevices(
   currentMood: Mood | null,
   segments: MoodStreamSegment[] = [],
-  currentSegmentIndex: number = 0
+  currentSegmentIndex: number = 0,
+  currentBrightness?: number // 현재 세그먼트의 brightness (0-100 범위)
 ) {
   const [devices, setDevices] = useState<Device[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // DB에서 디바이스 정보를 가져오는 중인지 여부
 
   // 초기 로드: DB에서 디바이스 목록 가져오기
   useEffect(() => {
     const fetchDevices = async () => {
+      const startTime = Date.now();
+      console.log("[useDevices] 🔄 디바이스 정보 로드 시작");
+      
       try {
         const response = await fetch("/api/devices", {
           method: "GET",
           credentials: "include",
+        });
+
+        const fetchTime = Date.now() - startTime;
+        console.log(`[useDevices] 📥 API 응답 수신 (${fetchTime}ms):`, {
+          status: response.status,
+          ok: response.ok,
         });
 
         // 401 에러 시 로그인 페이지로 리다이렉트
@@ -49,10 +59,14 @@ export function useDevices(
         }
 
         if (!response.ok) {
-          throw new Error("Failed to fetch devices");
+          throw new Error(`Failed to fetch devices: ${response.status} ${response.statusText}`);
         }
 
         const data = await response.json();
+        const parseTime = Date.now() - startTime;
+        console.log(`[useDevices] ✅ 디바이스 데이터 파싱 완료 (${parseTime}ms):`, {
+          devicesCount: Array.isArray(data.devices) ? data.devices.length : 0,
+        });
 
         // devices가 배열이면 설정, 아니면 빈 배열
         if (Array.isArray(data.devices)) {
@@ -70,15 +84,23 @@ export function useDevices(
             return a.id.localeCompare(b.id);
           });
           setDevices(sortedDevices);
+          const totalTime = Date.now() - startTime;
+          console.log(`[useDevices] ✅ 디바이스 정보 로드 완료 (총 ${totalTime}ms):`, {
+            devicesCount: sortedDevices.length,
+          });
         } else {
           setDevices([]);
+          console.warn("[useDevices] ⚠️ devices가 배열이 아님:", data);
         }
       } catch (error) {
-        console.error("Error fetching devices:", error);
+        const errorTime = Date.now() - startTime;
+        console.error(`[useDevices] ❌ 디바이스 정보 로드 실패 (${errorTime}ms):`, error);
         // 에러 발생 시 빈 배열 유지
         setDevices([]);
       } finally {
         setIsLoading(false);
+        const totalTime = Date.now() - startTime;
+        console.log(`[useDevices] 🔚 isLoading = false (총 ${totalTime}ms)`);
       }
     };
 
@@ -101,6 +123,9 @@ export function useDevices(
     if (!currentSegment?.mood) {
       return;
     }
+    
+    // 현재 세그먼트의 brightness 가져오기 (currentBrightness prop 또는 backgroundParams에서)
+    const segmentBrightness = currentBrightness ?? currentSegment.backgroundParams?.lighting?.brightness ?? 50;
     
     // convertSegmentMoodToMood를 사용하여 안전하게 변환
     // 이 함수는 musicTracks에서 실제 노래 제목과 duration을 가져오고,
@@ -127,8 +152,9 @@ export function useDevices(
               color: moodToUse.color,
               scentType: moodToUse.scent.name,
               nowPlaying: moodToUse.song.title,
-              // 사용자가 변경한 값은 보존
-              brightness: d.output.brightness ?? 50,
+              // brightness는 현재 세그먼트 값으로 통일 (LLM이 하나의 brightness만 제공)
+              brightness: segmentBrightness,
+              // scentLevel은 사용자가 변경한 값 보존
               scentLevel: d.output.scentLevel ?? 5,
             },
           };
@@ -139,7 +165,8 @@ export function useDevices(
             output: {
               ...d.output,
               color: moodToUse.color,
-              brightness: d.output.brightness ?? 50,
+              // brightness는 현재 세그먼트 값으로 통일 (LLM이 하나의 brightness만 제공)
+              brightness: segmentBrightness,
             },
           };
         }
@@ -165,7 +192,7 @@ export function useDevices(
         return d;
       })
     );
-  }, [currentMood, segments, currentSegmentIndex, setDevices]); // Phase 6: 현재 세그먼트 변경 시 자동 업데이트
+  }, [currentMood, segments, currentSegmentIndex, currentBrightness, setDevices]); // Phase 6: 현재 세그먼트 변경 시 자동 업데이트
 
   // 디바이스 추가 (DB에 저장)
   const addDevice = async (type: Device["type"], name?: string, currentMood?: Mood | null) => {
@@ -184,6 +211,7 @@ export function useDevices(
             scentType: currentMood.scent.type,
             scentName: currentMood.scent.name,
             songTitle: currentMood.song.title,
+            brightness: (currentMood as any).brightness, // brightness 정보 전달 (타입 확장 필요)
           } : undefined,
         }),
       });

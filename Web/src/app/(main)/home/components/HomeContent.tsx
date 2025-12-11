@@ -8,15 +8,13 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useEffect, useMemo, useCallback } from "react";
 import React from "react";
 import MoodDashboard from "./MoodDashboard/MoodDashboard";
 import DeviceGrid from "./Device/DeviceGrid";
 import ScentBackground from "@/components/ui/ScentBackground";
-import { MoodDashboardSkeleton } from "@/components/ui/Skeleton";
 import { useDeviceSync } from "@/hooks/useDeviceSync";
 import { detectCurrentEvent } from "@/lib/events/detectEvents";
-import { useDevicePreferences } from "@/hooks/useDevicePreferences";
 import type { Device } from "@/types/device";
 import type { Mood } from "@/types/mood";
 import type { BackgroundParams } from "@/hooks/useBackgroundParams";
@@ -108,9 +106,6 @@ export default function HomeContent({
     }
   }, [onRefreshRequest]);
   
-  // 저장된 디바이스 설정 불러오기
-  const { loadPreferences } = useDevicePreferences();
-
   // LLM 결과 및 무드 변경을 디바이스에 반영
   useDeviceSync({
     setDevices,
@@ -201,20 +196,8 @@ export default function HomeContent({
    * 
    * 개선: 초기 세그먼트가 있으면 스켈레톤 숨김 (isLoadingMoodStream만 체크하지 않음)
    */
-  // 초기 로딩 중이고 세그먼트가 없을 때만 스켈레톤 표시
-  const isInitialLoading = isLoadingMoodStream && (!segments || segments.length === 0);
-  // 세그먼트가 있지만 현재 인덱스가 범위를 벗어났을 때는 알림 표시 (스켈레톤 대신)
-  // isIndexOutOfRange는 MoodDashboard에서 처리하므로 여기서는 사용하지 않음
-  
-  // 초기 로딩 중이거나 currentMood와 currentSegmentData가 모두 없을 때만 스켈레톤 표시
-  // 인덱스가 범위를 벗어났을 때는 스켈레톤 대신 알림을 표시하고 현재 세그먼트 정보는 유지
-  if (isInitialLoading || (!currentMood && !currentSegmentData)) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <MoodDashboardSkeleton />
-      </div>
-    );
-  }
+  // 스켈레톤 UI 제거: 초기 세그먼트는 이미 가지고 있으니 바로 표시
+  // 디바이스 정보는 쿼리로 가져오고, 로딩이 끝나면 자연스럽게 추가됨
 
   return (
     <>
@@ -247,7 +230,7 @@ export default function HomeContent({
               }
             }}
             externalVolume={currentVolume}
-            mood={currentMood!}
+            mood={currentMood || undefined} // null이면 undefined로 변환
             onMoodChange={onMoodChange}
             onScentChange={onScentChange}
             onSongChange={onSongChange}

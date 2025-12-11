@@ -123,8 +123,8 @@ export default function ChangePasswordModal({ show, onClose }: ChangePasswordMod
   if (!show) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-xl p-6 w-[330px] shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+      <div className="bg-white rounded-xl p-6 w-[330px] shadow-2xl pointer-events-auto border border-gray-200">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Change Password</h2>

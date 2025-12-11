@@ -52,7 +52,7 @@
             "properties": {
               "type": {
                 "type": "string",
-                "enum": ["Floral", "Woody", "Spicy", "Fresh", "Citrus", "Herbal", "Musk", "Oriental"]
+                "enum": ["Musk", "Aromatic", "Woody", "Citrus", "Honey", "Green", "Dry", "Leathery", "Marine", "Spicy", "Floral", "Powdery"]
               },
               "name": {
                 "type": "string",

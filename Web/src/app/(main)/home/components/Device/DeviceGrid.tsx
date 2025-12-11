@@ -77,20 +77,8 @@ export default function DeviceGrid({
                 currentMood={currentMood}
                 onClose={() => setExpandedId(null)}
                 onDelete={() => onDeleteRequest(device)}
-                onTogglePower={handlers.handleTogglePower}
-                onUpdateName={handlers.handleUpdateName}
-                onUpdateLightColor={(color) => {
-                  handlers.handleUpdateLightColor(color);
-                  onDeviceControlChange?.({ color });
-                }}
-                onUpdateLightBrightness={(brightness) => {
-                  handlers.handleUpdateLightBrightness(brightness);
-                  onDeviceControlChange?.({ brightness });
-                }}
-                onUpdateScentLevel={(level) => {
-                  handlers.handleUpdateScentLevel(level);
-                  onDeviceControlChange?.({ scentLevel: level });
-                }}
+                onTogglePower={() => handlers.handleTogglePower()}
+                onUpdateName={(name) => handlers.handleUpdateName(name)}
                 volume={volume}
                 onUpdateVolume={(newVolume) => {
                   // 0-100 범위를 0-1로 변환하여 MusicPlayer에 전달

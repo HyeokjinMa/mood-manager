@@ -32,9 +32,17 @@ export function useProfile() {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [profileFetched, setProfileFetched] = useState(false);
 
   // 프로필 정보 조회 함수
   const fetchProfile = useCallback(async () => {
+    // 이미 로딩 중이거나 이미 가져온 경우 스킵
+    if (isLoadingProfile || profileFetched) {
+      return;
+    }
+
+    setIsLoadingProfile(true);
     try {
       const response = await fetch("/api/auth/profile");
       if (!response.ok) {
@@ -43,18 +51,22 @@ export function useProfile() {
       const data = await response.json();
       setProfile(data.profile);
       setProfileImage(data.profile.profileImageUrl || null);
+      setProfileFetched(true);
     } catch (error) {
       console.error("Error fetching profile:", error);
       toast.error("Failed to load profile data.");
+    } finally {
+      setIsLoadingProfile(false);
     }
-  }, []);
+  }, [isLoadingProfile, profileFetched]);
 
-  // 프로필 정보 조회 (실제 API 호출)
+  // 프로필 정보 조회 (실제 API 호출) - 세션이 있고 프로필이 없을 때만 호출
   useEffect(() => {
-    if (session) {
+    if (session && !profile && !isLoadingProfile && !profileFetched) {
       fetchProfile();
     }
-  }, [session, fetchProfile]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.email]); // 세션 이메일이 변경될 때만 재호출
 
   // 프로필 정보가 변경되면 편집 필드도 업데이트
   useEffect(() => {
@@ -180,6 +192,7 @@ export function useProfile() {
       setProfile(data.profile);
       setProfileImage(data.profile.profileImageUrl || null);
       setProfileImageFile(null);
+      setProfileFetched(true); // 업데이트 후에도 fetched 상태 유지
 
       toast.success("Profile updated successfully.");
       setIsEditingProfile(false);

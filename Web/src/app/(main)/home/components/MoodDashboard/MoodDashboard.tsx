@@ -9,7 +9,7 @@
 
 "use client";
 
-import { useCallback, useRef, useState, useEffect, useMemo } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 import { MoodDashboardSkeleton } from "@/components/ui/Skeleton";
 import type { Mood } from "@/types/mood";
 import { AlertCircle } from "lucide-react";
@@ -32,7 +32,7 @@ import AlbumInfoModal from "./components/AlbumInfoModal";
 import ScentInfoModal from "./components/ScentInfoModal";
 
 interface MoodDashboardProps {
-  mood: Mood;
+  mood: Mood | null | undefined; // null/undefined 허용: 초기 세그먼트 로드 전에는 null일 수 있음
   onMoodChange: (mood: Mood) => void;
   onScentChange: (mood: Mood) => void;
   onSongChange: (mood: Mood) => void;
@@ -76,10 +76,15 @@ export default function MoodDashboard({
   const currentSegmentIndex = currentSegmentData?.index ?? 0;
   const backgroundParamsFromSegment = currentSegmentData?.backgroundParams || backgroundParams;
   
+  // effectiveSegment: currentSegment가 null일 때 currentSegmentData에서 직접 가져오기
+  const effectiveSegment = currentSegment || currentSegmentData?.segment || null;
+  
   // 사용자 인터랙션 추적 (한 번 클릭하면 이후 자동재생 가능)
+  // React Hooks 규칙: 모든 hooks는 조건부 렌더링 전에 호출해야 함
   const userInteractedRef = useRef(false);
 
   // 무드 대시보드 상태 및 핸들러 관리
+  // mood가 null이어도 hooks는 호출해야 함 (React Hooks 규칙)
   const {
     isLoading,
     playing,
@@ -91,24 +96,29 @@ export default function MoodDashboard({
     preferenceCount,
     maxReached,
   } = useMoodDashboard({
-    mood,
+    mood: mood, // null일 수 있음 (훅 내부에서 처리)
     onMoodChange,
     onScentChange,
     onSongChange,
     currentSegment,
   });
 
-  // 색상 계산
+  // 색상 계산 (mood가 없으면 currentSegmentData?.mood 사용)
+  const effectiveMood = mood || currentSegmentData?.mood;
   const { baseColor, accentColor, displayAlias } = useMoodColors({
-    mood,
+    mood: effectiveMood,
     backgroundParams,
   });
+  
+  // 프로그레스 바 색상: 컬러피커로 변경된 색상이 있으면 우선 사용
+  const progressBarColor = effectiveMood?.color || backgroundParams?.moodColor || baseColor;
 
   // 하트 애니메이션 관리 (현재 세그먼트 전달)
   const { heartAnimation, handleDashboardClick, clearHeartAnimation } = useHeartAnimation();
 
   // Phase 5: 세그먼트 선택 - segments와 onSegmentIndexChange 사용
-  const moodStreamForSelector = segments.length > 0 ? {
+  // mood가 null이어도 hooks는 호출해야 함 (React Hooks 규칙)
+  const moodStreamForSelector = segments.length > 0 && mood ? {
     streamId: `stream-${Date.now()}`,
     currentMood: segments[0]?.mood || mood,
     segments: segments,
@@ -116,9 +126,18 @@ export default function MoodDashboard({
     userDataCount: 0,
   } : null;
   
+  // useSegmentSelector에 전달할 currentMood (null이면 기본값 제공)
+  const segmentSelectorMood: Mood = effectiveMood || {
+    id: "default",
+    name: "Loading...",
+    color: "#E6F3FF",
+    song: { title: "", duration: 0 },
+    scent: { type: "Musk" as const, name: "Default", color: "#9CAF88" },
+  };
+  
   const { handleSegmentSelect } = useSegmentSelector({
     moodStream: moodStreamForSelector,
-    currentMood: mood,
+    currentMood: segmentSelectorMood,
     setCurrentSegmentIndex: (index: number) => {
       onSegmentIndexChange?.(index);
     },
@@ -131,7 +150,7 @@ export default function MoodDashboard({
   
   // 범위를 벗어난 세그먼트 선택 시 알림 표시
   const [showWaitingMessage, setShowWaitingMessage] = useState(false);
-  const handleSegmentSelectOutOfRange = useCallback((index: number) => {
+  const handleSegmentSelectOutOfRange = useCallback(() => {
     setShowWaitingMessage(true);
     // 3초 후 자동으로 알림 숨김
     setTimeout(() => {
@@ -150,7 +169,7 @@ export default function MoodDashboard({
     volume,
     setVolume,
   } = useMusicTrackPlayer({
-    segment: currentSegment,
+    segment: effectiveSegment,
     playing,
     onSegmentEnd: () => {
       // Phase 5: 세그먼트 종료 시 다음 세그먼트로 전환
@@ -219,19 +238,19 @@ export default function MoodDashboard({
     onRefreshRequest?.(); // HomeContent에 LLM 호출 요청
   }, [handleRefreshClick, onRefreshRequest]);
 
-  /**
-   * Phase 5: 로딩 중 스켈레톤 표시
-   * - 초기 콜드스타트 단계에서만 스켈레톤 표시 (세그먼트가 없을 때)
-   * - 이후 새로고침/다음 스트림 생성 중에는 직전 무드 유지
-   * - 세그먼트 인덱스가 범위를 벗어났을 때만 스켈레톤 표시
-   */
-  // 초기 로딩 중이고 세그먼트가 없을 때만 스켈레톤 표시
-  const isInitialLoading = isLoadingMoodStream && !currentSegment && !segments?.length;
-  // 세그먼트가 있지만 현재 세그먼트가 없을 때는 스켈레톤 표시 (인덱스 범위 초과)
-  const isIndexOutOfRange = segments && segments.length > 0 && !currentSegment;
-  
-  if (isLoading || isInitialLoading || isIndexOutOfRange) {
+  // mood가 null이면 스켈레톤 표시 (초기 세그먼트 로드 전)
+  // 모든 hooks 호출 후에 조건부 렌더링 (React Hooks 규칙 준수)
+  if (!mood) {
     return <MoodDashboardSkeleton />;
+  }
+  
+  // 세그먼트가 없을 때만 에러 메시지 표시 (스켈레톤 대신)
+  if (!currentSegment && (!segments || segments.length === 0)) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-gray-500">세그먼트를 불러오는 중...</p>
+      </div>
+    );
   }
 
   return (
@@ -259,9 +278,12 @@ export default function MoodDashboard({
         key={`dashboard-${currentSegmentIndex}`}
       >
       <MoodHeader
-        mood={{
-          ...mood,
-          name: displayAlias, // LLM 추천 별명 사용
+        mood={effectiveMood || {
+          id: "default",
+          name: displayAlias || "Loading...",
+          color: baseColor || "#E6F3FF",
+          song: { title: "", duration: 0 },
+          scent: { type: "Musk" as const, name: "Default", color: "#9CAF88" },
         }}
         isSaved={isSaved}
         onSaveToggle={setIsSaved}
@@ -273,80 +295,89 @@ export default function MoodDashboard({
       />
 
       {/* Phase 5: 향/앨범 정보 모달 */}
-      <ScentControl 
-        mood={currentSegmentData?.mood || mood} 
-        onScentClick={() => setIsScentModalOpen(true)} 
-        moodColor={baseColor} 
-      />
+      {/* mood가 없으면 렌더링하지 않음 (로딩 중) */}
+      {effectiveMood && (
+        <>
+          <ScentControl 
+            mood={effectiveMood as Mood} 
+            onScentClick={() => setIsScentModalOpen(true)} 
+            moodColor={baseColor} 
+          />
 
-      <AlbumSection 
-        mood={mood}
-        onAlbumClick={() => setIsAlbumModalOpen(true)}
-        musicSelection={currentTrack?.title || backgroundParamsFromSegment?.musicSelection || backgroundParams?.musicSelection}
-        albumImageUrl={currentTrack?.albumImageUrl}
-      />
+          {/* albumImageUrl fallback: currentTrack → effectiveSegment.musicTracks */}
+          <AlbumSection 
+            mood={effectiveMood as Mood}
+            onAlbumClick={() => setIsAlbumModalOpen(true)}
+            musicSelection={currentTrack?.title || backgroundParamsFromSegment?.musicSelection || backgroundParams?.musicSelection}
+            albumImageUrl={currentTrack?.albumImageUrl || effectiveSegment?.musicTracks?.[0]?.albumImageUrl}
+          />
 
-      {/* 모달 컴포넌트 */}
-      <AlbumInfoModal
-        isOpen={isAlbumModalOpen}
-        onClose={() => setIsAlbumModalOpen(false)}
-        track={currentTrack}
-      />
+          {/* 모달 컴포넌트 */}
+          <AlbumInfoModal
+            isOpen={isAlbumModalOpen}
+            onClose={() => setIsAlbumModalOpen(false)}
+            track={currentTrack}
+          />
 
-      <ScentInfoModal
-        isOpen={isScentModalOpen}
-        onClose={() => setIsScentModalOpen(false)}
-        scentType={mood.scent.type}
-        scentName={mood.scent.name}
-      />
+          <ScentInfoModal
+            isOpen={isScentModalOpen}
+            onClose={() => setIsScentModalOpen(false)}
+            scentType={effectiveMood.scent?.type || "Musk"}
+            scentName={effectiveMood.scent?.name || ""}
+          />
 
-      <MusicControls
-        mood={mood}
-        progress={trackProgress}
-        totalProgress={totalProgress}
-        segmentDuration={segmentDuration}
-        currentTrack={currentTrack}
-        currentTrackIndex={0}
-        totalTracks={totalTracks}
-        playing={playing}
-        onPlayToggle={() => {
-          userInteractedRef.current = true; // 사용자 인터랙션 기록
-          setPlaying(!playing);
-        }}
-        onPrevious={() => {
-          // Phase 5: 트랙 이동 대신 세그먼트 이동으로 단순화
-          if (segments.length === 0) return;
-          const prevIndex = Math.max(0, currentSegmentIndex - 1);
-          handleSegmentSelect(prevIndex);
-        }}
-        onNext={() => {
-          // Phase 5: 트랙 이동 대신 세그먼트 이동으로 단순화
-          if (segments.length === 0) return;
-          const lastIndex = segments.length - 1;
-          const nextIndex = Math.min(lastIndex, currentSegmentIndex + 1);
-          handleSegmentSelect(nextIndex);
-        }}
-        onSeek={seek}
-      />
+          <MusicControls
+            mood={effectiveMood as Mood}
+            progress={trackProgress}
+            totalProgress={totalProgress}
+            segmentDuration={segmentDuration}
+            currentTrack={currentTrack}
+            currentTrackIndex={0}
+            totalTracks={totalTracks}
+            playing={playing}
+            moodColor={progressBarColor} // 무드 컬러 전달 (scent 아이콘과 동일, 컬러피커 변경 시 즉시 반영)
+            onPlayToggle={() => {
+              userInteractedRef.current = true; // 사용자 인터랙션 기록
+              setPlaying(!playing);
+            }}
+            onPrevious={() => {
+              // Phase 5: 트랙 이동 대신 세그먼트 이동으로 단순화
+              if (segments.length === 0) return;
+              const prevIndex = Math.max(0, currentSegmentIndex - 1);
+              handleSegmentSelect(prevIndex);
+            }}
+            onNext={() => {
+              // Phase 5: 트랙 이동 대신 세그먼트 이동으로 단순화
+              if (segments.length === 0) return;
+              const lastIndex = segments.length - 1;
+              const nextIndex = Math.min(lastIndex, currentSegmentIndex + 1);
+              handleSegmentSelect(nextIndex);
+            }}
+            onSeek={seek}
+          />
+        </>
+      )}
 
-      <MoodDuration
-        mood={mood}
-        currentIndex={currentSegmentIndex}
-        /**
-         * V1: 1 스트림 = 항상 10 세그먼트로 인식되도록 고정
-         * 실제 segments 개수가 3개뿐이어도, 사용자는 항상 10칸을 하나의 스트림으로 인식
-         */
-        totalSegments={10}
-        onSegmentSelect={handleSegmentSelect}
-        moodColorCurrent={baseColor}
-        moodColorPast={accentColor}
-        // Phase 5: nextStreamAvailable과 switchToNextStream은 나중에 구현
-        nextStreamAvailable={false}
-        onNextStreamSelect={() => {}}
-        totalSegmentsIncludingNext={undefined}
-        availableSegmentsCount={segments.length} // 실제 사용 가능한 세그먼트 개수 전달
-        onSegmentSelectOutOfRange={handleSegmentSelectOutOfRange}
-      />
+      {effectiveMood && (
+        <MoodDuration
+          mood={effectiveMood as Mood}
+          currentIndex={currentSegmentIndex}
+          /**
+           * V1: 1 스트림 = 항상 10 세그먼트로 인식되도록 고정
+           * 실제 segments 개수가 3개뿐이어도, 사용자는 항상 10칸을 하나의 스트림으로 인식
+           */
+          totalSegments={10}
+          onSegmentSelect={handleSegmentSelect}
+          moodColorCurrent={baseColor}
+          moodColorPast={accentColor}
+          // Phase 5: nextStreamAvailable과 switchToNextStream은 나중에 구현
+          nextStreamAvailable={false}
+          onNextStreamSelect={() => {}}
+          totalSegmentsIncludingNext={undefined}
+          availableSegmentsCount={segments.length} // 실제 사용 가능한 세그먼트 개수 전달
+          onSegmentSelectOutOfRange={handleSegmentSelectOutOfRange}
+        />
+      )}
       </div>
       
       {/* 범위를 벗어난 세그먼트 선택 시 알림 메시지 */}

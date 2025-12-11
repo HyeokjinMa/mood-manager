@@ -3,7 +3,7 @@
  * OpenAI API 실패 시 fallback으로 사용
  */
 
-import type { BackgroundParamsResponse } from "@/lib/llm/validateResponse";
+import type { BackgroundParamsResponse } from "@/types/llm";
 
 /**
  * [MOCK] 목업 응답 (OpenAI API 실패 시 fallback)

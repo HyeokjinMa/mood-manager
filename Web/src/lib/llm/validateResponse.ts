@@ -9,51 +9,12 @@
  */
 
 import type { MusicTrack } from "@/hooks/useMoodStream/types";
-import type { CompleteSegmentOutput } from "./types/completeOutput";
+import type { CompleteSegmentOutput } from "@/types/llm";
 import { validateCompleteSegmentOutput, convertToBackgroundParamsResponse } from "./validators/completeOutputValidator";
+import type { BackgroundParamsResponse } from "@/types/llm";
 
-/**
- * @deprecated BackgroundParamsResponse는 Phase 1 리팩토링으로 인해 점진적으로 제거됩니다.
- * 새로운 CompleteSegmentOutput 타입을 사용하세요.
- * 
- * 하위 호환성을 위해 일시적으로 유지됩니다.
- */
-export interface BackgroundParamsResponse {
-  moodAlias: string;
-  musicSelection: number | string; // musicID (10-69) 또는 문자열 (하위 호환성)
-  moodColor: string;
-  lighting: {
-    brightness: number;
-    temperature?: number;
-  };
-  backgroundIcon: {
-    name: string;
-    category: string;
-  };
-  // LLM이 선택한 원시 아이콘 키 배열 (최대 4개, 첫 번째는 backgroundIcon 에 매핑됨)
-  iconKeys?: string[];
-  backgroundWind: {
-    direction: number;
-    speed: number;
-  };
-  animationSpeed: number;
-  iconOpacity: number;
-  // 향 정보 (CompleteSegmentOutput에서 변환 시 포함)
-  scent?: {
-    type?: string;
-    name?: string;
-  };
-  // 사용되지 않는 필드들 (제거 예정)
-  // iconCount?: number;
-  // iconSize?: number;
-  // particleEffect?: boolean;
-  // gradientColors?: string[];
-  // transitionDuration?: number;
-  // DB에서 매핑된 실제 음악 트랙 (선택적, streamHandler에서 추가)
-  musicTracks?: MusicTrack[];
-  // 세그먼트 duration (밀리초, streamHandler에서 추가)
-  duration?: number;
-}
+// 하위 호환성을 위해 re-export
+export type { BackgroundParamsResponse } from "@/types/llm";
 
 /**
  * HEX 색상 검증

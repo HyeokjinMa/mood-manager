@@ -13,7 +13,8 @@
 import { NextResponse } from "next/server";
 import { prepareLLMInput, type LLMInput } from "@/lib/llm/prepareLLMInput";
 import { generatePromptFromPythonResponse } from "@/lib/llm/optimizePromptForPython";
-import { validateAndNormalizeResponse, type BackgroundParamsResponse } from "@/lib/llm/validateResponse";
+import { validateAndNormalizeResponse } from "@/lib/llm/validateResponse";
+import type { BackgroundParamsResponse } from "@/types/llm";
 import { getCachedResponse, setCachedResponse } from "@/lib/cache/llmCache";
 import { getMockResponse } from "../utils/mockResponse";
 import { PythonEmotionPredictionProvider } from "@/lib/prediction/PythonEmotionPredictionProvider";
@@ -94,7 +95,13 @@ export async function handleStreamMode({
   llmInput.tagPreferenceWeights = tagWeights;
 
   // ===== 1. 로그인 세션 기준으로 감정 카운터 조회 및 클렌징 =====
+  console.log("[handleStreamMode] 🔄 Step 2.1: 감정 카운터 조회 및 클렌징");
   const emotionCounts = getAndResetEmotionCounts(userId);
+  console.log("[handleStreamMode] ✅ Step 2.1 완료:", {
+    laughter: emotionCounts.laughter,
+    sigh: emotionCounts.sigh,
+    crying: emotionCounts.crying,
+  });
 
   // 전처리 데이터에 감정 카운터 추가
   const preprocessedWithCounts = {
@@ -114,7 +121,11 @@ export async function handleStreamMode({
     // ===== 2. Python 서버에서 감정 예측 받기 =====
     // PYTHON_SERVER_URL 이 없는 환경에서는 Python 단계를 건너뛰고
     // 바로 LLM-only fallback으로 진행
+    console.log("[handleStreamMode] 🔄 Step 2.2: Python 서버 호출 (마르코프 체인 예측)");
+    const pythonStartTime = Date.now();
+    
     if (!process.env.PYTHON_SERVER_URL) {
+      console.log("[handleStreamMode] ⚠️ PYTHON_SERVER_URL 없음, Python 단계 건너뜀");
       pythonResponse = null;
     } else {
       const pythonProvider = new PythonEmotionPredictionProvider();
@@ -127,13 +138,21 @@ export async function handleStreamMode({
 
       // Python 서버 호출
       pythonResponse = await pythonProvider.getPythonResponse(predictionInput, userId);
+      console.log(`[handleStreamMode] ✅ Step 2.2 완료 (${Date.now() - pythonStartTime}ms)`);
 
       // Python 응답 검증
       if (!validatePythonResponse(pythonResponse)) {
+        console.warn("[handleStreamMode] ⚠️ Python 응답 검증 실패, fallback으로 진행");
         pythonResponse = null;
+      } else {
+        console.log("[handleStreamMode] ✅ Python 응답 검증 성공:", {
+          currentId: pythonResponse.current_id,
+          futureId: pythonResponse.future_id,
+        });
       }
     }
-  } catch {
+  } catch (error) {
+    console.error("[handleStreamMode] ❌ Python 서버 호출 실패, fallback으로 진행:", error);
     pythonResponse = null;
   }
 
@@ -152,8 +171,11 @@ export async function handleStreamMode({
   }
 
   // ===== 3. Python 응답 JSON을 그대로 LLM 프롬프트에 포함 =====
+  console.log("[handleStreamMode] 🔄 Step 2.3: LLM 프롬프트 생성");
+  const promptStartTime = Date.now();
   // 세션 정보를 전달하여 목업 모드 확인
   const prompt = await generatePromptFromPythonResponse(llmInput, pythonResponse, userId, segments, session);
+  console.log(`[handleStreamMode] ✅ Step 2.3 완료 (${Date.now() - promptStartTime}ms)`);
 
   // ===== LLM 인풋 로깅 =====
   console.log("\n" + "=".repeat(100));
@@ -199,8 +221,11 @@ export async function handleStreamMode({
   }
 
   // ===== 4. LLM으로 배경 파라미터 생성 =====
+  console.log("[handleStreamMode] 🔄 Step 2.4: LLM 호출 시작");
+  const llmCallStartTime = Date.now();
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
+    console.warn("[handleStreamMode] ⚠️ OPENAI_API_KEY 없음, 목업 데이터로 폴백");
     const mockResponse = { ...getMockResponse(), source: "mock-no-key" as const };
     setCachedResponse(cacheKey, mockResponse);
     return NextResponse.json(mockResponse);
@@ -272,7 +297,7 @@ CRITICAL: Icon Diversity & Music Diversity & Scent Diversity
                       type: "object",
                       required: ["type", "name", "level", "interval"],
                       properties: {
-                        type: { type: "string", enum: ["Floral", "Woody", "Spicy", "Fresh", "Citrus", "Herbal", "Musk", "Oriental"] },
+                        type: { type: "string", enum: ["Musk", "Aromatic", "Woody", "Citrus", "Honey", "Green", "Dry", "Leathery", "Marine", "Spicy", "Floral", "Powdery"] },
                         name: { type: "string" },
                         level: { type: "integer", minimum: 1, maximum: 10 },
                         interval: { type: "integer", enum: [5, 10, 15, 20, 25, 30] }
@@ -343,6 +368,7 @@ CRITICAL: Icon Diversity & Music Diversity & Scent Diversity
     console.log("  - 출력 토큰:", completion.usage?.completion_tokens || "N/A");
     console.log("완료 이유:", completion.choices[0].finish_reason || "N/A");
     console.log("=".repeat(100) + "\n");
+    console.log(`[handleStreamMode] ✅ Step 2.4 완료 (${Date.now() - llmCallStartTime}ms)`);
 
     const rawResponse = JSON.parse(completion.choices[0].message.content || "{}");
     
@@ -356,7 +382,10 @@ CRITICAL: Icon Diversity & Music Diversity & Scent Diversity
     console.log(JSON.stringify(rawResponse, null, 2));
     console.log("=".repeat(100) + "\n");
     
+    console.log("[handleStreamMode] 🔄 Step 2.5: LLM 응답 검증 및 정규화");
+    const validationStartTime = Date.now();
     const validatedResponse = validateAndNormalizeResponse(rawResponse);
+    console.log(`[handleStreamMode] ✅ Step 2.5 완료 (${Date.now() - validationStartTime}ms)`);
     
     // ===== 검증된 응답 로깅 =====
     console.log("\n" + "=".repeat(100));
@@ -675,7 +704,7 @@ CRITICAL: Icon Diversity & Music Diversity & Scent Diversity
                       type: "object",
                       required: ["type", "name", "level", "interval"],
                       properties: {
-                        type: { type: "string", enum: ["Floral", "Woody", "Spicy", "Fresh", "Citrus", "Herbal", "Musk", "Oriental"] },
+                        type: { type: "string", enum: ["Musk", "Aromatic", "Woody", "Citrus", "Honey", "Green", "Dry", "Leathery", "Marine", "Spicy", "Floral", "Powdery"] },
                         name: { type: "string" },
                         level: { type: "integer", minimum: 1, maximum: 10 },
                         interval: { type: "integer", enum: [5, 10, 15, 20, 25, 30] }

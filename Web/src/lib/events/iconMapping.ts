@@ -1,26 +1,8 @@
 import type { EventInfo, EventType } from "./detectEvents";
+import type { IconKey } from "@/types/events";
 
-/**
- * 이벤트 아이콘 매핑
- * 
- * - 실제 React 아이콘 컴포넌트는 사용하지 않고,
- *   Canvas 드로잉용으로 문자열 키만 관리합니다.
- * - 키 → 드로잉 함수 매핑은 ScentBackground/drawing.ts 의 drawIconByKey 에서 처리합니다.
- */
-export type IconKey = 
-  // 크리스마스
-  | "tree" | "snowflake" | "star" | "gift" | "bell" | "candle" | "snowman" | "santa"
-  // 신년
-  | "fire" | "rocket" | "sparkles" | "confetti" | "starOfLife" | "magic" | "balloon"
-  // 발렌타인
-  | "heart" | "heartBroken" | "heartbeat" | "rose" | "flower" | "gem" | "ribbon" | "envelope"
-  // 할로윈
-  | "pumpkin" | "ghost" | "spider" | "spiderWeb" | "hatWizard" | "skull" | "moon" | "cloudMoon"
-  // 계절/일반
-  | "sun" | "umbrellaBeach" | "palmTree" | "water" | "iceCream" | "sunPlantWilt" | "butterfly"
-  | "leaf" | "mountain" | "mountainSun" | "treePine" | "flowerTulip" | "wheatAwn" | "apple" | "chestnut" | "grapes"
-  // 기본 (향 타입별)
-  | "petal" | "waterDrop" | "circle" | "cloud";
+// 하위 호환성을 위해 re-export
+export type { IconKey } from "@/types/events";
 
 /**
  * 이벤트별 아이콘 세트

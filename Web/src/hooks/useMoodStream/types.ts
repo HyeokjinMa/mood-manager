@@ -5,7 +5,7 @@
  * Phase 1: backgroundParams를 MoodStreamSegment에 통합
  */
 
-import type { CompleteSegmentOutput } from "@/lib/llm/types/completeOutput";
+import type { CompleteSegmentOutput } from "@/types/llm";
 import type { BackgroundParams } from "@/hooks/useBackgroundParams";
 
 /**

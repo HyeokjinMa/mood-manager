@@ -4,7 +4,7 @@
  * Phase 3: 새로운 CompleteSegmentOutput 구조를 MoodStreamSegment로 변환
  */
 
-import type { CompleteSegmentOutput } from "../types/completeOutput";
+import type { CompleteSegmentOutput } from "@/types/llm";
 import type { MoodStreamSegment } from "@/hooks/useMoodStream/types";
 import type { MusicTrack } from "@/hooks/useMoodStream/types";
 import { mapMusicIDToTrack } from "@/lib/music/mapMusicIDToTrack";

@@ -8,7 +8,8 @@
 import type { EmotionPredictionProvider, EmotionSegment, EmotionPredictionInput } from "./EmotionPredictionProvider";
 import { prepareLLMInput } from "@/lib/llm/prepareLLMInput";
 import { generateOptimizedPrompt } from "@/lib/llm/optimizePrompt";
-import { validateAndNormalizeResponse, type BackgroundParamsResponse } from "@/lib/llm/validateResponse";
+import { validateAndNormalizeResponse } from "@/lib/llm/validateResponse";
+import type { BackgroundParamsResponse } from "@/types/llm";
 import OpenAI from "openai";
 
 export class LLMEmotionPredictionProvider implements EmotionPredictionProvider {

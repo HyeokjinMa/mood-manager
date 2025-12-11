@@ -30,7 +30,8 @@ import DeviceNameEditor from "./components/DeviceNameEditor";
 import DeviceControls from "./components/DeviceControls";
 import { getDeviceIcon, getDeviceStatusDescription } from "./utils/deviceUtils";
 import type { MoodStreamSegment } from "@/hooks/useMoodStream/types";
-import { hexToRgb } from "@/lib/utils/colorUtils";
+import { hexToRgb } from "@/lib/utils/color";
+import { blendWithWhite, reduceWhiteTint } from "@/lib/utils";
 
 export default function DeviceCardExpanded({
   device,
@@ -39,9 +40,6 @@ export default function DeviceCardExpanded({
   onDelete,
   onTogglePower,
   onUpdateName,
-  onUpdateLightColor,
-  onUpdateLightBrightness,
-  onUpdateScentLevel,
   volume,
   onUpdateVolume,
   onDeviceUpdate,
@@ -55,9 +53,6 @@ export default function DeviceCardExpanded({
   onDelete: () => void;
   onTogglePower: () => void;
   onUpdateName: (name: string) => void;
-  onUpdateLightColor?: (color: string) => void;
-  onUpdateLightBrightness?: (brightness: number) => void;
-  onUpdateScentLevel?: (level: number) => void;
   volume?: number; // 0-100 범위
   onUpdateVolume?: (volume: number) => void; // 0-100 범위
   onDeviceUpdate?: (updatedDevice: Device) => void; // 디바이스 업데이트 콜백
@@ -66,14 +61,14 @@ export default function DeviceCardExpanded({
   currentSegment?: MoodStreamSegment | null; // 현재 세그먼트 데이터
 }) {
   const {
-    lightColor,
-    setLightColor,
+    lightColor: hookLightColor,
     lightBrightness,
-    setLightBrightness,
     scentLevel,
-    setScentLevel,
     backgroundColor: baseBackgroundColor,
   } = useDeviceCard({ device, currentMood });
+  
+  // device.output.color 또는 currentMood.color 우선 사용
+  const lightColor = device.output.color || currentMood?.color || hookLightColor;
 
   // 로컬 상태로 변경사항 추적 (저장 전까지는 반영하지 않음)
   const [localLightColor, setLocalLightColor] = useState(lightColor);
@@ -81,16 +76,37 @@ export default function DeviceCardExpanded({
   const [localScentLevel, setLocalScentLevel] = useState(scentLevel);
   const [localVolume, setLocalVolume] = useState(volume ?? device.output.volume ?? 70);
 
-  // 배경색은 원래대로 유지 (컬러 피커와 바만 색상 연동)
-  const backgroundColor = baseBackgroundColor;
+  // 배경색은 localLightColor가 있으면 우선 사용, 없으면 baseBackgroundColor 사용
+  // 컬러피커로 색을 변경했을 때 즉시 반영되도록
+  const getBackgroundColor = () => {
+    if (!device.power) {
+      return "rgba(200, 200, 200, 0.8)";
+    }
+    // localLightColor가 변경되었으면 우선 사용 (컬러피커 변경 즉시 반영)
+    if (localLightColor && localLightColor !== (device.output.color || currentMood?.color)) {
+      const adjustedColor = reduceWhiteTint(localLightColor);
+      return blendWithWhite(adjustedColor, 0.9);
+    }
+    // 기본값은 baseBackgroundColor 사용
+    return baseBackgroundColor;
+  };
+  
+  const backgroundColor = getBackgroundColor();
 
   // 디바이스 변경 시 로컬 상태 동기화 (세그먼트 이동 시 즉시 반영)
   useEffect(() => {
-    setLocalLightColor(lightColor);
+    // device.output.color 또는 currentMood.color 변경 시 로컬 상태 업데이트
+    // 단, 로컬에서 방금 변경한 경우는 제외 (컬러피커 변경과 구분)
+    const effectiveColor = device.output.color || currentMood?.color || lightColor;
+    if (effectiveColor && effectiveColor !== localLightColor) {
+      // 세그먼트 전환이나 디바이스 변경으로 인한 색상 변경은 즉시 반영
+      setLocalLightColor(effectiveColor);
+    }
+    
     setLocalLightBrightness(lightBrightness);
     setLocalScentLevel(scentLevel);
     setLocalVolume(volume ?? device.output.volume ?? 70);
-  }, [lightColor, lightBrightness, scentLevel, volume, device.output.volume, currentMood?.color, currentSegment?.mood?.color]);
+  }, [lightColor, lightBrightness, scentLevel, volume, device.output.volume, device.id, currentMood?.id, currentMood?.color, device.output.color]); // color 관련 의존성 추가
 
   // 즉시 저장 함수 (변경 시 자동 저장, 디바운스 적용)
   useEffect(() => {
@@ -162,7 +178,7 @@ export default function DeviceCardExpanded({
           : "rgba(200, 200, 200, 0.8)",
         borderColor: localLightColor || currentMood?.color || "#E6F3FF", // 로컬 컬러로 테두리 색상 연동
       }}
-      key={`device-${device.id}-${device.power}-${localLightColor}`} // 전원 상태 및 색상 변경 시 리렌더링 강제
+      key={`device-${device.id}-${device.power}`} // 전원 상태 변경 시 리렌더링
       onClick={(e) => {
         // 컬러 피커나 컨트롤 영역 클릭 시에는 닫히지 않음
         const target = e.target as HTMLElement;
@@ -231,7 +247,18 @@ export default function DeviceCardExpanded({
           scentLevel={localScentLevel}
           volume={localVolume}
           onUpdateLightColor={device.type === "light" || device.type === "manager" ? (color) => {
-            setLocalLightColor(color);
+            setLocalLightColor(color); // 즉시 로컬 상태 업데이트
+            // search_light 상태를 "search"로 변경 (라즈베리파이 풀링 활성화)
+            fetch("/api/search_light", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              credentials: "include",
+              body: JSON.stringify({ status: "search" }),
+            }).catch((error) => {
+              console.error("[DeviceCardExpanded] Failed to update search_light status:", error);
+            });
             // RGB 변경 시 즉시 onDeviceControlChange 호출하여 currentMood 업데이트
             if (onDeviceControlChange) {
               onDeviceControlChange({ color });

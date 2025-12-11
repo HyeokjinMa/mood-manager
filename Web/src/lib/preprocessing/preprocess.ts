@@ -29,7 +29,7 @@
  */
 import { PeriodicRaw } from "@/lib/types/periodic";
 import { calculateStressIndex } from "@/lib/stress";
-import type { WeatherData } from "@/lib/weather/fetchWeather";
+import type { WeatherData } from "@/types/weather";
 // TODO: calculateDailySleepScore는 route.ts에서 사용 예정
 // import { calculateDailySleepScore } from "../sleep/calculateDailySleepScore";
 

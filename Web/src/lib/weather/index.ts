@@ -9,6 +9,7 @@
  * - WeatherData: 날씨 데이터 타입
  */
 
-export { fetchWeather, type WeatherData } from "./fetchWeather";
+export { fetchWeather } from "./fetchWeather";
+export type { WeatherData } from "@/types/weather";
 export { convertToGrid } from "./mapGrid";
 

@@ -20,6 +20,7 @@ interface MusicControlsProps {
   onPrevious: () => void;
   onNext: () => void;
   onSeek?: (time: number) => void; // seek 함수 (선택적)
+  moodColor?: string; // 무드 컬러 (프로그레스 바 색상용)
 }
 
 export default function MusicControls({
@@ -35,6 +36,7 @@ export default function MusicControls({
   onPrevious,
   onNext,
   onSeek,
+  moodColor,
 }: MusicControlsProps) {
   // 현재 트랙의 길이 (밀리초 → 초)
   const currentTrackDuration = currentTrack?.duration || mood.song.duration * 1000;
@@ -64,8 +66,11 @@ export default function MusicControls({
           }}
         >
           <div
-            className="h-1 bg-black rounded transition-all"
-            style={{ width: `${segmentProgressPercent}%` }}
+            className="h-1 rounded transition-all"
+            style={{ 
+              width: `${segmentProgressPercent}%`,
+              backgroundColor: moodColor || mood.color || "#000000" // 무드 컬러 사용, 없으면 검은색
+            }}
           />
         </div>
         <span className="text-xs ml-2 text-gray-800">

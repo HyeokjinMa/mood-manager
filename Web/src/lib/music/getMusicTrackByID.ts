@@ -5,17 +5,13 @@
  */
 
 import { prisma } from "@/lib/prisma";
+import type { DatabaseMusicTrack } from "@/types/music";
 
-export interface MusicTrack {
-  musicID: number; // 10-69
-  genre: string; // "Balad", "Pop" 등
-  title: string;
-  mp3Url: string;
-  imageUrl: string;
-  artist: string;
-  description: string;
-  duration: number; // seconds
-}
+/**
+ * @deprecated DatabaseMusicTrack을 사용하세요.
+ * 하위 호환성을 위해 유지됩니다.
+ */
+export type MusicTrack = DatabaseMusicTrack;
 
 /**
  * musicID로 음악 트랙 찾기 (DB에서 조회)
@@ -23,7 +19,7 @@ export interface MusicTrack {
  * @param musicID - 10-69
  * @returns MusicTrack 또는 null
  */
-export async function getMusicTrackByID(musicID: number): Promise<MusicTrack | null> {
+export async function getMusicTrackByID(musicID: number): Promise<DatabaseMusicTrack | null> {
   try {
     // 모든 Sound 레코드를 가져와서 componentsJson에서 musicID를 확인
     const sounds = await prisma.sound.findMany({
@@ -61,7 +57,7 @@ export async function getMusicTrackByID(musicID: number): Promise<MusicTrack | n
       const { findImageFileByTitle } = await import("./findImageFile");
       const foundFileName = findImageFileByTitle(sound.name, sound.genre.name);
       if (foundFileName) {
-        imageUrl = `/musics_img/${sound.genre.name}/${foundFileName}`;
+        imageUrl = `/album/${sound.genre.name}/${foundFileName}`;
       }
     }
     
@@ -87,7 +83,7 @@ export async function getMusicTrackByID(musicID: number): Promise<MusicTrack | n
  * @param genre - "Balad", "Pop" 등
  * @returns 해당 장르의 모든 트랙
  */
-export async function getMusicTracksByGenre(genre: string): Promise<MusicTrack[]> {
+export async function getMusicTracksByGenre(genre: string): Promise<DatabaseMusicTrack[]> {
   try {
     const genreRecord = await prisma.genre.findUnique({
       where: { name: genre },
@@ -128,7 +124,7 @@ export async function getMusicTracksByGenre(genre: string): Promise<MusicTrack[]
 /**
  * 모든 트랙 가져오기 (DB에서 조회)
  */
-export async function getAllMusicTracks(): Promise<MusicTrack[]> {
+export async function getAllMusicTracks(): Promise<DatabaseMusicTrack[]> {
   try {
     const sounds = await prisma.sound.findMany({
       include: {
@@ -161,7 +157,7 @@ export async function getAllMusicTracks(): Promise<MusicTrack[]> {
  * @param title - 노래 제목
  * @returns MusicTrack 또는 null
  */
-export async function getMusicTrackByTitle(title: string): Promise<MusicTrack | null> {
+export async function getMusicTrackByTitle(title: string): Promise<DatabaseMusicTrack | null> {
   try {
     const sound = await prisma.sound.findFirst({
       where: {

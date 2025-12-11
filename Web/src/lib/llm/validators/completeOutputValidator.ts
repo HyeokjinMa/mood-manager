@@ -4,8 +4,8 @@
  * Phase 2: 새로운 CompleteSegmentOutput 구조를 처리하는 검증 로직
  */
 
-import type { CompleteSegmentOutput, ScentType as CompleteOutputScentType } from "../types/completeOutput";
-import type { BackgroundParamsResponse } from "../validateResponse";
+import type { CompleteSegmentOutput } from "@/types/llm";
+import type { BackgroundParamsResponse } from "@/types/llm";
 import { mapIconCategory } from "../validateResponse";
 import { SCENT_DEFINITIONS, type ScentType } from "@/types/mood";
 
@@ -79,19 +79,12 @@ export function validateCompleteSegmentOutput(
   const scent = segment.scent as Record<string, unknown> | undefined;
   const rawScentType = String(scent?.type || "").trim();
   
-  // completeOutput의 ScentType을 mood의 ScentType으로 변환
-  const scentTypeMap: Record<CompleteOutputScentType | string, ScentType> = {
-    "Floral": "Floral",
-    "Woody": "Woody",
-    "Spicy": "Spicy",
-    "Fresh": "Aromatic", // Fresh → Aromatic
-    "Citrus": "Citrus",
-    "Herbal": "Green", // Herbal → Green
-    "Musk": "Musk",
-    "Oriental": "Aromatic", // Oriental → Aromatic
-  };
-  
-  const finalScentType: ScentType = scentTypeMap[rawScentType] || "Floral";
+  // ScentType이 이미 12개로 통일되었으므로 직접 사용
+  // 유효하지 않은 타입이면 기본값 "Floral" 사용
+  const validScentTypes: ScentType[] = ["Musk", "Aromatic", "Woody", "Citrus", "Honey", "Green", "Dry", "Leathery", "Marine", "Spicy", "Floral", "Powdery"];
+  const finalScentType: ScentType = (validScentTypes.includes(rawScentType as ScentType)) 
+    ? (rawScentType as ScentType) 
+    : "Floral";
   
   // scent.name이 없으면 SCENT_DEFINITIONS에서 기본값 선택 (하드코딩 "Rose" 제거)
   let scentName = String(scent?.name || "").trim();
@@ -186,7 +179,7 @@ export function validateCompleteSegmentOutput(
       temperature,
     },
     scent: {
-      type: finalScentType as CompleteOutputScentType, // 타입 변환 (내부적으로는 mood의 ScentType 사용)
+      type: finalScentType, // ScentType이 이미 12개로 통일됨
       name: scentName,
       level: scentLevel,
       interval: scentInterval,

@@ -42,19 +42,7 @@ import { convertToGrid } from "./mapGrid";
 const LAT = 37.557218398096516; // 학교 위도 (고정값, 추후 사용자 GPS로 대체 예정)
 const LON = 127.04553794295386; // 학교 경도 (고정값, 추후 사용자 GPS로 대체 예정)
 
-/**
- * 날씨 데이터 타입 정의
- */
-export interface WeatherData {
-  /** 기온 (°C) */
-  temperature: number;
-  /** 습도 (%) */
-  humidity: number;
-  /** 강수형태 (0:없음, 1:비, 2:비/눈, 3:눈) */
-  rainType: number;
-  /** 하늘상태 (1~4) */
-  sky: number;
-}
+import type { WeatherData } from "@/types/weather";
 
 /**
  * 기상청 초단기실황조회 API를 호출하여 현재 날씨 데이터를 가져옵니다.

@@ -8,12 +8,10 @@
  * - 재생 위치 제어 (seek)
  */
 
-export interface AudioPlayerConfig {
-  src?: string; // 오디오 파일 URL
-  volume?: number; // 볼륨 (0-1)
-  fadeInDuration?: number; // 페이드인 시간 (밀리초, 기본값: 750)
-  fadeOutDuration?: number; // 페이드아웃 시간 (밀리초, 기본값: 750)
-}
+import type { AudioPlayerConfig } from "@/types/music";
+
+// 하위 호환성을 위해 re-export
+export type { AudioPlayerConfig } from "@/types/music";
 
 export class MusicPlayer {
   private audioElement: HTMLAudioElement | null = null;

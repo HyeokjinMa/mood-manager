@@ -6,26 +6,7 @@
  */
 
 import musicMetadata from "./musicMetadata.json";
-
-export interface MusicMetadataTrack {
-  id: string; // "Genre_Number" 형식
-  genre: string;
-  number: number;
-  title: string;
-  artist: string;
-  description: string;
-  fileName: string;
-  imageFileName: string;
-  fileUrl: string;
-  imageUrl: string;
-  originalFileName?: string;
-}
-
-export interface MusicMetadata {
-  version: string;
-  lastUpdated: string;
-  tracks: MusicMetadataTrack[];
-}
+import type { MusicMetadataTrack, MusicMetadata } from "@/types/music";
 
 /**
  * 전체 메타데이터 가져오기

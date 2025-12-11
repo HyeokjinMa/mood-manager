@@ -9,10 +9,9 @@
 
 "use client";
 
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { ADMIN_EMAIL } from "@/lib/auth/mockMode";
 import TopNav from "@/components/navigation/TopNav";
 import BottomNav from "@/components/navigation/BottomNav";
 import MyPageModal from "./components/modals/MyPageModal";
@@ -25,25 +24,21 @@ import DeviceAddModal from "./components/Device/DeviceAddModal";
 import DeviceDeleteModal from "./components/Device/DeviceDeleteModal";
 import SurveyOverlay from "./components/SurveyOverlay/SurveyOverlay";
 import type { Device } from "@/types/device";
+import type { Mood } from "@/types/mood";
 import { useDevices } from "@/hooks/useDevices";
 import { useMood } from "@/hooks/useMood";
 import { useSurvey } from "@/hooks/useSurvey";
+import { getInitialColdStartSegments } from "@/lib/mock/getInitialColdStartSegments";
 import type { BackgroundParams } from "@/hooks/useBackgroundParams";
-import type { MoodStreamSegment } from "@/hooks/useMoodStream/types";
-import type { Mood } from "@/types/mood";
-import type { MoodStreamData, CurrentSegmentData } from "@/types/moodStream";
 import { convertSegmentMoodToMood } from "./components/MoodDashboard/utils/moodStreamConverter";
-import { getLastSegmentEndTime } from "@/lib/utils/segmentUtils";
-import { hexToRgb } from "@/lib/utils/colorUtils";
+import { useMoodStreamManager } from "@/hooks/useMoodStreamManager";
+import { useDeviceState } from "@/hooks/useDeviceState";
 
 export default function HomePage() {
   const router = useRouter();
-  const { status, data: session } = useSession();
+  const { status } = useSession();
   const redirectingRef = useRef(false); // 리다이렉트 중복 방지
   const lastStatusRef = useRef<string | null>(null); // 이전 상태 추적
-  
-  // 관리자 모드 확인 (사용자 ID 기반으로만 확인, 이메일만으로는 판단하지 않음)
-  const isAdminMode = (session?.user as { id?: string })?.id === "admin-mock-user-id";
 
   /**
    * 세션 체크: 로그인되지 않은 경우 로그인 페이지로 리다이렉트
@@ -105,30 +100,69 @@ export default function HomePage() {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showQnaModal, setShowQnaModal] = useState(false);
   
-  // Phase 2: 무드스트림 데이터 상태 관리 (home/page.tsx로 이동)
-  const [moodStreamData, setMoodStreamData] = useState<MoodStreamData>({
-    streamId: "",
-    segments: [],
-    currentIndex: 0,
-    isLoading: true,
-    isGeneratingNextStream: false,
+  // Phase 1 단순화: 무드스트림 관리 훅 사용
+  const isAuthenticated = status === "authenticated";
+  console.log("[HomePage] 🔍 인증 상태:", {
+    status,
+    isAuthenticated,
   });
-
-  // 커스텀 훅 사용
-  // Phase 6: useDevices를 먼저 호출하여 setDevices를 얻고, useMood에서 사용
-  // currentMood는 초기값 null로 시작하고, 나중에 업데이트됨
-  const { devices, setDevices, addDevice, isLoading } = useDevices(
-    null, // 초기값은 null, 나중에 currentMood가 설정되면 업데이트됨
-    moodStreamData.segments,
-    moodStreamData.currentIndex
+  
+  // 초기 세그먼트를 먼저 동기적으로 로드하여 currentMood 즉시 설정
+  // 초기 세그먼트는 하드코딩되어 있어서 동기적으로 즉시 로드 가능
+  const initialSegments = useMemo(() => {
+    return getInitialColdStartSegments();
+  }, []);
+  
+  // 첫 번째 초기 세그먼트에서 currentMood 즉시 설정
+  const initialMood = useMemo((): Mood | null => {
+    const firstSegment = initialSegments[0];
+    if (firstSegment?.mood) {
+      return convertSegmentMoodToMood(firstSegment.mood, null, firstSegment);
+    }
+    return null;
+  }, [initialSegments]);
+  
+  // 디바이스 정보는 초기 세그먼트와 병렬로 로드
+  // setDevices는 useMood에서 사용되므로 먼저 선언
+  // useDevices는 segments와 currentSegmentIndex를 props로 받지만,
+  // 내부 useEffect에서 segments 변경을 감지하여 자동 업데이트됨
+  // currentBrightness는 나중에 계산되므로 useDevices 내부에서 처리
+  const { devices, setDevices, addDevice } = useDevices(
+    initialMood, // 초기 currentMood 전달 (Mood | null)
+    initialSegments, // 초기 세그먼트 전달
+    0 // 초기 인덱스
   );
   
   const { currentMood, setCurrentMood, handleScentChange, handleSongChange } =
-    useMood(null, setDevices);
+    useMood(initialMood, setDevices);
+  
+  // 초기 세그먼트는 이미 로드되었으므로 useMoodStreamManager에 전달
+  // LLM 생성은 백그라운드에서 진행되며, 초기 세그먼트 표시를 막지 않음
+  const {
+    moodStreamData,
+    setMoodStreamData,
+    handleRefreshRequest,
+  } = useMoodStreamManager({
+    isAuthenticated, // LLM 자동 생성에만 사용 (초기 세그먼트 로드와 무관)
+    initialSegments, // 이미 로드된 초기 세그먼트 전달
+    onInitialSegmentsLoaded: (firstSegment) => {
+      // 이미 currentMood가 설정되었지만 일관성을 위해 유지
+      if (firstSegment?.mood && !currentMood) {
+        const convertedMood = convertSegmentMoodToMood(firstSegment.mood, null, firstSegment);
+        setCurrentMood(convertedMood);
+      }
+    },
+  });
+  
+  // useDevices는 내부적으로 useEffect로 segments 변경을 감지하므로 여기서는 전달만 하면 됨
   const { showSurvey, handleSurveyComplete, handleSurveySkip } = useSurvey();
   
-  // 음량 상태 관리 (0-100 범위, 오디오 플레이어에 즉시 반영)
-  const [volume, setVolume] = useState<number>(70); // 기본값 70%
+  // Phase 2 단순화: 디바이스 상태 관리 훅 사용
+  const { volume, setVolume, handleDeviceControlChange } = useDeviceState({
+    currentMood,
+    setCurrentMood,
+    initialVolume: 70,
+  });
   
   // Phase 6: currentMood가 변경되면 useDevices에 전달하기 위해
   // useDevices를 다시 호출하는 대신, useEffect로 segments와 currentSegmentIndex를 업데이트
@@ -138,28 +172,66 @@ export default function HomePage() {
   // Phase 3: 현재 세그먼트 통합 데이터 제공 함수
   // currentMood를 사용하여 사용자가 변경한 값 반영
   const currentSegmentData = useMemo(() => {
-    if (!moodStreamData.segments || moodStreamData.segments.length === 0) {
-      return null;
+    // 1. moodStreamData.segments가 있으면 우선 사용
+    if (moodStreamData.segments && moodStreamData.segments.length > 0) {
+      const segment = moodStreamData.segments[moodStreamData.currentIndex];
+      if (segment) {
+        // Mood 타입으로 변환
+        const mood = convertSegmentMoodToMood(
+          segment.mood,
+          currentMood, // currentMood 전달하여 사용자 변경 값 반영
+          segment
+        );
+        
+        const segmentData = {
+          segment,
+          mood,
+          backgroundParams: segment.backgroundParams,
+          index: moodStreamData.currentIndex,
+        };
+        
+        console.log("[HomePage] ✅ currentSegmentData 생성 (moodStreamData.segments):", {
+          index: segmentData.index,
+          moodName: segmentData.mood.name,
+          moodColor: segmentData.mood.color,
+          hasBackgroundParams: !!segmentData.backgroundParams,
+          hasMusicTracks: !!segment.musicTracks?.length,
+        });
+        
+        return segmentData;
+      }
     }
     
-    const segment = moodStreamData.segments[moodStreamData.currentIndex];
-    if (!segment) return null;
+    // 2. fallback: initialSegments 사용 (초기 로딩 시)
+    if (initialSegments && initialSegments.length > 0) {
+      const segment = initialSegments[0];
+      if (segment?.mood) {
+        const mood = convertSegmentMoodToMood(segment.mood, currentMood, segment);
+        const segmentData = {
+          segment,
+          mood,
+          backgroundParams: segment.backgroundParams,
+          index: 0,
+        };
+        
+        console.log("[HomePage] ✅ currentSegmentData 생성 (initialSegments fallback):", {
+          index: segmentData.index,
+          moodName: segmentData.mood.name,
+          moodColor: segmentData.mood.color,
+        });
+        
+        return segmentData;
+      }
+    }
     
-    // Mood 타입으로 변환
-    // currentMood가 있으면 사용자 변경 값 반영, 없으면 세그먼트 기본값 사용
-    const mood = convertSegmentMoodToMood(
-      segment.mood,
-      currentMood, // currentMood 전달하여 사용자 변경 값 반영
-      segment
-    );
-    
-    return {
-      segment,
-      mood,
-      backgroundParams: segment.backgroundParams,
-      index: moodStreamData.currentIndex,
-    };
-  }, [moodStreamData.segments, moodStreamData.currentIndex, currentMood]); // currentMood를 의존성에 추가
+    console.log("[HomePage] ⚠️ currentSegmentData: segments가 비어있음");
+    return null;
+  }, [moodStreamData.segments, moodStreamData.currentIndex, currentMood, initialSegments]); // initialSegments를 의존성에 추가
+
+  // 현재 세그먼트의 brightness 계산 (currentSegmentData 이후에 정의)
+  const currentBrightness = useMemo(() => {
+    return currentSegmentData?.backgroundParams?.lighting?.brightness || 50;
+  }, [currentSegmentData?.backgroundParams?.lighting?.brightness]);
   
   // Phase 3: currentSegmentData 변경 시 currentMood 업데이트 (무한 루프 방지)
   const prevMoodIdRef = useRef<string | null>(null);
@@ -168,10 +240,19 @@ export default function HomePage() {
       // mood.id가 변경되었을 때만 업데이트하여 무한 루프 방지
       if (prevMoodIdRef.current !== currentSegmentData.mood.id) {
         prevMoodIdRef.current = currentSegmentData.mood.id;
+        console.log("[HomePage] ✅ currentMood 업데이트 (currentSegmentData에서):", {
+          id: currentSegmentData.mood.id,
+          name: currentSegmentData.mood.name,
+          color: currentSegmentData.mood.color,
+        });
         setCurrentMood(currentSegmentData.mood);
       }
+    } else {
+      console.log("[HomePage] ⚠️ currentSegmentData.mood가 없음, currentMood 업데이트 스킵");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSegmentData?.mood?.id, setCurrentMood]);
+  // 의도: mood.id만 추적하여 무한 루프 방지 (prevMoodIdRef로 id 변경 시에만 업데이트)
   
   // 전구 제어: currentSegmentData 변경 시 조명 정보를 저장 (라즈베리파이가 GET으로 가져감)
   // 단, light_power가 "on"일 때만 전달
@@ -253,316 +334,9 @@ export default function HomePage() {
       });
   }, [currentSegmentData]);
 
-  // 디바이스 컨트롤 변경 시 전구 API 업데이트 및 currentMood 업데이트
-  const handleDeviceControlChange = useCallback((changes: { 
-    color?: string; 
-    brightness?: number; 
-    scentLevel?: number; 
-    volume?: number;
-    power?: boolean;
-  }) => {
-    // 변경된 값 로그 출력
-    console.log("\n" + "=".repeat(80));
-    console.log("[HomePage] 📱 디바이스 컨트롤 변경 감지");
-    console.log("=".repeat(80));
-    console.log("변경사항:", JSON.stringify(changes, null, 2));
-    
-    if (changes.color) {
-      const prevColor = currentMood?.color || "N/A";
-      console.log(`  🎨 색상 변경: ${prevColor} → ${changes.color}`);
-    }
-    if (changes.brightness !== undefined) {
-      const prevBrightness = currentSegmentData?.backgroundParams?.lighting?.brightness || "N/A";
-      console.log(`  💡 밝기 변경: ${prevBrightness}% → ${changes.brightness}%`);
-    }
-    if (changes.scentLevel !== undefined) {
-      console.log(`  🌸 센트 레벨 변경: ${changes.scentLevel}`);
-    }
-    if (changes.volume !== undefined) {
-      console.log(`  🔊 볼륨 변경: ${changes.volume}%`);
-    }
-
-    // currentMood 업데이트 (모든 컴포넌트에 즉시 반영)
-    if (currentMood) {
-      const updatedMood = { ...currentMood };
-      let moodUpdated = false;
-
-      // 색상 변경
-      if (changes.color && changes.color !== currentMood.color) {
-        updatedMood.color = changes.color;
-        moodUpdated = true;
-        console.log(`[HomePage] ✅ currentMood.color 업데이트: ${currentMood.color} → ${changes.color}`);
-      }
-
-      // 볼륨 변경 시 오디오 플레이어에 즉시 반영
-      if (changes.volume !== undefined && changes.volume !== volume) {
-        const prevVolume = volume;
-        setVolume(changes.volume);
-        console.log(`[HomePage] ✅ 볼륨 업데이트: ${prevVolume}% → ${changes.volume}% (오디오 플레이어에 즉시 반영)`);
-      }
-      if (changes.scentLevel !== undefined) {
-        console.log(`[HomePage] ℹ️ 센트 레벨 변경 (디바이스 output에 저장): ${changes.scentLevel}`);
-      }
-
-      if (moodUpdated) {
-        setCurrentMood(updatedMood);
-        console.log("[HomePage] ✅ currentMood 업데이트 완료 (모든 컴포넌트에 반영됨)");
-      }
-    }
-
-    // 현재 세그먼트 업데이트 (스트림 재생성 없이 반영)
-    if (currentSegmentData?.segment) {
-      // onUpdateCurrentSegment는 HomeContent에서 처리하므로 여기서는 로그만 출력
-      if (changes.color) {
-        console.log(`[HomePage] ℹ️ 세그먼트 색상 변경 (HomeContent에서 처리): ${changes.color}`);
-      }
-      if (changes.brightness !== undefined) {
-        console.log(`[HomePage] ℹ️ 세그먼트 밝기 변경 (HomeContent에서 처리): ${changes.brightness}%`);
-      }
-    }
-
-    // Light/Manager 타입 디바이스의 색상/밝기 변경 시 light_info 업데이트
-    // 단, light_power가 "on"일 때만 전달
-    if (changes.color || changes.brightness !== undefined) {
-      // light_power 상태 확인 (on일 때만 전달)
-      fetch("/api/light_power", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      })
-        .then((response) => {
-          if (!response.ok) {
-            console.log("[HomePage] light_power 상태 확인 실패, light_info 전달 건너뜀");
-            return null;
-          }
-          return response.json();
-        })
-        .then((powerData) => {
-          // power가 "on"이 아니면 전달하지 않음
-          if (!powerData || powerData.power !== "on") {
-            console.log("[HomePage] light_power가 off 상태, light_info 전달 건너뜀");
-            return;
-          }
-          
-          const requestBody: {
-            r?: number;
-            g?: number;
-            b?: number;
-            brightness?: number;
-          } = {};
-
-          // 색상 변경 시 RGB 변환
-          if (changes.color) {
-            const rgb = hexToRgb(changes.color);
-            requestBody.r = rgb[0];
-            requestBody.g = rgb[1];
-            requestBody.b = rgb[2];
-            console.log(`[HomePage] 🔄 RGB 변환: ${changes.color} → r:${rgb[0]}, g:${rgb[1]}, b:${rgb[2]}`);
-          }
-
-          // 밝기 변경 시 (0-100 → 0-255 변환)
-          if (changes.brightness !== undefined) {
-            requestBody.brightness = Math.round((changes.brightness / 100) * 255);
-            console.log(`[HomePage] 🔄 밝기 변환: ${changes.brightness}% → ${requestBody.brightness} (0-255)`);
-          }
-
-          // API 호출: 전구 정보 업데이트 (메모리에 저장)
-          console.log("[HomePage] 📡 /api/light_info 업데이트 요청 (power: on):", requestBody);
-          fetch("/api/light_info", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-            body: JSON.stringify(requestBody),
-          })
-            .then((response) => {
-              if (response.ok) {
-                console.log("[HomePage] ✅ /api/light_info 업데이트 성공");
-              } else {
-                console.error("[HomePage] ❌ /api/light_info 업데이트 실패:", response.status);
-              }
-            })
-            .catch((error) => {
-              console.error("[HomePage] ❌ /api/light_info 업데이트 에러:", error);
-            });
-        })
-        .catch((error) => {
-          console.error("[HomePage] light_power 상태 확인 에러:", error);
-        });
-    }
-
-    console.log("=".repeat(80) + "\n");
-
-    // 전원 변경은 useDeviceHandlers에서 이미 처리됨
-  }, [currentMood, currentSegmentData, setCurrentMood, volume]);
+  // Phase 2 단순화: 디바이스 컨트롤 변경 로직은 useDeviceState 훅에서 처리
   
-  // Phase 2: 무드스트림 생성 함수
-  const generateMoodStream = useCallback(async (segmentCount: number = 7, currentSegments?: MoodStreamSegment[]) => {
-    // 현재 segments를 파라미터로 받거나 상태에서 가져오기
-    const segmentsToUse = currentSegments || moodStreamData.segments;
-    
-    if (moodStreamData.isGeneratingNextStream) {
-      return; // 이미 생성 중이면 스킵
-    }
-    
-    setMoodStreamData(prev => ({ ...prev, isGeneratingNextStream: true }));
-    
-    try {
-      const nextStartTime = getLastSegmentEndTime(segmentsToUse);
-      
-      // 타임아웃을 위한 AbortController 생성
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 120000); // 120초 타임아웃
-      
-      const response = await fetch("/api/moods/current/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        signal: controller.signal,
-        body: JSON.stringify({
-          nextStartTime,
-          segmentCount,
-        }),
-      });
-      
-      clearTimeout(timeout);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to generate mood stream: ${response.status} ${response.statusText}`);
-      }
-      
-      let data;
-      try {
-        data = await response.json();
-      } catch (jsonError) {
-        throw new Error("Failed to parse response JSON");
-      }
-      const newSegments: MoodStreamSegment[] = data.moodStream || [];
-      
-      // 기존 세그먼트에 추가
-      setMoodStreamData(prev => ({
-        ...prev,
-        segments: [...prev.segments, ...newSegments],
-        isGeneratingNextStream: false,
-      }));
-    } catch (error) {
-      console.error("[HomePage] Failed to generate mood stream:", error);
-      // AbortError인 경우 타임아웃 에러로 처리
-      if (error instanceof Error && error.name === "AbortError") {
-        console.error("[HomePage] Request timeout after 120 seconds");
-      }
-      setMoodStreamData(prev => ({ ...prev, isGeneratingNextStream: false }));
-    }
-  }, [moodStreamData.isGeneratingNextStream]); // segments를 dependency에서 제거하여 무한 루프 방지
-  
-  // 새로고침 요청 핸들러: 현재 세그먼트부터 다시 생성
-  const handleRefreshRequest = useCallback(() => {
-    // 로딩 상태 즉시 설정하여 스피너 표시
-    setMoodStreamData(prev => ({ ...prev, isGeneratingNextStream: true }));
-    // 현재 세그먼트부터 10개 새로 생성
-    const currentSegments = moodStreamData.segments.slice(0, moodStreamData.currentIndex + 1);
-    generateMoodStream(10, currentSegments);
-  }, [moodStreamData.segments, moodStreamData.currentIndex, generateMoodStream]);
-  
-  // Phase 2: 콜드스타트 로직 - 초기 3세그먼트 로드 → 즉시 실행 → 값 공유 → 무드스트림 생성 호출
-  useEffect(() => {
-    const loadInitialSegments = async () => {
-      if (status !== "authenticated" || moodStreamData.segments.length > 0) {
-        return; // 이미 로드되었거나 인증되지 않은 경우 스킵
-      }
-      
-      setMoodStreamData(prev => ({ ...prev, isLoading: true }));
-      
-      try {
-        // 1. 초기 3개 캐롤 세그먼트 가져오기
-        // 타임아웃을 위한 AbortController 생성
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 30000); // 30초 타임아웃
-        
-        const response = await fetch("/api/moods/carol-segments", {
-          credentials: "include",
-          signal: controller.signal,
-        });
-        
-        clearTimeout(timeout);
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch carol segments: ${response.status} ${response.statusText}`);
-        }
-        
-        let data;
-        try {
-          data = await response.json();
-        } catch (jsonError) {
-          throw new Error("Failed to parse carol segments JSON");
-        }
-        const carolSegments: MoodStreamSegment[] = data.segments || [];
-        
-        if (carolSegments.length === 0) {
-          throw new Error("No carol segments found");
-        }
-        
-        // 2. 상태에 저장
-        setMoodStreamData(prev => ({
-          ...prev,
-          streamId: `stream-${Date.now()}`,
-          segments: carolSegments,
-          currentIndex: 0,
-          isLoading: false,
-        }));
-        
-        // 3. 즉시 첫 번째 세그먼트 정보 공유 (currentMood 초기화)
-        // 초기 세그먼트가 로드되면 즉시 currentMood를 설정하여 디바이스 카드에 바로 반영
-        const firstSegment = carolSegments[0];
-        if (firstSegment?.mood) {
-          const convertedMood = convertSegmentMoodToMood(firstSegment.mood, null, firstSegment);
-          setCurrentMood(convertedMood);
-        }
-        
-        // 4. 관리자 모드가 아닐 때만 무드스트림 생성 호출 (7개 세그먼트)
-        // 관리자 모드는 generateMoodStream 내부에서 목업 데이터로 즉시 반환됨
-        // segments를 직접 전달하여 최신 상태 사용
-        generateMoodStream(7, carolSegments);
-      } catch (error) {
-        console.error("[HomePage] Failed to load initial segments:", error);
-        setMoodStreamData(prev => ({ ...prev, isLoading: false }));
-      }
-    };
-    
-    loadInitialSegments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status]); // status가 authenticated가 되면 실행
-  
-  // Phase 2: 자동 생성 로직 - 8, 9, 10번째 세그먼트 도달 시 다음 스트림 자동 생성
-  useEffect(() => {
-    // 스트림이 로드되지 않았거나 생성 중이면 스킵
-    if (moodStreamData.isLoading || moodStreamData.isGeneratingNextStream) {
-      return;
-    }
-    
-    // 세그먼트가 없으면 스킵
-    if (!moodStreamData.segments || moodStreamData.segments.length === 0) {
-      return;
-    }
-    
-    const clampedTotal = 10;
-    const clampedIndex = moodStreamData.currentIndex >= clampedTotal 
-      ? clampedTotal - 1 
-      : moodStreamData.currentIndex;
-    const remainingFromClamped = clampedTotal - clampedIndex - 1;
-    
-    // 8, 9, 10번째 세그먼트일 때 다음 스트림(10개) 생성
-    if (moodStreamData.segments.length >= 10 && 
-        remainingFromClamped > 0 && 
-        remainingFromClamped <= 3 &&
-        !moodStreamData.isGeneratingNextStream) {
-      generateMoodStream(10);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [moodStreamData.currentIndex, moodStreamData.segments.length, moodStreamData.isGeneratingNextStream, moodStreamData.isLoading]);
+  // Phase 1 단순화: 무드스트림 생성 및 자동 생성 로직은 useMoodStreamManager 훅에서 처리
 
   // 로딩 중이거나 인증되지 않은 경우 로딩 화면 표시
   if (status === "loading") {
@@ -585,12 +359,9 @@ export default function HomePage() {
     <div className="flex flex-col h-screen overflow-hidden relative">
       <TopNav />
 
-      {isLoading ? (
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-gray-500">Loading devices...</p>
-        </div>
-      ) : (
-        <HomeContent
+      {/* 디바이스 정보와 초기 세그먼트는 병렬로 로드 */}
+      {/* 초기 세그먼트는 즉시 표시, 디바이스는 로드되는 대로 추가 */}
+      <HomeContent
           moodState={{
             current: currentMood,
             onChange: setCurrentMood,
@@ -646,7 +417,9 @@ export default function HomePage() {
               };
             });
           }}
-          isLoadingMoodStream={moodStreamData.isLoading || moodStreamData.isGeneratingNextStream}
+          // LLM 생성 중이어도 초기 세그먼트는 이미 표시되어 있으므로 UI를 막지 않음
+          // isLoadingMoodStream은 스피너 표시용으로만 사용 (UI 블로킹 아님)
+          isLoadingMoodStream={moodStreamData.isGeneratingNextStream} // isLoading 제거: 초기 세그먼트 로드는 즉시 완료
           // Phase 5: segments 배열 전달
           segments={moodStreamData.segments}
           // 새로고침 요청 핸들러: 현재 세그먼트부터 다시 생성
@@ -657,10 +430,9 @@ export default function HomePage() {
           volume={volume}
           onVolumeChange={(newVolume) => {
             setVolume(newVolume);
-            console.log(`[HomePage] 🔊 음량 변경 (MoodDashboard에서): ${volume}% → ${newVolume}%`);
+            console.log(`[HomePage] 🔊 음량 변경 (MoodDashboard에서): ${newVolume}%`);
           }}
         />
-      )}
 
         <BottomNav 
           currentMood={currentMood || undefined}
@@ -673,7 +445,14 @@ export default function HomePage() {
         <DeviceAddModal
           onClose={() => setShowAddModal(false)}
           onConfirm={(type: Device["type"], name?: string) => {
-            addDevice(type, name, currentMood);
+            // 현재 세그먼트의 brightness 정보를 포함하여 전달
+            const brightness = currentSegmentData?.backgroundParams?.lighting?.brightness || 50;
+            const deviceMood = currentMood ? {
+              ...currentMood,
+              brightness, // brightness 정보 추가
+            } : null;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            addDevice(type, name, deviceMood as any);
             setShowAddModal(false);
           }}
         />
@@ -682,11 +461,33 @@ export default function HomePage() {
       {deviceToDelete && (
         <DeviceDeleteModal
           device={deviceToDelete}
-          onConfirm={() => {
-            const updatedDevices = devices.filter((d) => d.id !== deviceToDelete.id);
-            setDevices(updatedDevices);
-            setDeviceToDelete(null);
-            setExpandedId(null); // 확장된 카드 닫기
+          onConfirm={async () => {
+            try {
+              // API 호출로 DB에서 삭제
+              const response = await fetch(`/api/devices/${deviceToDelete.id}`, {
+                method: "DELETE",
+                credentials: "include",
+              });
+
+              if (!response.ok) {
+                const error = await response.json();
+                console.error("[HomePage] 디바이스 삭제 실패:", error);
+                // 에러 토스트 메시지 표시 (react-hot-toast 사용 시)
+                // toast.error("디바이스 삭제에 실패했습니다.");
+                alert("디바이스 삭제에 실패했습니다.");
+                return;
+              }
+
+              // 성공 시 UI 업데이트
+              const updatedDevices = devices.filter((d) => d.id !== deviceToDelete.id);
+              setDevices(updatedDevices);
+              setDeviceToDelete(null);
+              setExpandedId(null); // 확장된 카드 닫기
+              console.log("[HomePage] ✅ 디바이스 삭제 완료:", deviceToDelete.id);
+            } catch (error) {
+              console.error("[HomePage] 디바이스 삭제 에러:", error);
+              alert("디바이스 삭제 중 오류가 발생했습니다.");
+            }
           }}
           onCancel={() => setDeviceToDelete(null)}
         />

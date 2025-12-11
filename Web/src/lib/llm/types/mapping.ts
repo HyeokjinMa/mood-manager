@@ -4,16 +4,23 @@
  * Phase 1: 타입 정의 및 매핑 관계 문서화
  */
 
-import type { CompleteSegmentOutput } from "./completeOutput";
+import type { CompleteSegmentOutput } from "@/types/llm";
 import type { MoodStreamSegment } from "@/hooks/useMoodStream/types";
-import type { BackgroundParamsResponse } from "../validateResponse";
+import type { BackgroundParamsResponse } from "@/types/llm";
+import type { OutputMapping } from "@/types/llm";
+
+// 하위 호환성을 위해 re-export
+export type { OutputMapping } from "@/types/llm";
 
 /**
  * CompleteSegmentOutput → MoodStreamSegment 매핑 관계
  * 
  * LLM이 생성한 완전한 출력을 MoodStreamSegment로 변환하는 방법을 정의합니다.
+ * 
+ * @deprecated 이 인터페이스는 문서화 목적으로만 사용됩니다.
+ * 실제 매핑은 OutputMapping 타입을 사용하세요.
  */
-export interface OutputMapping {
+export interface OutputMappingDoc {
   /**
    * CompleteSegmentOutput의 각 필드가 MoodStreamSegment의 어느 필드로 매핑되는지 정의
    */

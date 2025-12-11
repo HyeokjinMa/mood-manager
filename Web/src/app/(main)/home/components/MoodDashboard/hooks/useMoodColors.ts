@@ -11,7 +11,7 @@ import type { BackgroundParams } from "@/hooks/useBackgroundParams";
 import { blendWithWhite } from "@/lib/utils";
 
 interface UseMoodColorsProps {
-  mood: Mood;
+  mood: Mood | null | undefined; // null/undefined 허용 (초기 로딩 시)
   backgroundParams?: BackgroundParams | null;
 }
 
@@ -29,6 +29,15 @@ export function useMoodColors({
   backgroundParams,
 }: UseMoodColorsProps): MoodColors {
   return useMemo(() => {
+    // mood가 없으면 기본값 사용
+    if (!mood) {
+      return {
+        baseColor: backgroundParams?.moodColor || "#E6F3FF",
+        accentColor: blendWithWhite(backgroundParams?.moodColor || "#E6F3FF", 0.9),
+        displayAlias: backgroundParams?.moodAlias || "Loading...",
+      };
+    }
+    
     // baseColor: 원본 무드 컬러 계산 (사용자가 변경한 mood.color 우선, 그 다음 LLM, 마지막 기본 무드)
     // 사용자가 변경한 값이 있으면 우선 사용
     const baseColor = mood.color || backgroundParams?.moodColor || "#E6F3FF";
@@ -46,6 +55,6 @@ export function useMoodColors({
       accentColor,
       displayAlias,
     };
-  }, [mood.color, mood.name, backgroundParams?.moodColor, backgroundParams?.moodAlias]);
+  }, [mood?.color, mood?.name, backgroundParams?.moodColor, backgroundParams?.moodAlias]);
 }
 

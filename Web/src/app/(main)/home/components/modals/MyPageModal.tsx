@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -33,7 +33,7 @@ export default function MyPageModal({
   onInquiryClick,
   onPrivacyClick,
 }: MyPageModalProps) {
-  const { status, data: session } = useSession();
+  const { data: session } = useSession();
   const router = useRouter();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
@@ -121,11 +121,19 @@ export default function MyPageModal({
     }
   };
 
+  // 모달이 열릴 때만 프로필 새로고침
+  useEffect(() => {
+    if (isOpen && session) {
+      // useProfile hook이 자동으로 프로필을 가져오도록 함
+      // 단, 이미 프로필이 있으면 다시 가져오지 않음 (useProfile 내부에서 처리)
+    }
+  }, [isOpen, session]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-xl w-full max-w-[375px] max-h-[90vh] overflow-hidden flex flex-col relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+      <div className="bg-white rounded-xl w-full max-w-[375px] max-h-[90vh] overflow-hidden flex flex-col relative pointer-events-auto border border-gray-200 shadow-2xl">
         {/* Close Button */}
         <button
           onClick={onClose}

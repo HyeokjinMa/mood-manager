@@ -5,7 +5,7 @@
  * 같은 입력에 대해 캐시된 응답 반환하여 비용 절감
  */
 
-import type { BackgroundParamsResponse } from "@/lib/llm/validateResponse";
+import type { BackgroundParamsResponse } from "@/types/llm";
 
 interface CacheEntry {
   response: BackgroundParamsResponse;

@@ -61,7 +61,10 @@ export class PythonEmotionPredictionProvider implements EmotionPredictionProvide
       clearTimeout(timeoutId);
       
       if (!response.ok) {
-        throw new Error(`Python server error: ${response.status} ${response.statusText}`);
+        const errorMessage = response.status === 403 
+          ? `Python server 접근 거부 (403 Forbidden). 서버가 실행 중인지, CORS 설정이 올바른지 확인하세요. URL: ${this.pythonServerUrl}`
+          : `Python server error: ${response.status} ${response.statusText}`;
+        throw new Error(errorMessage);
       }
       
       const data: PythonPredictionResponse = await response.json();
@@ -207,7 +210,10 @@ export class PythonEmotionPredictionProvider implements EmotionPredictionProvide
       clearTimeout(timeoutId);
       
       if (!response.ok) {
-        throw new Error(`Python server error: ${response.status} ${response.statusText}`);
+        const errorMessage = response.status === 403 
+          ? `Python server 접근 거부 (403 Forbidden). 서버가 실행 중인지, CORS 설정이 올바른지 확인하세요. URL: ${this.pythonServerUrl}`
+          : `Python server error: ${response.status} ${response.statusText}`;
+        throw new Error(errorMessage);
       }
       
       return await response.json();

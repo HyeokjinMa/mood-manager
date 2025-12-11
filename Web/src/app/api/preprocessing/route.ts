@@ -54,16 +54,18 @@ export async function GET() {
 
   try {
     // 1) 오늘 날짜 raw_periodic 데이터 조회
+    console.log("[GET /api/preprocessing] 🔄 Step 1: Firestore raw_periodic 데이터 조회");
+    const firestoreStartTime = Date.now();
     let todayRawData;
     
     try {
       todayRawData = await fetchTodayPeriodicRaw(USER_ID);
       console.log(
-        `[preprocessing] ✅ Firestore raw_periodic 데이터 ${todayRawData.length}건을 기반으로 실제 전처리를 수행합니다.`
+        `[GET /api/preprocessing] ✅ Step 1 완료 (${Date.now() - firestoreStartTime}ms) - Firestore raw_periodic 데이터 ${todayRawData.length}건`
       );
     } catch (error) {
       console.warn(
-        "[preprocessing] ⚠️ Firestore 조회 실패, 목업 전처리 데이터로 대체합니다:",
+        `[GET /api/preprocessing] ❌ Step 1 실패 (${Date.now() - firestoreStartTime}ms) - Firestore 조회 실패, 목업 데이터로 폴백:`,
         error
       );
       // [MOCK] Firestore 조회 실패 시 목업 데이터 반환
@@ -91,12 +93,14 @@ export async function GET() {
     const recentStressIndex = calculateStressIndex(latestRaw);
 
     // 3) 날씨 정보
+    console.log("[GET /api/preprocessing] 🔄 Step 2: 날씨 API 호출");
+    const weatherStartTime = Date.now();
     let weather = undefined;
     try {
       weather = await fetchWeather();
-      console.log("[preprocessing] ✅ 실제 기상청(KMA) 날씨 데이터를 사용합니다.");
+      console.log(`[GET /api/preprocessing] ✅ Step 2 완료 (${Date.now() - weatherStartTime}ms) - 실제 기상청(KMA) 날씨 데이터 사용`);
     } catch (err) {
-      console.warn("[preprocessing] ⚠️ Weather query failed, 기본 날씨 값으로 대체:", err);
+      console.warn(`[GET /api/preprocessing] ⚠️ Step 2 실패 (${Date.now() - weatherStartTime}ms) - Weather query failed, 기본 날씨 값으로 대체:`, err);
     }
 
     // 4) 수면 점수 (수면 세션 기반)

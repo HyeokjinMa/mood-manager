@@ -20,7 +20,6 @@ interface DeviceControlsProps {
 
 export default function DeviceControls({
   device,
-  currentMood,
   lightColor,
   lightBrightness,
   scentLevel,

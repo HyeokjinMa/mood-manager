@@ -5,7 +5,7 @@
 
 import { NextResponse } from "next/server";
 import { prepareLLMInput } from "@/lib/llm/prepareLLMInput";
-import { type BackgroundParamsResponse } from "@/lib/llm/validateResponse";
+import type { BackgroundParamsResponse } from "@/types/llm";
 import { getCachedResponse, setCachedResponse } from "@/lib/cache/llmCache";
 import { getCacheKey } from "../utils/getCacheKey";
 import { getSegmentIndex } from "../utils/getSegmentIndex";
