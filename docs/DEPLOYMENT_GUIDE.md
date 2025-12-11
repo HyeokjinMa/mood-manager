@@ -1,6 +1,6 @@
 # Deployment Guide
 
-프로덕션 배포를 위한 체크리스트 및 가이드이다.
+프로덕션 배포를 위한 체크리스트 및 가이드
 
 ---
 
@@ -148,4 +148,3 @@ For issues or questions:
 - Check application logs in deployment platform
 - Review error messages in browser console
 - Contact team members
-

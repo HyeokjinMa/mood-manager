@@ -1,6 +1,6 @@
 # Development Guide
 
-개발 환경 설정 및 개발 가이드이다.
+개발 환경 설정 및 개발 가이드
 
 ---
 
@@ -48,7 +48,7 @@ npm install -g npm@latest
 
 ### 3. Git
 
-저장소를 클론하기 위해 Git이 설치되어 있어야 한다.
+저장소 클론을 위해 Git 설치 필요
 
 ### 4. PostgreSQL (for Production)
 
@@ -73,7 +73,7 @@ cd Web
 npm install
 ```
 
-**중요**: 모든 명령어는 `Web/` 디렉토리에서 실행해야 한다.
+**중요**: 모든 명령어는 `Web/` 디렉토리에서 실행
 
 ### 3. Configure Environment Variables
 
@@ -183,7 +183,7 @@ cd Web
 npm run dev
 ```
 
-애플리케이션은 `http://localhost:3000`에서 접근할 수 있다.
+애플리케이션은 `http://localhost:3000`에서 접근 가능
 
 ### Production Build
 
@@ -197,11 +197,11 @@ npm start
 
 ## Admin Mode (Mock Mode)
 
-개발 및 테스트를 위해 Admin 모드를 사용할 수 있다:
+개발 및 테스트를 위한 Admin 모드 사용:
 
-1. 관리자 계정으로 등록하거나 로그인한다.
-2. Admin 모드는 자동으로 목업 데이터를 활성화한다.
-3. 모든 기능은 localStorage 기반 저장소로 작동한다.
+1. 관리자 계정으로 등록하거나 로그인
+2. Admin 모드는 자동으로 목업 데이터 활성화
+3. 모든 기능은 localStorage 기반 저장소로 작동
 
 ---
 
@@ -210,13 +210,11 @@ npm start
 ### 주석 스타일 가이드
 
 #### 1. 한국어 주석 (기능 설명)
-- **음슴체 사용**: "~한다", "~한다" 형태
+- **음슴체 사용**: "~한다" 형태
 - **예시**:
   - "무드스트림을 관리한다"
   - "색상을 계산한다"
   - "다음 스트림을 생성한다"
-  - "무드스트림을 관리한다" (평서체) - 사용하지 않음
-  - "무드스트림 관리" (명사형) - 사용하지 않음
 
 #### 2. 영어 주석 (UI 요소, 간단한 표시)
 - **Button, Link, Text 등 UI 요소**: 영어 사용
@@ -280,4 +278,3 @@ npm start
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Prisma Documentation](https://www.prisma.io/docs)
 - [TypeScript Documentation](https://www.typescriptlang.org/docs)
-
