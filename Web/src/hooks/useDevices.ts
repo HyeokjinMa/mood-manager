@@ -3,6 +3,7 @@ import type { Device } from "@/types/device";
 import type { Mood } from "@/types/mood";
 import type { MoodStreamSegment } from "@/hooks/useMoodStream/types";
 import { convertSegmentMoodToMood } from "@/app/(main)/home/components/MoodDashboard/utils/moodStreamConverter";
+import { hexToRgb } from "@/lib/utils/color";
 
 // 정렬 우선순위 정의
 const PRIORITY: Record<Device["type"], number> = {
@@ -224,8 +225,15 @@ export function useDevices(
       const data = await response.json();
 
       // light 타입 디바이스 추가 시 search_light API의 status를 "search"로 변경하고 전원 켜기
-      if (type === "light") {
-        console.log("[Add Device] 🔍 Light 디바이스 추가 감지 - search 상태로 변경 및 전원 켜기");
+      if (type === "light" || type === "manager") {
+        console.log("[Add Device] 🔍 Light/Manager 디바이스 추가 감지 - search 상태로 변경 및 전원 켜기");
+        
+        // currentMood에서 초기 색상 가져오기
+        const initialColor = currentMood?.color || "#FFD700";
+        const rgb = hexToRgb(initialColor);
+        const initialBrightness = currentMood && 'brightness' in currentMood 
+          ? (currentMood as Mood & { brightness?: number }).brightness || 50
+          : 50;
         
         try {
           // 1. search_light API: status를 "search"로 변경
@@ -250,8 +258,35 @@ export function useDevices(
           console.error("[Add Device] ❌ search_light API 호출 에러:", error);
         }
         
+        // 2. light_info API에 초기 RGB 값 전달
         try {
-          // 2. light_power API: 전원을 "on"으로 설정
+          const lightInfoResponse = await fetch("/api/light_info", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({
+              r: rgb[0],
+              g: rgb[1],
+              b: rgb[2],
+              brightness: Math.round((initialBrightness / 100) * 255), // 0-100 → 0-255 변환
+            }),
+          });
+          
+          if (lightInfoResponse.ok) {
+            const lightInfoData = await lightInfoResponse.json();
+            console.log("[Add Device] ✅ light_info 초기 RGB 값 설정 성공:", lightInfoData);
+          } else {
+            const errorData = await lightInfoResponse.json().catch(() => ({}));
+            console.error("[Add Device] ❌ light_info 초기 RGB 값 설정 실패:", lightInfoResponse.status, errorData);
+          }
+        } catch (error) {
+          console.error("[Add Device] ❌ light_info API 호출 에러:", error);
+        }
+        
+        try {
+          // 3. light_power API: 전원을 "on"으로 설정
           // 클라이언트에서 호출하므로 API 키는 선택적 (개발 환경에서는 완화)
           const powerResponse = await fetch("/api/light_power", {
             method: "POST",
