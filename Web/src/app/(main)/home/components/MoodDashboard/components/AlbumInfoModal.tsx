@@ -63,7 +63,7 @@ export default function AlbumInfoModal({
       onClick={onClose}
     >
       <div
-        className="relative bg-white rounded-xl shadow-2xl p-6 w-[calc(100%-2rem)] max-w-[320px] mx-4 overflow-y-auto"
+        className="relative bg-white rounded-xl shadow-2xl p-4 w-[calc(100%-2rem)] max-w-[280px] mx-4 overflow-y-auto"
         style={{
           maxHeight: "calc(100vh - 4rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))",
           marginTop: "calc(2rem + env(safe-area-inset-top, 0px))",
@@ -86,13 +86,13 @@ export default function AlbumInfoModal({
             <Image
               src={track.albumImageUrl}
               alt={track.title || "Album Art"}
-              width={160}
-              height={160}
-              className="w-40 h-40 rounded-lg object-cover shadow-md"
+              width={96}
+              height={96}
+              className="w-24 h-24 rounded-lg object-cover shadow-md"
               unoptimized
             />
           ) : (
-            <div className="w-40 h-40 rounded-lg bg-gray-200 flex items-center justify-center">
+            <div className="w-24 h-24 rounded-lg bg-gray-200 flex items-center justify-center">
               <span className="text-gray-400 text-sm">Album Art</span>
             </div>
           )}

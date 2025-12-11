@@ -129,8 +129,8 @@ export default function DeviceCardExpanded({
     }
     
     const newVolume = volume ?? device.output.volume ?? 70;
-    // ✅ 차이가 있을 때만 업데이트 (불필요한 리렌더링 방지)
-    if (newVolume !== localVolume) {
+    // ✅ Phase 2-3: 차이가 3% 이상일 때만 업데이트 (진동 방지)
+    if (Math.abs(newVolume - localVolume) > 3) {
       setLocalVolume(newVolume);
     }
   }, [volume, device.output.volume]); // ✅ localVolume을 의존성에서 제거하여 무한 루프 방지
@@ -304,8 +304,13 @@ export default function DeviceCardExpanded({
             }
           } : undefined}
           onUpdateLightBrightness={(brightness) => {
+            console.log("[DeviceCardExpanded] onUpdateLightBrightness 호출:", {
+              oldLocalBrightness: localLightBrightness,
+              newBrightness: brightness
+            });
             isUserChangingRef.current.brightness = true;
             setLocalLightBrightness(brightness);
+            console.log("[DeviceCardExpanded] setLocalLightBrightness 호출됨");
             if (onDeviceControlChange) {
               onDeviceControlChange({ brightness });
             }
@@ -314,8 +319,13 @@ export default function DeviceCardExpanded({
             }, 500);
           }}
           onUpdateScentLevel={(level) => {
+            console.log("[DeviceCardExpanded] onUpdateScentLevel 호출:", {
+              oldLocalScentLevel: localScentLevel,
+              newLevel: level
+            });
             isUserChangingRef.current.scent = true;
             setLocalScentLevel(level);
+            console.log("[DeviceCardExpanded] setLocalScentLevel 호출됨");
             if (onDeviceControlChange) {
               onDeviceControlChange({ scentLevel: level });
             }
@@ -324,8 +334,13 @@ export default function DeviceCardExpanded({
             }, 500);
           }}
           onUpdateVolume={(newVolume) => {
+            console.log("[DeviceCardExpanded] onUpdateVolume 호출:", {
+              oldLocalVolume: localVolume,
+              newVolume: newVolume
+            });
             isUserChangingRef.current.volume = true;
             setLocalVolume(newVolume);
+            console.log("[DeviceCardExpanded] setLocalVolume 호출됨");
             if (onUpdateVolume) {
               onUpdateVolume(newVolume);
             }

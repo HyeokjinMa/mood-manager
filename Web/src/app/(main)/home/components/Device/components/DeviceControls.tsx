@@ -66,8 +66,16 @@ export default function DeviceControls({
               value={lightBrightness ?? 50}
               onChange={(e) => {
                 const newBrightness = Number(e.target.value);
-                console.log("[DeviceControls] 🔆 Brightness 슬라이더 변경 (Light):", newBrightness);
-                onUpdateLightBrightness?.(newBrightness);
+                console.log("[DeviceControls] 🔆 Brightness 슬라이더 onChange (Light):", {
+                  oldValue: lightBrightness,
+                  newValue: newBrightness,
+                  hasHandler: !!onUpdateLightBrightness
+                });
+                if (onUpdateLightBrightness) {
+                  onUpdateLightBrightness(newBrightness);
+                } else {
+                  console.warn("[DeviceControls] ⚠️ onUpdateLightBrightness 핸들러가 없음");
+                }
               }}
               className="w-full"
               style={{ accentColor: lightColor }}
@@ -90,8 +98,16 @@ export default function DeviceControls({
               value={scentLevel ?? 5}
               onChange={(e) => {
                 const newLevel = Number(e.target.value);
-                console.log("[DeviceControls] 🌸 Scent Level 슬라이더 변경 (Scent):", newLevel);
-                onUpdateScentLevel?.(newLevel);
+                console.log("[DeviceControls] 🌸 Scent Level 슬라이더 onChange (Scent):", {
+                  oldValue: scentLevel,
+                  newValue: newLevel,
+                  hasHandler: !!onUpdateScentLevel
+                });
+                if (onUpdateScentLevel) {
+                  onUpdateScentLevel(newLevel);
+                } else {
+                  console.warn("[DeviceControls] ⚠️ onUpdateScentLevel 핸들러가 없음");
+                }
               }}
               className="w-full"
               style={{ accentColor: lightColor || "#9CAF88" }}
@@ -118,8 +134,16 @@ export default function DeviceControls({
               value={volume ?? 70}
               onChange={(e) => {
                 const newVolume = Number(e.target.value);
-                console.log("[DeviceControls] 🔊 Volume 슬라이더 변경 (Speaker):", newVolume);
-                onUpdateVolume?.(newVolume);
+                console.log("[DeviceControls] 🔊 Volume 슬라이더 onChange (Speaker):", {
+                  oldValue: volume,
+                  newValue: newVolume,
+                  hasHandler: !!onUpdateVolume
+                });
+                if (onUpdateVolume) {
+                  onUpdateVolume(newVolume);
+                } else {
+                  console.warn("[DeviceControls] ⚠️ onUpdateVolume 핸들러가 없음");
+                }
               }}
               className="w-full"
               style={{ accentColor: lightColor || "#3B82F6" }}
@@ -164,8 +188,16 @@ export default function DeviceControls({
               value={volume ?? 70}
               onChange={(e) => {
                 const newVolume = Number(e.target.value);
-                console.log("[DeviceControls] 🔊 Volume 슬라이더 변경 (Manager):", newVolume);
-                onUpdateVolume?.(newVolume);
+                console.log("[DeviceControls] 🔊 Volume 슬라이더 onChange (Manager):", {
+                  oldValue: volume,
+                  newValue: newVolume,
+                  hasHandler: !!onUpdateVolume
+                });
+                if (onUpdateVolume) {
+                  onUpdateVolume(newVolume);
+                } else {
+                  console.warn("[DeviceControls] ⚠️ onUpdateVolume 핸들러가 없음");
+                }
               }}
               className="w-full"
               style={{ accentColor: lightColor || "#3B82F6" }}
@@ -183,8 +215,16 @@ export default function DeviceControls({
               value={lightBrightness ?? 50}
               onChange={(e) => {
                 const newBrightness = Number(e.target.value);
-                console.log("[DeviceControls] 🔆 Brightness 슬라이더 변경 (Manager):", newBrightness);
-                onUpdateLightBrightness?.(newBrightness);
+                console.log("[DeviceControls] 🔆 Brightness 슬라이더 onChange (Manager):", {
+                  oldValue: lightBrightness,
+                  newValue: newBrightness,
+                  hasHandler: !!onUpdateLightBrightness
+                });
+                if (onUpdateLightBrightness) {
+                  onUpdateLightBrightness(newBrightness);
+                } else {
+                  console.warn("[DeviceControls] ⚠️ onUpdateLightBrightness 핸들러가 없음");
+                }
               }}
               className="w-full"
               style={{ accentColor: lightColor }}
@@ -202,8 +242,16 @@ export default function DeviceControls({
               value={scentLevel ?? 5}
               onChange={(e) => {
                 const newLevel = Number(e.target.value);
-                console.log("[DeviceControls] 🌸 Scent Level 슬라이더 변경 (Manager):", newLevel);
-                onUpdateScentLevel?.(newLevel);
+                console.log("[DeviceControls] 🌸 Scent Level 슬라이더 onChange (Manager):", {
+                  oldValue: scentLevel,
+                  newValue: newLevel,
+                  hasHandler: !!onUpdateScentLevel
+                });
+                if (onUpdateScentLevel) {
+                  onUpdateScentLevel(newLevel);
+                } else {
+                  console.warn("[DeviceControls] ⚠️ onUpdateScentLevel 핸들러가 없음");
+                }
               }}
               className="w-full"
               style={{ accentColor: lightColor || "#9CAF88" }}

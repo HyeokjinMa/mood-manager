@@ -50,9 +50,11 @@ interface SearchLightState {
   light_off: boolean;
 }
 
-// 기본 상태: wait, light_off는 false (전원 유지)
+// ✅ Phase 1-4: 항상 "wait"으로 시작하며, POST 요청을 통해서만 "search"로 변경됨
+// 디바이스 추가 시 "search", 삭제 시 "wait"으로 변경
+// 서버 재시작 시 항상 "wait" 상태로 초기화됨
 const searchLightState: SearchLightState = {
-  status: "wait",
+  status: "wait", // ✅ 항상 "wait"으로 시작
   light_off: false,
 };
 

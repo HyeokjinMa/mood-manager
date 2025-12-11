@@ -26,45 +26,18 @@ export function createDeviceHandlers({
   // 디바이스 삭제 (DB 연동)
   const handleDelete = async () => {
     try {
-      // 삭제할 디바이스가 조명 타입인지 확인
-      const isLightOrManager = device.type === "light" || device.type === "manager";
+      // 삭제 전에 디바이스 타입과 ID를 변수로 저장
+      const deletedDeviceType = device.type;
+      const deletedDeviceId = device.id;
+      const isLightOrManager = deletedDeviceType === "light" || deletedDeviceType === "manager";
 
-      const response = await fetch(`/api/devices/${device.id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        // Mock Mode일 가능성 체크 (401/403 에러는 무시하고 로컬 삭제)
-        if (response.status === 401 || response.status === 403) {
-          // Mock Mode: 로컬 상태만 업데이트
-          setDevices((prev) => prev.filter((d) => d.id !== device.id));
-
-          // ✅ 조명 디바이스 삭제 시 무조건 wait으로 변경
-          if (isLightOrManager) {
-            fetch("/api/search_light", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              credentials: "include",
-              body: JSON.stringify({ status: "wait" }),
-            }).catch((error) => {
-              console.error("[Delete Device] ❌ search_light status 변경 실패:", error);
-            });
-          }
-
-          return;
-        }
-        const error = await response.json();
-        throw new Error(error.message || "Failed to delete device");
-      }
-
-      // 삭제 성공 시 로컬 상태 업데이트
-      setDevices((prev) => prev.filter((d) => d.id !== device.id));
-
-      // ✅ 조명 디바이스 삭제 시 무조건 wait으로 변경
+      // ✅ Phase 1-1: 삭제 API 호출 전에 wait 변경 호출 (확실히 실행되도록)
       if (isLightOrManager) {
-        console.log("[Delete Device] 🔍 조명 디바이스 삭제 감지 - status를 'wait'으로 변경");
-
+        console.log("[Delete Device] 🔍 조명 디바이스 삭제 감지 - status를 'wait'으로 변경", {
+          deviceType: deletedDeviceType,
+          deviceId: deletedDeviceId
+        });
+        
         fetch("/api/search_light", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -77,33 +50,39 @@ export function createDeviceHandlers({
               console.log("[Delete Device] ✅ search_light status 변경 성공:", searchData);
             } else {
               const errorData = await searchResponse.json().catch(() => ({}));
-              console.error(
-                "[Delete Device] ❌ search_light status 변경 실패:",
-                searchResponse.status,
-                errorData
-              );
+              console.error("[Delete Device] ❌ search_light status 변경 실패:", searchResponse.status, errorData);
             }
           })
           .catch((error) => {
             console.error("[Delete Device] ❌ search_light API 호출 에러:", error);
           });
       }
+
+      // 그 다음 삭제 API 호출
+      const response = await fetch(`/api/devices/${device.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        // Mock Mode일 가능성 체크 (401/403 에러는 무시하고 로컬 삭제)
+        if (response.status === 401 || response.status === 403) {
+          // Mock Mode: 로컬 상태만 업데이트
+          setDevices((prev) => prev.filter((d) => d.id !== device.id));
+          // wait 변경은 이미 위에서 처리됨
+          return;
+        }
+        const error = await response.json();
+        throw new Error(error.message || "Failed to delete device");
+      }
+
+      // 삭제 성공 시 로컬 상태 업데이트
+      setDevices((prev) => prev.filter((d) => d.id !== device.id));
     } catch (error) {
       console.error("Error deleting device:", error);
       // 네트워크 에러나 기타 에러 시 Mock Mode로 간주하고 로컬 삭제
       setDevices((prev) => prev.filter((d) => d.id !== device.id));
-
-      // ✅ 에러 발생 시에도 조명 디바이스 삭제 시 wait으로 변경
-      if (device.type === "light" || device.type === "manager") {
-        fetch("/api/search_light", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ status: "wait" }),
-        }).catch((error) => {
-          console.error("[Delete Device] ❌ search_light status 변경 실패:", error);
-        });
-      }
+      // wait 변경은 이미 위에서 처리됨
     }
   };
 

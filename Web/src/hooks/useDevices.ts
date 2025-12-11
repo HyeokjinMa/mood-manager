@@ -225,8 +225,8 @@ export function useDevices(
               color: moodToUse.color,
               scentType: moodToUse.scent.name,
               nowPlaying: moodToUse.song.title,
-              // brightness는 현재 세그먼트 값으로 통일 (LLM이 하나의 brightness만 제공)
-              brightness: segmentBrightness,
+              // ✅ Phase 2-2: brightness는 사용자가 변경한 값이 있으면 유지, 없으면 세그먼트 값 사용
+              brightness: d.output.brightness ?? segmentBrightness,
               // scentLevel은 사용자가 변경한 값 보존
               scentLevel: d.output.scentLevel ?? 5,
             },
@@ -238,8 +238,8 @@ export function useDevices(
             output: {
               ...d.output,
               color: moodToUse.color,
-              // brightness는 현재 세그먼트 값으로 통일 (LLM이 하나의 brightness만 제공)
-              brightness: segmentBrightness,
+              // ✅ Phase 2-2: brightness는 사용자가 변경한 값이 있으면 유지, 없으면 세그먼트 값 사용
+              brightness: d.output.brightness ?? segmentBrightness,
             },
           };
         }
