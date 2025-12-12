@@ -11,6 +11,14 @@ Mood Manager is a multimodal AI service that analyzes users' psychological and p
 The system operates based on the following pipeline: 
 > **WearOS** → **Firebase** → **ML Analysis Server** → **Next.js Web App** → **Emotion Prediction** *(Discrete Markov Chain)* → **Mood Expansion** *(LLM)* → **Output Device Control**
 ---
+## 🎥 Demo Video
+
+[![Mood Manager Demo](https://img.youtube.com/vi/BnCa3alahAo/maxresdefault.jpg)](https://www.youtube.com/watch?v=BnCa3alahAo)
+
+> Wearable-based real-time emotion inference and environment control system
+
+
+---
 
 ## 🔗 Links
 - **Tech Blog**: [Mood-manager | Tech Blog](https://www.notion.so/Mood-Manager-2c42a535a226809d9206ef6166f28718?source=copy_link)
