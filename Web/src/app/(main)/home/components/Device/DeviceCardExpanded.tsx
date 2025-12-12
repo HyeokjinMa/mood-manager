@@ -128,33 +128,33 @@ export default function DeviceCardExpanded({
     }
   }, [device.output.color, currentMood?.color, lightColor, localLightColor]);
   
-  // ✅ Fix: brightness 동기화 - device.output.brightness만 추적
-  // 이전 값 추적으로 불필요한 업데이트 방지
+  // ✅ Fix: brightness 동기화 - 드래그 중이 아닐 때만 전역 상태와 동기화
+  // 드래그 중에는 로컬 상태를 사용하고, 드래그 종료 후 전역 상태로 동기화
   const prevBrightnessRef = useRef(device.output.brightness);
   useEffect(() => {
-    // ✅ 사용자 조작 중이 아니고, 값이 실제로 변경되었을 때만 동기화
+    // 사용자 조작 중이 아닐 때만 전역 상태(device.output.brightness)로 동기화
     if (!isUserChangingRef.current.brightness && device.output.brightness !== undefined) {
+      // 이전 값과 실제로 다를 때만 업데이트 (불필요한 리렌더링 방지)
       if (prevBrightnessRef.current !== device.output.brightness) {
         prevBrightnessRef.current = device.output.brightness;
-        // ✅ setLocalBrightness는 조건 체크 후에만 호출
         setLocalBrightness(device.output.brightness);
       }
     }
-  }, [device.output.brightness]); // ✅ localBrightness는 의존성에서 제거 (무한 루프 방지)
+  }, [device.output.brightness]);
   
-  // ✅ Fix: scentLevel 동기화 - device.output.scentLevel만 추적
-  // 이전 값 추적으로 불필요한 업데이트 방지
+  // ✅ Fix: scentLevel 동기화 - 드래그 중이 아닐 때만 전역 상태와 동기화
+  // 드래그 중에는 로컬 상태를 사용하고, 드래그 종료 후 전역 상태로 동기화
   const prevScentLevelRef = useRef(device.output.scentLevel);
   useEffect(() => {
-    // ✅ 사용자 조작 중이 아니고, 값이 실제로 변경되었을 때만 동기화
+    // 사용자 조작 중이 아닐 때만 전역 상태(device.output.scentLevel)로 동기화
     if (!isUserChangingRef.current.scent && device.output.scentLevel !== undefined) {
+      // 이전 값과 실제로 다를 때만 업데이트 (불필요한 리렌더링 방지)
       if (prevScentLevelRef.current !== device.output.scentLevel) {
         prevScentLevelRef.current = device.output.scentLevel;
-        // ✅ setLocalScentLevel은 조건 체크 후에만 호출
         setLocalScentLevel(device.output.scentLevel);
       }
     }
-  }, [device.output.scentLevel]); // ✅ localScentLevel은 의존성에서 제거 (무한 루프 방지)
+  }, [device.output.scentLevel]);
 
   // ✅ Phase 1: API 호출 제거 - Home에서 중앙 관리
   // DeviceCardExpanded는 UI 반응성만 담당 (로컬 state 관리)
@@ -239,8 +239,8 @@ export default function DeviceCardExpanded({
           device={device}
           currentMood={currentMood}
           lightColor={localLightColor}
-          lightBrightness={localBrightness}
-          scentLevel={localScentLevel}
+          lightBrightness={isUserChangingRef.current.brightness ? localBrightness : (device.output.brightness ?? localBrightness ?? 50)}
+          scentLevel={isUserChangingRef.current.scent ? localScentLevel : (device.output.scentLevel ?? localScentLevel ?? 5)}
           volume={volume ?? device.output.volume ?? 70}
           onUpdateLightColor={device.type === "light" || device.type === "manager" ? (color) => {
             setLocalLightColor(color); // 즉시 로컬 상태 업데이트

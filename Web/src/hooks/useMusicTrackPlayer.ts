@@ -186,6 +186,32 @@ export function useMusicTrackPlayer({
       onSegmentEndRef.current?.();
     });
 
+    // ✅ Fix: timeupdate 이벤트 리스너 설정 (오디오의 currentTime이 변경될 때마다 자동 호출)
+    musicPlayerRef.current.setOnTimeUpdate((currentTimeSeconds: number) => {
+      const currentTime = currentTimeSeconds * 1000; // 밀리초로 변환
+      
+      // 세그먼트 종료 확인
+      if (segmentDuration > 0 && currentTime >= segmentDuration) {
+        setTrackProgress((prev) => {
+          if (prev.progress >= segmentDuration) return prev;
+          return { progress: segmentDuration };
+        });
+        return;
+      }
+      
+      // 진행 시간 업데이트
+      setTrackProgress((prev) => {
+        if (prev.progress === currentTime) {
+          return prev; // 값이 같으면 업데이트하지 않음
+        }
+        console.log("[useMusicTrackPlayer] ✅ timeupdate 이벤트로 진행 바 업데이트:", {
+          prev: Math.round(prev.progress),
+          current: Math.round(currentTime),
+        });
+        return { progress: currentTime };
+      });
+    });
+
     // 재생 시도만 수행 (setInterval은 useEffect에서 관리)
     await playCurrentTrack();
   }, [segment, currentTrack, segmentDuration, playCurrentTrack]); // ✅ onSegmentEnd 제거
@@ -206,9 +232,18 @@ export function useMusicTrackPlayer({
    * playing 상태와 재생 중일 때만 interval 실행
    */
   useEffect(() => {
+    console.log("[useMusicTrackPlayer] 진행 바 추적 useEffect 실행:", {
+      playing,
+      hasSegment: !!segment,
+      hasCurrentTrack: !!currentTrack,
+      hasMusicPlayer: !!musicPlayerRef.current,
+      hasInterval: !!intervalRef.current,
+    });
+
     if (!playing || !segment || !currentTrack || !musicPlayerRef.current) {
       // 재생 중이 아니면 interval 정리
       if (intervalRef.current) {
+        console.log("[useMusicTrackPlayer] 진행 바 추적 중지 (조건 불만족)");
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
@@ -216,52 +251,108 @@ export function useMusicTrackPlayer({
     }
 
     // 이미 interval이 있으면 중복 생성 방지
-    if (intervalRef.current) return;
+    if (intervalRef.current) {
+      console.log("[useMusicTrackPlayer] 진행 바 추적 interval 이미 실행 중");
+      return;
+    }
+
+    console.log("[useMusicTrackPlayer] 진행 바 추적 interval 시작");
 
     // 진행 시간 추적 시작 (백업용, ended 이벤트가 실패할 경우 대비)
     intervalRef.current = setInterval(() => {
-      if (!musicPlayerRef.current) return;
-
-      const currentTime = musicPlayerRef.current.getCurrentTime() * 1000; // 밀리초로 변환
-      
-      // 세그먼트 종료 확인 (실제 MP3 길이 사용)
-      // ended 이벤트가 먼저 발생하지만, 백업으로 체크
-      if (segmentDuration > 0 && currentTime >= segmentDuration) {
-        // ✅ 함수형 업데이트 사용하여 무한 루프 방지
-        setTrackProgress((prev) => {
-          // 이미 최대값에 도달했으면 업데이트하지 않음
-          if (prev.progress >= segmentDuration) {
-            return prev;
-          }
-          return { progress: segmentDuration };
-        });
-        
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-        }
-        
-        // 오디오 중지
-        musicPlayerRef.current?.stop();
-        currentTrackSrcRef.current = null;
-        
-        // ✅ ref를 통해 호출 (의존성 배열에서 제거)
-        onSegmentEndRef.current?.();
+      // ✅ Fix: ref를 통한 최신 musicPlayerRef 참조 보장
+      const player = musicPlayerRef.current;
+      if (!player) {
+        console.warn("[useMusicTrackPlayer] interval: musicPlayerRef.current가 null");
         return;
       }
 
-      // ✅ 함수형 업데이트 사용하여 무한 루프 방지
-      setTrackProgress((prev) => {
-        // 값이 실제로 변경되었을 때만 업데이트
-        if (Math.abs(prev.progress - currentTime) < 50) { // 50ms 이내 차이는 무시
-          return prev;
+      try {
+        // 실제 재생 상태 확인
+        const isActuallyPlaying = player.isPlaying?.() ?? false;
+        const currentTimeSeconds = player.getCurrentTime();
+        const duration = player.getDuration?.() ?? 0;
+        
+        // ✅ Fix: NaN이나 유효하지 않은 값 체크
+        if (isNaN(currentTimeSeconds) || !isFinite(currentTimeSeconds)) {
+          console.warn("[useMusicTrackPlayer] ⚠️ currentTime이 유효하지 않음:", currentTimeSeconds);
+          return;
         }
-        return { progress: currentTime };
-      });
+        
+        const currentTime = currentTimeSeconds * 1000; // 밀리초로 변환
+        
+        // ✅ Fix: currentTime이 음수이거나 유효하지 않으면 무시
+        if (currentTime < 0) {
+          return;
+        }
+        
+        // 디버깅: 매번 로그 출력 (문제 진단용)
+        console.log("[useMusicTrackPlayer] interval 실행:", {
+          currentTime: Math.round(currentTime),
+          currentTimeSeconds,
+          segmentDuration,
+          duration,
+          isActuallyPlaying,
+          hasAudioElement: !!player.getCurrentSrc(),
+        });
+        
+        // 재생 중이 아닌데 interval이 실행 중이면 경고
+        if (!isActuallyPlaying && currentTime === 0) {
+          console.warn("[useMusicTrackPlayer] ⚠️ 오디오가 재생 중이 아닌데 interval이 실행됨");
+        }
+        
+        // 세그먼트 종료 확인 (실제 MP3 길이 사용)
+        // ended 이벤트가 먼저 발생하지만, 백업으로 체크
+        if (segmentDuration > 0 && currentTime >= segmentDuration) {
+          // ✅ 함수형 업데이트 사용하여 무한 루프 방지
+          setTrackProgress((prev) => {
+            // 이미 최대값에 도달했으면 업데이트하지 않음
+            if (prev.progress >= segmentDuration) {
+              return prev;
+            }
+            return { progress: segmentDuration };
+          });
+          
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
+          
+          // 오디오 중지
+          player.stop();
+          currentTrackSrcRef.current = null;
+          
+          // ✅ ref를 통해 호출 (의존성 배열에서 제거)
+          onSegmentEndRef.current?.();
+          return;
+        }
+
+        // ✅ Fix: 함수형 업데이트 사용하여 무한 루프 방지
+        // ✅ Fix: 차이 무시 조건 완전 제거 - 항상 업데이트 (currentTime이 증가하면 무조건 반영)
+        setTrackProgress((prev) => {
+          // currentTime이 증가했거나, 이전 값과 다르면 업데이트
+          if (prev.progress === currentTime) {
+            // 값이 같으면 업데이트하지 않음 (불필요한 리렌더링 방지)
+            return prev;
+          }
+          
+          console.log("[useMusicTrackPlayer] ✅ 진행 바 상태 업데이트:", {
+            prev: Math.round(prev.progress),
+            current: Math.round(currentTime),
+            diff: Math.round(currentTime - prev.progress),
+          });
+          
+          return { progress: currentTime };
+        });
+      } catch (error) {
+        console.error("[useMusicTrackPlayer] interval에서 오류 발생:", error);
+        // 오류 발생 시 interval 정리하지 않음 (일시적 오류일 수 있음)
+      }
     }, 100); // 100ms마다 업데이트
 
     // ✅ 필수: cleanup 함수 반환으로 무한 타이머 생성 방지
     return () => {
+      console.log("[useMusicTrackPlayer] 진행 바 추적 cleanup 실행");
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;

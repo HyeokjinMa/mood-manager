@@ -46,12 +46,20 @@ export class MusicPlayer {
   }
 
   private onEndedCallback: (() => void) | null = null;
+  private onTimeUpdateCallback: ((currentTime: number) => void) | null = null;
 
   /**
    * 종료 콜백 설정
    */
   setOnEnded(callback: () => void) {
     this.onEndedCallback = callback;
+  }
+
+  /**
+   * 시간 업데이트 콜백 설정
+   */
+  setOnTimeUpdate(callback: (currentTime: number) => void) {
+    this.onTimeUpdateCallback = callback;
   }
 
   /**
@@ -84,6 +92,16 @@ export class MusicPlayer {
       console.log("[MusicPlayer] Audio ended");
       if (this.onEndedCallback) {
         this.onEndedCallback();
+      }
+    });
+
+    // 시간 업데이트 이벤트 (currentTime이 변경될 때마다 발생)
+    this.audioElement.addEventListener("timeupdate", () => {
+      if (this.onTimeUpdateCallback && this.audioElement) {
+        const currentTime = this.audioElement.currentTime;
+        if (!isNaN(currentTime) && isFinite(currentTime)) {
+          this.onTimeUpdateCallback(currentTime);
+        }
       }
     });
   }
@@ -342,7 +360,28 @@ export class MusicPlayer {
    * 현재 재생 위치 가져오기
    */
   getCurrentTime(): number {
-    return this.audioElement?.currentTime ?? 0;
+    if (!this.audioElement) {
+      return 0;
+    }
+    
+    const time = this.audioElement.currentTime;
+    
+    // 디버깅: currentTime이 업데이트되는지 확인
+    if (time > 0) {
+      console.log("[MusicPlayer] getCurrentTime:", {
+        time,
+        paused: this.audioElement.paused,
+        readyState: this.audioElement.readyState,
+        duration: this.audioElement.duration,
+        src: this.audioElement.src,
+      });
+    }
+    
+    // NaN이나 유효하지 않은 값 체크
+    if (time == null || isNaN(time) || !isFinite(time)) {
+      return 0;
+    }
+    return time;
   }
 
   /**
@@ -372,6 +411,7 @@ export class MusicPlayer {
   dispose() {
     this.stopFade();
     this.onEndedCallback = null;
+    this.onTimeUpdateCallback = null;
     
     if (this.audioElement) {
       this.audioElement.pause();
