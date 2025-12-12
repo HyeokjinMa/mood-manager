@@ -14,6 +14,9 @@ interface UseMusicTrackPlayerProps {
   segment: MoodStreamSegment | null;
   playing: boolean;
   onSegmentEnd?: () => void; // 세그먼트 종료 시 호출
+  // ✅ Fix: HomePage로부터 받은 volume과 setVolume (0-100 범위)
+  volume: number; // 0-100 범위, HomePage의 useDeviceState volume
+  setVolume: (v: number) => void; // HomePage의 setVolume (0-100 범위를 기대)
 }
 
 interface TrackProgress {
@@ -24,6 +27,8 @@ export function useMusicTrackPlayer({
   segment,
   playing,
   onSegmentEnd,
+  volume, // ✅ Fix: props로 받은 volume (0-100 범위)
+  setVolume, // ✅ Fix: props로 받은 setVolume (0-100 범위를 기대)
 }: UseMusicTrackPlayerProps) {
   // 세그먼트 내 음악 트랙 (1개만)
   const currentTrack: MusicTrack | null = useMemo(() => {
@@ -35,31 +40,44 @@ export function useMusicTrackPlayer({
     progress: 0,
   });
   
-  // 음량 상태 관리 (0-1 범위, 기본값: 0.7)
-  const [volume, setVolumeState] = useState<number>(() => {
-    if (typeof window === "undefined") return 0.7;
-    try {
-      const saved = localStorage.getItem("mood-manager:music-volume");
-      return saved ? Math.max(0, Math.min(1, parseFloat(saved))) : 0.7;
-    } catch {
-      return 0.7;
-    }
-  });
+  // ✅ Fix: 내부 volume 상태 제거 - props로 받은 volume 사용
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const musicPlayerRef = useRef<MusicPlayer | null>(null);
   const currentTrackSrcRef = useRef<string | null>(null);
   const isInitializedRef = useRef(false);
+  // ✅ Fix: onSegmentEnd를 ref로 감싸서 useEffect 의존성에서 제거 (안정화)
+  const onSegmentEndRef = useRef(onSegmentEnd);
+  
+  // onSegmentEnd가 변경될 때마다 ref 업데이트
+  useEffect(() => {
+    onSegmentEndRef.current = onSegmentEnd;
+  }, [onSegmentEnd]);
 
   /**
    * MusicPlayer 인스턴스 초기화 (한 번만)
+   * ✅ Fix: volume을 의존성에서 제거하여 볼륨 변경 시 재초기화되지 않도록 함
    */
   useEffect(() => {
     if (typeof window === "undefined" || isInitializedRef.current) return;
 
     musicPlayerRef.current = new MusicPlayer();
+    // 초기 볼륨 설정: localStorage에서 가져오거나 기본값 사용 (0.7 = 70%)
+    let initialVolumeNormalized = 0.7;
+    try {
+      const savedVolume = localStorage.getItem("mood-manager:music-volume");
+      if (savedVolume) {
+        initialVolumeNormalized = parseFloat(savedVolume);
+        if (isNaN(initialVolumeNormalized) || initialVolumeNormalized < 0 || initialVolumeNormalized > 1) {
+          initialVolumeNormalized = 0.7;
+        }
+      }
+    } catch (error) {
+      console.warn("[useMusicTrackPlayer] Failed to load volume from localStorage:", error);
+    }
+    
     musicPlayerRef.current.init({
-      volume: volume, // 저장된 음량 사용
+      volume: initialVolumeNormalized,
       fadeInDuration: 750, // 0.75초
       fadeOutDuration: 750, // 0.75초
     });
@@ -70,36 +88,38 @@ export function useMusicTrackPlayer({
       musicPlayerRef.current = null;
       isInitializedRef.current = false;
     };
-  }, []);
+  }, []); // ✅ Fix: 빈 배열로 1회 실행 보장 (volume 변경 시 재초기화 방지)
 
   /**
-   * 음량 설정 함수
+   * 음량 설정 함수 (UI 컴포넌트에서 호출 시 사용)
+   * ✅ Fix: 내부 상태 대신 props로 받은 setVolume (HomePage의 setVolume) 호출
    */
-  const setVolume = useCallback((newVolume: number) => {
+  const handleSetVolume = useCallback((newVolume: number) => {
+    // newVolume은 0-1 범위로 들어옴
     const clampedVolume = Math.max(0, Math.min(1, newVolume));
-    setVolumeState(clampedVolume);
     
-    // MusicPlayer에 즉시 반영
-    if (musicPlayerRef.current) {
-      musicPlayerRef.current.setVolume(clampedVolume);
-    }
+    // ✅ Fix: HomePage의 setVolume은 0-100 범위를 기대하므로 변환하여 전달
+    // props에서 받은 setVolume 사용
+    setVolume(Math.round(clampedVolume * 100));
     
-    // localStorage에 저장
+    // localStorage에 저장 (0-1 범위로 저장)
     try {
       localStorage.setItem("mood-manager:music-volume", clampedVolume.toString());
     } catch (error) {
       console.warn("[useMusicTrackPlayer] Failed to save volume to localStorage:", error);
     }
-  }, []);
+  }, [setVolume]); // ✅ props의 setVolume을 의존성에 포함
 
   /**
-   * 음량 변경 시 MusicPlayer에 반영
+   * 음량 변경 시 MusicPlayer에 반영 (HomePage의 상태 추적)
+   * ✅ Fix: props volume (0-100)을 0-1 범위로 변환하여 MusicPlayer에 전달
    */
   useEffect(() => {
     if (musicPlayerRef.current) {
-      musicPlayerRef.current.setVolume(volume);
+      const volumeNormalized = volume / 100; // 0-100 → 0-1
+      musicPlayerRef.current.setVolume(volumeNormalized);
     }
-  }, [volume]);
+  }, [volume]); // ✅ Fix: props volume 추적
 
   /**
    * 세그먼트 전체 길이 계산 (1곡의 길이) - 실제 MP3 길이 사용
@@ -143,14 +163,11 @@ export function useMusicTrackPlayer({
   }, [currentTrack, getTrackUrl]);
 
   /**
-   * 재생 시작 및 진행 시간 추적
+   * 재생 시작 (setInterval은 useEffect에서 관리)
    */
   const startPlayback = useCallback(async () => {
     // 세그먼트가 없거나 트랙이 없으면 재생하지 않음
     if (!segment || !currentTrack || !musicPlayerRef.current) return;
-
-    // 이미 재생 중이면 중복 실행 방지
-    if (intervalRef.current) return;
 
     // 오디오 종료 이벤트 리스너 설정
     musicPlayerRef.current.setOnEnded(() => {
@@ -159,47 +176,19 @@ export function useMusicTrackPlayer({
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
-      setTrackProgress({
-        progress: segmentDuration,
+      // ✅ 함수형 업데이트 사용
+      setTrackProgress((prev) => {
+        if (prev.progress >= segmentDuration) return prev;
+        return { progress: segmentDuration };
       });
       currentTrackSrcRef.current = null;
-      onSegmentEnd?.();
+      // ✅ ref를 통해 호출 (의존성 배열에서 제거)
+      onSegmentEndRef.current?.();
     });
 
-    // 재생 시도
+    // 재생 시도만 수행 (setInterval은 useEffect에서 관리)
     await playCurrentTrack();
-
-    // 진행 시간 추적 시작 (백업용, ended 이벤트가 실패할 경우 대비)
-    intervalRef.current = setInterval(() => {
-      if (!musicPlayerRef.current) return;
-
-      const currentTime = musicPlayerRef.current.getCurrentTime() * 1000; // 밀리초로 변환
-      
-      // 세그먼트 종료 확인 (실제 MP3 길이 사용)
-      // ended 이벤트가 먼저 발생하지만, 백업으로 체크
-      if (segmentDuration > 0 && currentTime >= segmentDuration) {
-        setTrackProgress({
-          progress: segmentDuration,
-        });
-        
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-        }
-        
-        // 오디오 중지
-        musicPlayerRef.current?.stop();
-        currentTrackSrcRef.current = null;
-        
-        onSegmentEnd?.();
-        return;
-      }
-
-      setTrackProgress({
-        progress: currentTime,
-      });
-    }, 100); // 100ms마다 업데이트
-  }, [segment, currentTrack, segmentDuration, onSegmentEnd, playCurrentTrack]);
+  }, [segment, currentTrack, segmentDuration, playCurrentTrack]); // ✅ onSegmentEnd 제거
 
   /**
    * 재생 일시정지
@@ -211,6 +200,74 @@ export function useMusicTrackPlayer({
     }
     musicPlayerRef.current?.pause();
   }, []);
+
+  /**
+   * ✅ Fix: 진행 시간 추적을 위한 별도의 useEffect (startPlayback에서 분리)
+   * playing 상태와 재생 중일 때만 interval 실행
+   */
+  useEffect(() => {
+    if (!playing || !segment || !currentTrack || !musicPlayerRef.current) {
+      // 재생 중이 아니면 interval 정리
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      return;
+    }
+
+    // 이미 interval이 있으면 중복 생성 방지
+    if (intervalRef.current) return;
+
+    // 진행 시간 추적 시작 (백업용, ended 이벤트가 실패할 경우 대비)
+    intervalRef.current = setInterval(() => {
+      if (!musicPlayerRef.current) return;
+
+      const currentTime = musicPlayerRef.current.getCurrentTime() * 1000; // 밀리초로 변환
+      
+      // 세그먼트 종료 확인 (실제 MP3 길이 사용)
+      // ended 이벤트가 먼저 발생하지만, 백업으로 체크
+      if (segmentDuration > 0 && currentTime >= segmentDuration) {
+        // ✅ 함수형 업데이트 사용하여 무한 루프 방지
+        setTrackProgress((prev) => {
+          // 이미 최대값에 도달했으면 업데이트하지 않음
+          if (prev.progress >= segmentDuration) {
+            return prev;
+          }
+          return { progress: segmentDuration };
+        });
+        
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        
+        // 오디오 중지
+        musicPlayerRef.current?.stop();
+        currentTrackSrcRef.current = null;
+        
+        // ✅ ref를 통해 호출 (의존성 배열에서 제거)
+        onSegmentEndRef.current?.();
+        return;
+      }
+
+      // ✅ 함수형 업데이트 사용하여 무한 루프 방지
+      setTrackProgress((prev) => {
+        // 값이 실제로 변경되었을 때만 업데이트
+        if (Math.abs(prev.progress - currentTime) < 50) { // 50ms 이내 차이는 무시
+          return prev;
+        }
+        return { progress: currentTime };
+      });
+    }, 100); // 100ms마다 업데이트
+
+    // ✅ 필수: cleanup 함수 반환으로 무한 타이머 생성 방지
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [playing, segment, currentTrack, segmentDuration]); // ✅ onSegmentEnd 제거 (ref로 처리)
 
   /**
    * 세그먼트 변경 시 진행 상태 리셋 및 새 트랙 준비
@@ -314,7 +371,7 @@ export function useMusicTrackPlayer({
     ? trackProgress.progress >= segmentDuration - (currentTrack.fadeOut || 750)
     : false;
 
-  return {
+    return {
     currentTrack,
     currentTrackIndex: 0, // 항상 0 (1곡만)
     progress: trackProgress.progress,
@@ -327,7 +384,8 @@ export function useMusicTrackPlayer({
     goToPreviousTrack: () => {}, // 1곡만 있으므로 빈 함수
     seek,
     totalTracks: 1, // 항상 1
-    volume, // 0-1 범위
-    setVolume, // 0-1 범위
+    volume, // ✅ Fix: props volume 반환 (0-100 범위)
+    setVolume: handleSetVolume, // ✅ Fix: 래핑된 핸들러 반환 (0-1 범위를 받아 0-100으로 변환하여 HomePage에 전달)
+    // ✅ Fix: isUserChangingRef 제거 (더 이상 필요 없음)
   };
 }

@@ -59,7 +59,9 @@ interface HomeContentProps {
   // 새로고침 요청 콜백
   onRefreshRequest?: () => void;
   // 디바이스 컨트롤 변경 콜백 (전구 API 업데이트용)
-  onDeviceControlChange?: (changes: { color?: string; brightness?: number; scentLevel?: number; volume?: number; power?: boolean }) => void;
+  onDeviceControlChange?: (changes: { color?: string; brightness?: number; scentLevel?: number; volume?: number; power?: boolean; deviceId?: string }) => void;
+  // ✅ Fix: 볼륨 조작 추적 ref 전달
+  volumeIsUserChangingRef?: React.MutableRefObject<boolean>;
 }
 
 export default function HomeContent({
@@ -76,6 +78,7 @@ export default function HomeContent({
   segments = [],
   onRefreshRequest,
   onDeviceControlChange: onDeviceControlChangeFromHome,
+  volumeIsUserChangingRef,
 }: HomeContentProps) {
   const { current: currentMood, onChange: onMoodChange, onScentChange, onSongChange } = moodState;
   const { devices, setDevices, expandedId, setExpandedId, onOpenAddModal, onDeleteRequest } = deviceState;
@@ -223,13 +226,14 @@ export default function HomeContent({
         {/* 무드 대시보드 - 고정 */}
         <div className="flex-shrink-0 relative z-20">
           <MoodDashboard
+            // ✅ Fix: volume과 onVolumeChange만 전달 (단일 진실 공급원: HomePage의 useDeviceState)
+            volume={currentVolume} // 0-100 범위, HomePage의 useDeviceState volume
             onVolumeChange={(newVolume) => {
-              // 외부로 볼륨 변경 전달
+              // 외부로 볼륨 변경 전달 (HomePage의 setVolume 호출)
               if (onVolumeChange) {
                 onVolumeChange(newVolume);
               }
             }}
-            externalVolume={currentVolume}
             mood={currentMood || undefined} // null이면 undefined로 변환
             onMoodChange={onMoodChange}
             onScentChange={onScentChange}
@@ -244,12 +248,15 @@ export default function HomeContent({
             onSegmentIndexChange={onSegmentIndexChange}
             segments={segments}
             isLoadingMoodStream={isLoadingMoodStream}
+            // ✅ Fix: 볼륨 조작 추적 ref 전달 (DeviceControls에서 사용)
+            volumeIsUserChangingRef={volumeIsUserChangingRef}
           />
         </div>
 
         {/* 디바이스 그리드 - 스크롤 가능 */}
         <div className="flex-1 overflow-y-auto mt-1 pb-20">
           <DeviceGrid
+            volumeIsUserChangingRef={volumeIsUserChangingRef}
             devices={devices}
             expandedId={expandedId}
             setExpandedId={setExpandedId}
@@ -308,49 +315,50 @@ export default function HomeContent({
                 }
               }
               
-              // 디바이스 output을 직접 업데이트하여 다른 디바이스 카드에 즉시 반영
+              // ✅ Fix: 디바이스 output을 직접 업데이트하여 다른 디바이스 카드에 즉시 반영
+              // deviceId가 전달된 경우 해당 디바이스만 업데이트, 여러 필드 동시 변경 지원
               setDevices((prev) => {
                 const updated = prev.map((d) => {
+                  // deviceId가 전달된 경우 해당 디바이스만 업데이트
+                  if (changes.deviceId && d.id !== changes.deviceId) {
+                    return d;
+                  }
+                  
+                  // deviceId가 없으면 타입별로 모든 디바이스 업데이트 (하위 호환성)
+                  const updates: Partial<Device["output"]> = {};
+                  let hasUpdates = false;
+                  
                   if (changes.color && (d.type === "manager" || d.type === "light")) {
                     console.log(`[HomeContent] 디바이스 ${d.id} (${d.type}) 색상 업데이트: ${d.output.color || "N/A"} → ${changes.color}`);
-                    return {
-                      ...d,
-                      output: {
-                        ...d.output,
-                        color: changes.color,
-                      },
-                    };
+                    updates.color = changes.color;
+                    hasUpdates = true;
                   }
                   if (changes.brightness !== undefined && (d.type === "manager" || d.type === "light")) {
-                    console.log(`[HomeContent] 디바이스 ${d.id} (${d.type}) 밝기 업데이트: ${d.output.brightness || "N/A"} → ${changes.brightness}%`);
-                    return {
-                      ...d,
-                      output: {
-                        ...d.output,
-                        brightness: changes.brightness,
-                      },
-                    };
+                    console.log(`[HomeContent] 디바이스 ${d.id} (${d.type}) 밝기 업데이트: ${d.output.brightness ?? "N/A"} → ${changes.brightness}%`);
+                    updates.brightness = changes.brightness;
+                    hasUpdates = true;
                   }
                   if (changes.scentLevel !== undefined && (d.type === "manager" || d.type === "scent")) {
-                    console.log(`[HomeContent] 디바이스 ${d.id} (${d.type}) 센트 레벨 업데이트: ${d.output.scentLevel || "N/A"} → ${changes.scentLevel}`);
-                    return {
-                      ...d,
-                      output: {
-                        ...d.output,
-                        scentLevel: changes.scentLevel,
-                      },
-                    };
+                    console.log(`[HomeContent] 디바이스 ${d.id} (${d.type}) 센트 레벨 업데이트: ${d.output.scentLevel ?? "N/A"} → ${changes.scentLevel}`);
+                    updates.scentLevel = changes.scentLevel;
+                    hasUpdates = true;
                   }
                   if (changes.volume !== undefined && (d.type === "manager" || d.type === "speaker")) {
-                    console.log(`[HomeContent] 디바이스 ${d.id} (${d.type}) 볼륨 업데이트: ${d.output.volume || "N/A"} → ${changes.volume}%`);
+                    console.log(`[HomeContent] 디바이스 ${d.id} (${d.type}) 볼륨 업데이트: ${d.output.volume ?? "N/A"} → ${changes.volume}%`);
+                    updates.volume = changes.volume;
+                    hasUpdates = true;
+                  }
+                  
+                  if (hasUpdates) {
                     return {
                       ...d,
                       output: {
                         ...d.output,
-                        volume: changes.volume,
+                        ...updates,
                       },
                     };
                   }
+                  
                   return d;
                 });
                 console.log(`[HomeContent] ✅ 총 ${updated.length}개 디바이스 업데이트 완료`);

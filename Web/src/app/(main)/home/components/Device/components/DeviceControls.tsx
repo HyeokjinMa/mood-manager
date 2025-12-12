@@ -2,6 +2,8 @@
 // File: src/app/(main)/home/components/Device/components/DeviceControls.tsx
 // ======================================================
 
+"use client"; // ✅ Fix: 클라이언트 컴포넌트로 지정 (슬라이더 인터랙션을 위해 필수)
+
 import type { Device } from "@/types/device";
 import type { Mood } from "@/types/mood";
 
@@ -16,6 +18,12 @@ interface DeviceControlsProps {
   onUpdateLightBrightness?: (brightness: number) => void;
   onUpdateScentLevel?: (level: number) => void;
   onUpdateVolume?: (volume: number) => void; // 0-100 범위
+  // ✅ 드래그 종료 시점 핸들러 추가
+  onBrightnessDragEnd?: () => void;
+  onScentLevelDragEnd?: () => void;
+  onVolumeDragEnd?: () => void;
+  // ✅ Fix: 볼륨 슬라이더 조작 추적 ref (useMusicTrackPlayer의 isUserChangingRef)
+  volumeIsUserChangingRef?: React.MutableRefObject<boolean>;
 }
 
 export default function DeviceControls({
@@ -28,6 +36,10 @@ export default function DeviceControls({
   onUpdateLightBrightness,
   onUpdateScentLevel,
   onUpdateVolume,
+  onBrightnessDragEnd,
+  onScentLevelDragEnd,
+  onVolumeDragEnd,
+  volumeIsUserChangingRef, // ✅ Fix: 볼륨 조작 추적 ref
 }: DeviceControlsProps) {
   if (!device.power) return null;
 
@@ -77,6 +89,18 @@ export default function DeviceControls({
                   console.warn("[DeviceControls] ⚠️ onUpdateLightBrightness 핸들러가 없음");
                 }
               }}
+              onMouseUp={(e) => {
+                // 드래그 종료 시 이벤트 전파 방지 (카드 닫힘 방지)
+                e.stopPropagation();
+                // ✅ 드래그 종료 시점 핸들러 호출
+                onBrightnessDragEnd?.();
+              }}
+              onTouchEnd={(e) => {
+                // 모바일 터치 종료 시 이벤트 전파 방지
+                e.stopPropagation();
+                // ✅ 드래그 종료 시점 핸들러 호출
+                onBrightnessDragEnd?.();
+              }}
               className="w-full"
               style={{ accentColor: lightColor }}
             />
@@ -108,6 +132,16 @@ export default function DeviceControls({
                 } else {
                   console.warn("[DeviceControls] ⚠️ onUpdateScentLevel 핸들러가 없음");
                 }
+              }}
+              onMouseUp={(e) => {
+                e.stopPropagation();
+                // ✅ 드래그 종료 시점 핸들러 호출
+                onScentLevelDragEnd?.();
+              }}
+              onTouchEnd={(e) => {
+                e.stopPropagation();
+                // ✅ 드래그 종료 시점 핸들러 호출
+                onScentLevelDragEnd?.();
               }}
               className="w-full"
               style={{ accentColor: lightColor || "#9CAF88" }}
@@ -144,6 +178,42 @@ export default function DeviceControls({
                 } else {
                   console.warn("[DeviceControls] ⚠️ onUpdateVolume 핸들러가 없음");
                 }
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                // ✅ Fix: 사용자 조작 시작 시점에 플래그 설정
+                if (volumeIsUserChangingRef) {
+                  volumeIsUserChangingRef.current = true;
+                  console.log("[DeviceControls] 🔊 Volume 슬라이더 드래그 시작");
+                }
+              }}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+                // ✅ Fix: 모바일 터치 시작 시점에 플래그 설정
+                if (volumeIsUserChangingRef) {
+                  volumeIsUserChangingRef.current = true;
+                  console.log("[DeviceControls] 🔊 Volume 슬라이더 터치 시작");
+                }
+              }}
+              onMouseUp={(e) => {
+                e.stopPropagation();
+                // ✅ Fix: 사용자 조작 종료 시점에 플래그 해제
+                if (volumeIsUserChangingRef) {
+                  volumeIsUserChangingRef.current = false;
+                  console.log("[DeviceControls] 🔊 Volume 슬라이더 드래그 종료");
+                }
+                // 드래그 종료 시점 핸들러 호출
+                onVolumeDragEnd?.();
+              }}
+              onTouchEnd={(e) => {
+                e.stopPropagation();
+                // ✅ Fix: 모바일 터치 종료 시점에 플래그 해제
+                if (volumeIsUserChangingRef) {
+                  volumeIsUserChangingRef.current = false;
+                  console.log("[DeviceControls] 🔊 Volume 슬라이더 터치 종료");
+                }
+                // 드래그 종료 시점 핸들러 호출
+                onVolumeDragEnd?.();
               }}
               className="w-full"
               style={{ accentColor: lightColor || "#3B82F6" }}
@@ -193,11 +263,48 @@ export default function DeviceControls({
                   newValue: newVolume,
                   hasHandler: !!onUpdateVolume
                 });
+                // ✅ Fix: onChange에서 onUpdateVolume 호출 (pendingVolumeRef 업데이트용)
+                // DeviceCardExpanded의 onUpdateVolume은 pendingVolumeRef만 업데이트하고 즉시 상위로 전달하지 않음
+                // 실제 상위 전달은 드래그 종료 시 onVolumeDragEnd에서 수행됨
                 if (onUpdateVolume) {
                   onUpdateVolume(newVolume);
-                } else {
-                  console.warn("[DeviceControls] ⚠️ onUpdateVolume 핸들러가 없음");
                 }
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                // ✅ Fix: 사용자 조작 시작 시점에 플래그 설정
+                if (volumeIsUserChangingRef) {
+                  volumeIsUserChangingRef.current = true;
+                  console.log("[DeviceControls] 🔊 Volume 슬라이더 드래그 시작 (Manager)");
+                }
+              }}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+                // ✅ Fix: 모바일 터치 시작 시점에 플래그 설정
+                if (volumeIsUserChangingRef) {
+                  volumeIsUserChangingRef.current = true;
+                  console.log("[DeviceControls] 🔊 Volume 슬라이더 터치 시작 (Manager)");
+                }
+              }}
+              onMouseUp={(e) => {
+                e.stopPropagation();
+                // ✅ Fix: 사용자 조작 종료 시점에 플래그 해제
+                if (volumeIsUserChangingRef) {
+                  volumeIsUserChangingRef.current = false;
+                  console.log("[DeviceControls] 🔊 Volume 슬라이더 드래그 종료 (Manager)");
+                }
+                // 드래그 종료 시점 핸들러 호출
+                onVolumeDragEnd?.();
+              }}
+              onTouchEnd={(e) => {
+                e.stopPropagation();
+                // ✅ Fix: 모바일 터치 종료 시점에 플래그 해제
+                if (volumeIsUserChangingRef) {
+                  volumeIsUserChangingRef.current = false;
+                  console.log("[DeviceControls] 🔊 Volume 슬라이더 터치 종료 (Manager)");
+                }
+                // 드래그 종료 시점 핸들러 호출
+                onVolumeDragEnd?.();
               }}
               className="w-full"
               style={{ accentColor: lightColor || "#3B82F6" }}

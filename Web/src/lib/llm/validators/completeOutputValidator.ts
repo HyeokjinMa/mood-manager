@@ -171,7 +171,7 @@ export function validateCompleteSegmentOutput(
 
   // rgb는 항상 생성 (moodColor에서 변환, LLM 응답에 없어도 됨)
   const finalRgb = rgb as [number, number, number];
-  
+
   return {
     moodAlias,
     moodColor,

@@ -281,7 +281,7 @@ export function useMoodStreamManager(
       let data;
       try {
         data = await response.json();
-      } catch (jsonError) {
+      } catch {
         throw new Error("Failed to parse carol segments JSON");
       }
 
@@ -380,7 +380,7 @@ export function useMoodStreamManager(
           let data;
           try {
             data = await response.json();
-          } catch (jsonError) {
+          } catch {
             throw new Error("Failed to parse response JSON");
           }
 

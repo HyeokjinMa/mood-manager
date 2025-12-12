@@ -37,6 +37,7 @@ export default function DeviceGrid({
   onDeviceControlChange,
   onUpdateCurrentSegment,
   currentSegment,
+  volumeIsUserChangingRef, // ✅ Fix: 볼륨 조작 추적 ref 전달
 }: {
   devices: Device[];
   expandedId: string | null;
@@ -48,9 +49,10 @@ export default function DeviceGrid({
   isLoading?: boolean; // 디바이스 데이터 로딩 상태
   volume?: number; // 0-100 범위
   onUpdateVolume?: (volume: number) => void; // 0-100 범위
-  onDeviceControlChange?: (changes: { color?: string; brightness?: number; scentLevel?: number; volume?: number }) => void; // 디바이스 컨트롤 변경 콜백
+  onDeviceControlChange?: (changes: { color?: string; brightness?: number; scentLevel?: number; volume?: number; deviceId?: string }) => void; // 디바이스 컨트롤 변경 콜백
   onUpdateCurrentSegment?: (updates: Partial<MoodStreamSegment>) => void; // 현재 세그먼트 업데이트 콜백
   currentSegment?: MoodStreamSegment | null; // 현재 세그먼트 데이터
+  volumeIsUserChangingRef?: React.MutableRefObject<boolean>; // ✅ Fix: 볼륨 조작 추적 ref
 }) {
 
   // 확장 카드가 있으면 그 카드를 먼저 앞으로 정렬
@@ -85,15 +87,12 @@ export default function DeviceGrid({
                   onUpdateVolume?.(newVolume);
                   onDeviceControlChange?.({ volume: newVolume });
                 }}
-                onDeviceUpdate={(updatedDevice) => {
-                  // 디바이스 업데이트 시 상태 반영 (페이지 리로드 없이)
-                  setDevices((prev) =>
-                    prev.map((d) => (d.id === updatedDevice.id ? updatedDevice : d))
-                  );
-                }}
+                // ✅ Phase 1-4: onDeviceUpdate 제거 - Home에서 중앙 관리하므로 불필요
                 onDeviceControlChange={onDeviceControlChange}
                 onUpdateCurrentSegment={onUpdateCurrentSegment}
                 currentSegment={currentSegment}
+                // ✅ Fix: 볼륨 조작 추적 ref 전달
+                volumeIsUserChangingRef={volumeIsUserChangingRef}
               />
             </div>
           );

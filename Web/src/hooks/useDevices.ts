@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { Device } from "@/types/device";
 import type { Mood } from "@/types/mood";
 import type { MoodStreamSegment } from "@/hooks/useMoodStream/types";
@@ -184,6 +184,9 @@ export function useDevices(
   // 핵심: segments 배열의 현재 세그먼트를 단일 소스로 사용하여 모든 디바이스에 일관되게 반영
   // 세그먼트가 변경될 때마다 자동으로 디바이스 정보 업데이트
   // 중요: segments가 로드되기 전에는 디바이스를 업데이트하지 않음 (더미데이터 방지)
+  // ✅ Phase 2: 세그먼트 변경 추적하여 색 변경 시 다른 필드 보존
+  const prevSegmentIndexRef = useRef(currentSegmentIndex);
+  
   useEffect(() => {
     // segments가 없으면 업데이트하지 않음 (초기 3세그먼트가 로드될 때까지 대기)
     // 이렇게 하면 DB에서 가져온 더미데이터가 먼저 보이지 않음
@@ -196,6 +199,10 @@ export function useDevices(
     if (!currentSegment?.mood) {
       return;
     }
+    
+    // ✅ Phase 2: 세그먼트 변경 여부 확인 (색 변경과 구분)
+    const segmentChanged = prevSegmentIndexRef.current !== currentSegmentIndex;
+    prevSegmentIndexRef.current = currentSegmentIndex;
     
     // 현재 세그먼트의 brightness 가져오기 (currentBrightness prop 또는 backgroundParams에서)
     const segmentBrightness = currentBrightness ?? currentSegment.backgroundParams?.lighting?.brightness ?? 50;
@@ -213,7 +220,8 @@ export function useDevices(
     const moodToUse = currentMood || moodFromSegment;
     
     // 디바이스 업데이트: 현재 세그먼트 정보를 모든 디바이스에 반영
-    // 사용자가 수동으로 변경한 값(brightness, scentLevel, volume)은 보존
+    // ✅ Phase 2: 색 변경 시 다른 필드(song, scent) 보존
+    // 세그먼트 변경 시에만 song, scent 업데이트
     setDevices((prev) =>
       prev.map((d) => {
         if (d.type === "manager") {
@@ -221,11 +229,12 @@ export function useDevices(
             ...d,
             output: {
               ...d.output,
-              // 현재 세그먼트 정보 반영
-              color: moodToUse.color,
-              scentType: moodToUse.scent.name,
-              nowPlaying: moodToUse.song.title,
-              // ✅ Phase 2-2: brightness는 사용자가 변경한 값이 있으면 유지, 없으면 세그먼트 값 사용
+              // ✅ Phase 2: 색은 currentMood.color 우선, 없으면 기존 값 유지, 없으면 세그먼트 값
+              color: currentMood?.color || d.output.color || moodToUse.color,
+              // ✅ Phase 2: 세그먼트 변경 시에만 song, scent 업데이트 (색 변경 시에는 기존 값 유지)
+              scentType: segmentChanged ? (moodToUse.scent.name) : (d.output.scentType || moodToUse.scent.name),
+              nowPlaying: segmentChanged ? (moodToUse.song.title) : (d.output.nowPlaying || moodToUse.song.title),
+              // brightness는 사용자가 변경한 값이 있으면 유지, 없으면 세그먼트 값 사용
               brightness: d.output.brightness ?? segmentBrightness,
               // scentLevel은 사용자가 변경한 값 보존
               scentLevel: d.output.scentLevel ?? 5,
@@ -237,8 +246,8 @@ export function useDevices(
             ...d,
             output: {
               ...d.output,
-              color: moodToUse.color,
-              // ✅ Phase 2-2: brightness는 사용자가 변경한 값이 있으면 유지, 없으면 세그먼트 값 사용
+              // ✅ Phase 2: 색은 currentMood.color 우선, 없으면 기존 값 유지
+              color: currentMood?.color || d.output.color || moodToUse.color,
               brightness: d.output.brightness ?? segmentBrightness,
             },
           };
@@ -248,7 +257,8 @@ export function useDevices(
             ...d,
             output: {
               ...d.output,
-              scentType: moodToUse.scent.name,
+              // ✅ Phase 2: 세그먼트 변경 시에만 scent 업데이트
+              scentType: segmentChanged ? (moodToUse.scent.name) : (d.output.scentType || moodToUse.scent.name),
               scentLevel: d.output.scentLevel ?? 5,
             },
           };
@@ -258,7 +268,8 @@ export function useDevices(
             ...d,
             output: {
               ...d.output,
-              nowPlaying: moodToUse.song.title,
+              // ✅ Phase 2: 세그먼트 변경 시에만 song 업데이트
+              nowPlaying: segmentChanged ? (moodToUse.song.title) : (d.output.nowPlaying || moodToUse.song.title),
             },
           };
         }

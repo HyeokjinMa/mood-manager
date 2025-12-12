@@ -25,40 +25,47 @@ export function createDeviceHandlers({
 
   // 디바이스 삭제 (DB 연동)
   const handleDelete = async () => {
+    console.log("[Delete Device] 🗑️ 디바이스 삭제 시작:", {
+      deviceId: device.id,
+      deviceType: device.type,
+      deviceName: device.name,
+    });
+    
     try {
       // 삭제 전에 디바이스 타입과 ID를 변수로 저장
       const deletedDeviceType = device.type;
       const deletedDeviceId = device.id;
       const isLightOrManager = deletedDeviceType === "light" || deletedDeviceType === "manager";
 
-      // ✅ Phase 1-1: 삭제 API 호출 전에 wait 변경 호출 (확실히 실행되도록)
+      // ✅ Fix: 조명 디바이스 삭제 시 search_light status를 'wait'으로 변경
       if (isLightOrManager) {
         console.log("[Delete Device] 🔍 조명 디바이스 삭제 감지 - status를 'wait'으로 변경", {
           deviceType: deletedDeviceType,
           deviceId: deletedDeviceId
         });
         
-        fetch("/api/search_light", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ status: "wait" }),
-        })
-          .then(async (searchResponse) => {
-            if (searchResponse.ok) {
-              const searchData = await searchResponse.json();
-              console.log("[Delete Device] ✅ search_light status 변경 성공:", searchData);
-            } else {
-              const errorData = await searchResponse.json().catch(() => ({}));
-              console.error("[Delete Device] ❌ search_light status 변경 실패:", searchResponse.status, errorData);
-            }
-          })
-          .catch((error) => {
-            console.error("[Delete Device] ❌ search_light API 호출 에러:", error);
+        try {
+          const searchResponse = await fetch("/api/search_light", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ status: "wait" }),
           });
+          
+          if (searchResponse.ok) {
+            const searchData = await searchResponse.json();
+            console.log("[Delete Device] ✅ search_light status 변경 성공:", searchData);
+          } else {
+            const errorData = await searchResponse.json().catch(() => ({}));
+            console.error("[Delete Device] ❌ search_light status 변경 실패:", searchResponse.status, errorData);
+          }
+        } catch (error) {
+          console.error("[Delete Device] ❌ search_light API 호출 에러:", error);
+        }
       }
 
       // 그 다음 삭제 API 호출
+      console.log("[Delete Device] 📤 DELETE /api/devices/${device.id} 호출");
       const response = await fetch(`/api/devices/${device.id}`, {
         method: "DELETE",
         credentials: "include",
@@ -67,8 +74,10 @@ export function createDeviceHandlers({
       if (!response.ok) {
         // Mock Mode일 가능성 체크 (401/403 에러는 무시하고 로컬 삭제)
         if (response.status === 401 || response.status === 403) {
+          console.log("[Delete Device] ⚠️ Mock Mode로 간주, 로컬 상태만 업데이트");
           // Mock Mode: 로컬 상태만 업데이트
           setDevices((prev) => prev.filter((d) => d.id !== device.id));
+          console.log("[Delete Device] ✅ 로컬 삭제 완료");
           // wait 변경은 이미 위에서 처리됨
           return;
         }
@@ -77,11 +86,14 @@ export function createDeviceHandlers({
       }
 
       // 삭제 성공 시 로컬 상태 업데이트
+      console.log("[Delete Device] ✅ DELETE API 호출 성공, 로컬 상태 업데이트");
       setDevices((prev) => prev.filter((d) => d.id !== device.id));
+      console.log("[Delete Device] ✅ 디바이스 삭제 완료:", device.id);
     } catch (error) {
-      console.error("Error deleting device:", error);
+      console.error("[Delete Device] ❌ 디바이스 삭제 실패:", error);
       // 네트워크 에러나 기타 에러 시 Mock Mode로 간주하고 로컬 삭제
       setDevices((prev) => prev.filter((d) => d.id !== device.id));
+      console.log("[Delete Device] ⚠️ 에러 발생했으나 로컬 상태는 업데이트됨");
       // wait 변경은 이미 위에서 처리됨
     }
   };

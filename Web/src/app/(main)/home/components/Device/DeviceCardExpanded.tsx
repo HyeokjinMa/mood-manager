@@ -42,10 +42,10 @@ export default function DeviceCardExpanded({
   onUpdateName,
   volume,
   onUpdateVolume,
-  onDeviceUpdate,
   onDeviceControlChange,
   onUpdateCurrentSegment,
   currentSegment,
+  volumeIsUserChangingRef,
 }: {
   device: Device;
   currentMood?: Mood;
@@ -55,15 +55,15 @@ export default function DeviceCardExpanded({
   onUpdateName: (name: string) => void;
   volume?: number; // 0-100 범위
   onUpdateVolume?: (volume: number) => void; // 0-100 범위
-  onDeviceUpdate?: (updatedDevice: Device) => void; // 디바이스 업데이트 콜백
-  onDeviceControlChange?: (changes: { color?: string; brightness?: number; scentLevel?: number; volume?: number }) => void; // 디바이스 컨트롤 변경 콜백
+  // ✅ Phase 1-4: onDeviceUpdate 제거 - Home에서 중앙 관리하므로 불필요
+  onDeviceControlChange?: (changes: { color?: string; brightness?: number; scentLevel?: number; volume?: number; deviceId?: string }) => void; // 디바이스 컨트롤 변경 콜백
   onUpdateCurrentSegment?: (updates: Partial<MoodStreamSegment>) => void; // 현재 세그먼트 업데이트 콜백
   currentSegment?: MoodStreamSegment | null; // 현재 세그먼트 데이터
+  // ✅ Fix: 볼륨 조작 추적 ref 전달
+  volumeIsUserChangingRef?: React.MutableRefObject<boolean>;
 }) {
   const {
     lightColor: hookLightColor,
-    lightBrightness,
-    scentLevel,
     backgroundColor: baseBackgroundColor,
   } = useDeviceCard({ device, currentMood });
   
@@ -74,15 +74,34 @@ export default function DeviceCardExpanded({
   const [localLightColor, setLocalLightColor] = useState(() => 
     device.output.color || currentMood?.color || hookLightColor
   );
-  const [localLightBrightness, setLocalLightBrightness] = useState(() => 
+  
+  // ✅ Phase 1: 슬라이더 즉시 UI 반영을 위한 로컬 state 재도입
+  // useEffect 동기화 문제 최소화를 위해 사용자 변경 추적 ref 추가
+  const isUserChangingRef = useRef({ brightness: false, scent: false, volume: false });
+  
+  // ✅ Fix: 스몰↔익스펜디드 전환 시 값 초기화 방지 - device.output 변경 시 초기값도 동기화
+  const [localBrightness, setLocalBrightness] = useState(() => 
     device.output.brightness ?? 50
   );
   const [localScentLevel, setLocalScentLevel] = useState(() => 
     device.output.scentLevel ?? 5
   );
-  const [localVolume, setLocalVolume] = useState(() => 
-    volume ?? device.output.volume ?? 70
-  );
+  
+  // ✅ Fix: 드래그 종료 시 API 호출을 위한 최종 값 저장 ref
+  const pendingBrightnessRef = useRef<number | null>(null);
+  const pendingScentLevelRef = useRef<number | null>(null);
+  const pendingVolumeRef = useRef<number | null>(null);
+  
+  // ✅ Fix: device.id 변경 시 (컴포넌트 리마운트 방지) 로컬 state를 device.output과 동기화
+  const prevDeviceIdRef = useRef(device.id);
+  useEffect(() => {
+    if (prevDeviceIdRef.current !== device.id) {
+      // 다른 디바이스로 전환된 경우 초기화
+      prevDeviceIdRef.current = device.id;
+      setLocalBrightness(device.output.brightness ?? 50);
+      setLocalScentLevel(device.output.scentLevel ?? 5);
+    }
+  }, [device.id, device.output.brightness, device.output.scentLevel]);
 
   // 배경색은 localLightColor가 있으면 우선 사용, 없으면 baseBackgroundColor 사용
   // 컬러피커로 색을 변경했을 때 즉시 반영되도록
@@ -101,104 +120,45 @@ export default function DeviceCardExpanded({
   
   const backgroundColor = getBackgroundColor();
 
-  // 디바이스 output 변경 시 로컬 상태 동기화 (사용자가 변경 중이 아닐 때만)
-  const isUserChangingRef = useRef({ brightness: false, scent: false, volume: false });
-  
-  useEffect(() => {
-    if (!isUserChangingRef.current.brightness && device.output.brightness !== undefined) {
-      const newBrightness = device.output.brightness;
-      if (newBrightness !== localLightBrightness) {
-        setLocalLightBrightness(newBrightness);
-      }
-    }
-  }, [device.output.brightness, localLightBrightness]);
-  
-  useEffect(() => {
-    if (!isUserChangingRef.current.scent && device.output.scentLevel !== undefined) {
-      const newScentLevel = device.output.scentLevel;
-      if (newScentLevel !== localScentLevel) {
-        setLocalScentLevel(newScentLevel);
-      }
-    }
-  }, [device.output.scentLevel, localScentLevel]);
-  
-  useEffect(() => {
-    // 사용자가 변경 중이 아닐 때만 props 동기화
-    if (isUserChangingRef.current.volume) {
-      return; // ✅ 사용자 변경 중에는 props 무시
-    }
-    
-    const newVolume = volume ?? device.output.volume ?? 70;
-    // ✅ Phase 2-3: 차이가 3% 이상일 때만 업데이트 (진동 방지)
-    if (Math.abs(newVolume - localVolume) > 3) {
-      setLocalVolume(newVolume);
-    }
-  }, [volume, device.output.volume]); // ✅ localVolume을 의존성에서 제거하여 무한 루프 방지
-  
+  // ✅ Phase 1: useEffect 동기화 최적화 - 사용자 변경 중이 아닐 때만 동기화
   useEffect(() => {
     const effectiveColor = device.output.color || currentMood?.color || lightColor;
     if (effectiveColor !== localLightColor) {
       setLocalLightColor(effectiveColor);
     }
   }, [device.output.color, currentMood?.color, lightColor, localLightColor]);
-
-  // 즉시 저장 함수 (변경 시 자동 저장, 디바운스 적용)
+  
+  // ✅ Fix: brightness 동기화 - device.output.brightness만 추적
+  // 이전 값 추적으로 불필요한 업데이트 방지
+  const prevBrightnessRef = useRef(device.output.brightness);
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      const updateData: {
-        color?: string;
-        brightness?: number;
-        scentLevel?: number;
-        volume?: number;
-      } = {};
-
-      if (device.type === "light" || device.type === "manager") {
-        updateData.color = localLightColor;
-        updateData.brightness = localLightBrightness;
+    // ✅ 사용자 조작 중이 아니고, 값이 실제로 변경되었을 때만 동기화
+    if (!isUserChangingRef.current.brightness && device.output.brightness !== undefined) {
+      if (prevBrightnessRef.current !== device.output.brightness) {
+        prevBrightnessRef.current = device.output.brightness;
+        // ✅ setLocalBrightness는 조건 체크 후에만 호출
+        setLocalBrightness(device.output.brightness);
       }
-      if (device.type === "scent" || device.type === "manager") {
-        updateData.scentLevel = localScentLevel;
+    }
+  }, [device.output.brightness]); // ✅ localBrightness는 의존성에서 제거 (무한 루프 방지)
+  
+  // ✅ Fix: scentLevel 동기화 - device.output.scentLevel만 추적
+  // 이전 값 추적으로 불필요한 업데이트 방지
+  const prevScentLevelRef = useRef(device.output.scentLevel);
+  useEffect(() => {
+    // ✅ 사용자 조작 중이 아니고, 값이 실제로 변경되었을 때만 동기화
+    if (!isUserChangingRef.current.scent && device.output.scentLevel !== undefined) {
+      if (prevScentLevelRef.current !== device.output.scentLevel) {
+        prevScentLevelRef.current = device.output.scentLevel;
+        // ✅ setLocalScentLevel은 조건 체크 후에만 호출
+        setLocalScentLevel(device.output.scentLevel);
       }
-      if (device.type === "speaker" || device.type === "manager") {
-        updateData.volume = localVolume;
-      }
+    }
+  }, [device.output.scentLevel]); // ✅ localScentLevel은 의존성에서 제거 (무한 루프 방지)
 
-      // 로컬 상태와 실제 디바이스 상태가 다를 때만 저장
-      const hasChanges = 
-        ((device.type === "light" || device.type === "manager") &&
-        (localLightColor !== lightColor || localLightBrightness !== lightBrightness)) ||
-        ((device.type === "scent" || device.type === "manager") &&
-        localScentLevel !== scentLevel) ||
-        ((device.type === "speaker" || device.type === "manager") &&
-        localVolume !== (volume ?? device.output.volume ?? 70));
-
-      if (hasChanges) {
-        fetch(`/api/devices/${device.id}/update`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(updateData),
-        })
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error("Failed to save device settings");
-            }
-            return response.json();
-          })
-          .then((result) => {
-            if (result.device && onDeviceUpdate) {
-              onDeviceUpdate(result.device);
-            }
-          })
-          .catch((error) => {
-            console.error("Failed to save device settings:", error);
-          });
-      }
-    }, 1000); // 1초 디바운스
-
-    return () => clearTimeout(timeoutId);
-  }, [localLightColor, localLightBrightness, localScentLevel, localVolume, lightColor, lightBrightness, scentLevel, volume, device.output.volume, device.type, device.id, onDeviceUpdate]);
+  // ✅ Phase 1: API 호출 제거 - Home에서 중앙 관리
+  // DeviceCardExpanded는 UI 반응성만 담당 (로컬 state 관리)
+  // 모든 API 호출은 Home의 handleDeviceControlChange에서 처리
 
 
   return (
@@ -230,7 +190,8 @@ export default function DeviceCardExpanded({
         onClose();
       }}
       onMouseDown={(e) => {
-        // 컬러 피커가 포커스되어 있을 때는 카드가 닫히지 않도록
+        // 컬러 피커나 슬라이더 영역에서는 카드가 닫히지 않도록 처리
+        // 단, preventDefault()는 호출하지 않음 (슬라이더 드래그 동작을 위해)
         const target = e.target as HTMLElement;
         if (
           target.closest('input[type="color"]') || 
@@ -238,7 +199,8 @@ export default function DeviceCardExpanded({
           target.closest('.space-y-2') ||
           target.closest('label')
         ) {
-          e.preventDefault(); // mousedown 이벤트 전파 방지
+          // preventDefault() 제거 - 슬라이더 드래그 동작을 막지 않도록
+          e.stopPropagation(); // 이벤트 전파만 방지 (기본 동작은 허용)
         }
       }}
     >
@@ -277,16 +239,16 @@ export default function DeviceCardExpanded({
           device={device}
           currentMood={currentMood}
           lightColor={localLightColor}
-          lightBrightness={localLightBrightness}
+          lightBrightness={localBrightness}
           scentLevel={localScentLevel}
-          volume={localVolume}
+          volume={volume ?? device.output.volume ?? 70}
           onUpdateLightColor={device.type === "light" || device.type === "manager" ? (color) => {
             setLocalLightColor(color); // 즉시 로컬 상태 업데이트
             
-            // RGB 변경 시 즉시 onDeviceControlChange 호출하여 home으로 전달
-            // route.ts 업데이트는 home에서 handleDeviceControlChange를 통해 처리됨
+            // ✅ Phase 1: RGB 변경 시 즉시 onDeviceControlChange 호출하여 home으로 전달
+            // route.ts 업데이트 및 DB 저장은 home에서 handleDeviceControlChange를 통해 처리됨
             if (onDeviceControlChange) {
-              onDeviceControlChange({ color });
+              onDeviceControlChange({ color, deviceId: device.id });
             }
             // 무드대시보드 색상 즉각 반영을 위해 세그먼트도 즉시 업데이트
             if (onUpdateCurrentSegment && currentSegment?.mood) {
@@ -304,53 +266,78 @@ export default function DeviceCardExpanded({
             }
           } : undefined}
           onUpdateLightBrightness={(brightness) => {
-            console.log("[DeviceCardExpanded] onUpdateLightBrightness 호출:", {
-              oldLocalBrightness: localLightBrightness,
-              newBrightness: brightness
-            });
+            // ✅ 드래그 중: 로컬 상태만 즉시 업데이트 (UI 반응성)
             isUserChangingRef.current.brightness = true;
-            setLocalLightBrightness(brightness);
-            console.log("[DeviceCardExpanded] setLocalLightBrightness 호출됨");
-            if (onDeviceControlChange) {
-              onDeviceControlChange({ brightness });
+            setLocalBrightness(brightness);
+            
+            // 최종 값 저장 (드래그 종료 시 API 호출에 사용)
+            pendingBrightnessRef.current = brightness;
+          }}
+          onBrightnessDragEnd={() => {
+            // ✅ 드래그 종료 시: 최종 값으로 API 호출
+            if (pendingBrightnessRef.current !== null && onDeviceControlChange) {
+              const finalBrightness = pendingBrightnessRef.current;
+              console.log(`[DeviceCardExpanded] 🔆 Brightness 드래그 종료 - 최종 값: ${finalBrightness}%`);
+              onDeviceControlChange({ brightness: finalBrightness, deviceId: device.id });
+              pendingBrightnessRef.current = null;
             }
-            setTimeout(() => {
-              isUserChangingRef.current.brightness = false;
-            }, 500);
+            // ✅ Fix: 사용자 변경 플래그 리셋은 즉시 처리 (setTimeout 제거)
+            isUserChangingRef.current.brightness = false;
           }}
           onUpdateScentLevel={(level) => {
-            console.log("[DeviceCardExpanded] onUpdateScentLevel 호출:", {
-              oldLocalScentLevel: localScentLevel,
-              newLevel: level
-            });
+            // ✅ 드래그 중: 로컬 상태만 즉시 업데이트 (UI 반응성)
             isUserChangingRef.current.scent = true;
             setLocalScentLevel(level);
-            console.log("[DeviceCardExpanded] setLocalScentLevel 호출됨");
-            if (onDeviceControlChange) {
-              onDeviceControlChange({ scentLevel: level });
+            
+            // 최종 값 저장 (드래그 종료 시 API 호출에 사용)
+            pendingScentLevelRef.current = level;
+          }}
+          onScentLevelDragEnd={() => {
+            // ✅ 드래그 종료 시: 최종 값으로 API 호출
+            if (pendingScentLevelRef.current !== null && onDeviceControlChange) {
+              const finalLevel = pendingScentLevelRef.current;
+              console.log(`[DeviceCardExpanded] 🌸 Scent Level 드래그 종료 - 최종 값: ${finalLevel}`);
+              onDeviceControlChange({ scentLevel: finalLevel, deviceId: device.id });
+              pendingScentLevelRef.current = null;
             }
-            setTimeout(() => {
-              isUserChangingRef.current.scent = false;
-            }, 500);
+            // ✅ Fix: 사용자 변경 플래그 리셋은 즉시 처리 (setTimeout 제거)
+            isUserChangingRef.current.scent = false;
           }}
           onUpdateVolume={(newVolume) => {
-            console.log("[DeviceCardExpanded] onUpdateVolume 호출:", {
-              oldLocalVolume: localVolume,
-              newVolume: newVolume
-            });
-            isUserChangingRef.current.volume = true;
-            setLocalVolume(newVolume);
-            console.log("[DeviceCardExpanded] setLocalVolume 호출됨");
-            if (onUpdateVolume) {
-              onUpdateVolume(newVolume);
-            }
-            if (onDeviceControlChange) {
-              onDeviceControlChange({ volume: newVolume });
-            }
-            setTimeout(() => {
-              isUserChangingRef.current.volume = false;
-            }, 500);
+            // ✅ Fix: DeviceControls의 onMouseDown에서 이미 volumeIsUserChangingRef.current = true로 설정됨
+            // 여기서는 중복 설정하지 않고, pendingVolumeRef만 업데이트
+            // 로컬 플래그 (isUserChangingRef.current.volume) 로직 완전히 제거
+            
+            // 최종 값 저장 (드래그 종료 시 API 호출에 사용)
+            pendingVolumeRef.current = newVolume;
           }}
+          onVolumeDragEnd={() => {
+            // ✅ 드래그 종료 시: 최종 값으로 API 호출 및 HomeContent로 전달
+            if (pendingVolumeRef.current !== null) {
+              const finalVolume = pendingVolumeRef.current;
+              console.log(`[DeviceCardExpanded] 🔊 Volume 드래그 종료 - 최종 값: ${finalVolume}%`);
+              
+              // HomeContent로 전달 (HomePage의 setVolume 호출)
+              if (onUpdateVolume) {
+                onUpdateVolume(finalVolume);
+              }
+              
+              // 디바이스 컨트롤 변경도 함께 전달
+              if (onDeviceControlChange) {
+                onDeviceControlChange({ volume: finalVolume, deviceId: device.id });
+              }
+              
+              pendingVolumeRef.current = null;
+            }
+            // ✅ Fix: 사용자 변경 플래그 리셋은 즉시 처리
+            // DeviceControls의 onMouseUp에서 이미 false로 설정되지만, 보조적으로 여기서도 설정
+            if (volumeIsUserChangingRef) {
+              volumeIsUserChangingRef.current = false;
+            }
+            // ✅ Fix: 로컬 플래그 (isUserChangingRef.current.volume) 로직 완전히 제거
+          }}
+          // ✅ Fix: 볼륨 조작 추적 ref 전달
+          volumeIsUserChangingRef={volumeIsUserChangingRef}
         />
       </div>
 

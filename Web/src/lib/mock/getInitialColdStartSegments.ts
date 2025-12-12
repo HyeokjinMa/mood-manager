@@ -52,7 +52,7 @@ export function getInitialColdStartSegments(): MoodStreamSegment[] {
       windSpeed: 3,
       animationSpeed: 4,
       iconOpacity: 0.7,
-      brightness: 50,
+      brightness: 100,
     },
     {
       // musicID 61: "Because it's Christmas" - Sung Sikyung and others

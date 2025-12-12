@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import MoodDeleteModal from "@/app/(main)/mood/components/MoodDeleteModal";
 import MoodReplaceModal from "@/app/(main)/mood/components/MoodReplaceModal";
 import { blendWithWhite } from "@/lib/utils";
-import { getSavedMoods, deleteSavedMood, type SavedMood as SavedMoodType } from "@/lib/mock/savedMoodsStorage";
+import { deleteSavedMood, type SavedMood as SavedMoodType } from "@/lib/mock/savedMoodsStorage";
 import { FaTimes } from "react-icons/fa";
 
 // Number of mood cards per page (2 x 3 grid)
@@ -24,7 +24,6 @@ interface MoodModalProps {
 }
 
 export default function MoodModal({ isOpen, onClose, onApplyMood }: MoodModalProps) {
-  const router = useRouter();
   const isAdminMode = false;
   
   const [savedMoods, setSavedMoods] = useState<SavedMoodType[]>([]);

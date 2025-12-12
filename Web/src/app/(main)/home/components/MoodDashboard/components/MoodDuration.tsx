@@ -28,7 +28,6 @@ export default function MoodDuration({
   moodColorPast,
   nextStreamAvailable = false,
   onNextStreamSelect,
-  totalSegmentsIncludingNext,
   availableSegmentsCount,
   onSegmentSelectOutOfRange,
 }: MoodDurationProps) {

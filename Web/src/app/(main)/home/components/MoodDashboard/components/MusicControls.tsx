@@ -9,12 +9,9 @@ import { formatTime } from "../utils/moodUtils";
 
 interface MusicControlsProps {
   mood: Mood;
-  progress: number; // 현재 트랙의 진행 시간 (밀리초)
   totalProgress: number; // 세그먼트 전체 진행 시간 (밀리초)
   segmentDuration: number; // 세그먼트 전체 길이 (밀리초)
   currentTrack: MusicTrack | null; // 현재 재생 중인 트랙
-  currentTrackIndex: number; // 현재 트랙 인덱스 (0-2)
-  totalTracks: number; // 세그먼트 내 총 트랙 개수 (3)
   playing: boolean;
   onPlayToggle: () => void;
   onPrevious: () => void;
@@ -25,12 +22,9 @@ interface MusicControlsProps {
 
 export default function MusicControls({
   mood,
-  progress,
   totalProgress,
   segmentDuration,
   currentTrack,
-  currentTrackIndex,
-  totalTracks,
   playing,
   onPlayToggle,
   onPrevious,
@@ -38,8 +32,6 @@ export default function MusicControls({
   onSeek,
   moodColor,
 }: MusicControlsProps) {
-  // 현재 트랙의 길이 (밀리초 → 초)
-  const currentTrackDuration = currentTrack?.duration || mood.song.duration * 1000;
   
   // 세그먼트 전체 진행률
   const segmentProgressPercent = segmentDuration > 0 

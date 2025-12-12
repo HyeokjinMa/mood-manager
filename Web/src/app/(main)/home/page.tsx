@@ -94,6 +94,8 @@ export default function HomePage() {
   const [deviceToDelete, setDeviceToDelete] = useState<Device | null>(null);
   const [backgroundParams, setBackgroundParams] = useState<BackgroundParams | null>(null);
   const [homeMoodColor, setHomeMoodColor] = useState<string | undefined>(undefined); // 홈 컬러 상태
+  // ✅ Fix: 볼륨 조작 추적 ref (useMusicTrackPlayer의 isUserChangingRef와 동기화)
+  const volumeIsUserChangingRef = useRef<boolean>(false);
   // Phase 8: 모달 상태 관리
   const [showMyPageModal, setShowMyPageModal] = useState(false);
   const [showMoodModal, setShowMoodModal] = useState(false);
@@ -159,10 +161,13 @@ export default function HomePage() {
   const { showSurvey, handleSurveyComplete, handleSurveySkip } = useSurvey();
   
   // Phase 2 단순화: 디바이스 상태 관리 훅 사용
+  // ✅ Fix: devices와 setDevices 전달 (즉시 상태 업데이트를 위해)
   const { volume, setVolume, handleDeviceControlChange } = useDeviceState({
     currentMood,
     setCurrentMood,
     initialVolume: 70,
+    devices, // ✅ Fix: 전달
+    setDevices, // ✅ Fix: 전달
   });
   
   // Phase 6: currentMood가 변경되면 useDevices에 전달하기 위해
@@ -229,10 +234,7 @@ export default function HomePage() {
     return null;
   }, [moodStreamData.segments, moodStreamData.currentIndex, currentMood, initialSegments]); // initialSegments를 의존성에 추가
 
-  // 현재 세그먼트의 brightness 계산 (currentSegmentData 이후에 정의)
-  const currentBrightness = useMemo(() => {
-    return currentSegmentData?.backgroundParams?.lighting?.brightness || 50;
-  }, [currentSegmentData?.backgroundParams?.lighting?.brightness]);
+  // currentBrightness는 useDevices 내부에서 처리됨
   
   // Phase 3-1: localStorage에서 저장된 색상 복원 (초기 로드 시)
   useEffect(() => {
@@ -518,6 +520,8 @@ export default function HomePage() {
             setVolume(newVolume);
             console.log(`[HomePage] 🔊 음량 변경 (MoodDashboard에서): ${newVolume}%`);
           }}
+          // ✅ Fix: 볼륨 조작 추적 ref 전달 (MoodDashboard와 동기화)
+          volumeIsUserChangingRef={volumeIsUserChangingRef}
         />
 
         <BottomNav 

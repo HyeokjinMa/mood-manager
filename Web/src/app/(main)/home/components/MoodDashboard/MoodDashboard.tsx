@@ -41,13 +41,16 @@ interface MoodDashboardProps {
   allSegmentsParams?: BackgroundParams[] | null;
   setBackgroundParams?: (params: BackgroundParams | null) => void;
   isLLMLoading?: boolean;
-  onVolumeChange?: (volume: number) => void; // 0-100 범위
-  externalVolume?: number; // 0-100 범위, 외부에서 전달받은 volume
+  // ✅ Fix: volume과 onVolumeChange만 props로 받음 (단일 진실 공급원: HomePage의 useDeviceState)
+  volume?: number; // 0-100 범위, HomePage의 useDeviceState volume
+  onVolumeChange?: (volume: number) => void; // 0-100 범위, HomePage의 setVolume
   // Phase 5: currentSegmentData를 props로 받기
   currentSegmentData: CurrentSegmentData | null;
   onSegmentIndexChange?: (index: number) => void; // 세그먼트 인덱스 변경 콜백
   segments?: MoodStreamSegment[]; // 전체 세그먼트 배열 (세그먼트 선택용)
   isLoadingMoodStream?: boolean; // 무드스트림 로딩 상태
+  // ✅ Fix: 볼륨 조작 추적 ref (DeviceControls에서 사용)
+  volumeIsUserChangingRef?: React.MutableRefObject<boolean>;
 }
 
 export default function MoodDashboard({
@@ -60,12 +63,13 @@ export default function MoodDashboard({
   allSegmentsParams,
   setBackgroundParams,
   isLLMLoading,
-  onVolumeChange,
-  externalVolume,
+  volume: externalVolume, // ✅ Fix: externalVolume 제거, volume prop 사용 (0-100 범위)
+  onVolumeChange, // ✅ Fix: HomePage의 setVolume을 호출하는 핸들러
   currentSegmentData,
   onSegmentIndexChange,
   segments = [],
   isLoadingMoodStream = false,
+  volumeIsUserChangingRef, // ✅ Fix: DeviceControls에서 사용할 ref
 }: MoodDashboardProps) {
   // 모달 상태 관리
   const [isAlbumModalOpen, setIsAlbumModalOpen] = useState(false);
@@ -158,7 +162,10 @@ export default function MoodDashboard({
     }, 3000);
   }, []);
 
-  // 음악 트랙 재생 관리 (3세그 구조)
+  // ✅ Fix: useMusicTrackPlayer에 HomePage의 volume과 setVolume 전달 (단일 진실 공급원)
+  // externalVolume이 undefined일 경우 기본값 사용 (초기 로드 시)
+  const currentVolume = externalVolume ?? 70; // 기본값 70 (0-100 범위)
+  
   const {
     currentTrack,
     progress: trackProgress,
@@ -166,8 +173,8 @@ export default function MoodDashboard({
     segmentDuration,
     totalTracks,
     seek,
-    volume,
-    setVolume,
+    volume, // ✅ Fix: useMusicTrackPlayer에서 반환된 volume (props로 전달한 값, 0-100 범위)
+    setVolume, // ✅ Fix: useMusicTrackPlayer에서 반환된 setVolume (handleSetVolume 래퍼, 0-1 범위를 받아 0-100으로 변환)
   } = useMusicTrackPlayer({
     segment: effectiveSegment,
     playing,
@@ -189,38 +196,14 @@ export default function MoodDashboard({
         }
       }
     },
+    // ✅ Fix: HomePage의 volume과 setVolume 전달 (단일 진실 공급원)
+    volume: currentVolume, // 0-100 범위
+    setVolume: onVolumeChange || (() => {}), // HomePage의 setVolume (0-100 범위를 기대)
   });
 
-  // 외부에서 volume 변경 시 MusicPlayer에 반영 (0-100 → 0-1 변환)
-  // 무한 루프 방지: ref를 사용하여 이전 값 추적
-  const prevExternalVolumeRef = useRef<number | undefined>(undefined);
-  useEffect(() => {
-    if (externalVolume !== undefined && externalVolume !== prevExternalVolumeRef.current) {
-      const volumeNormalized = externalVolume / 100; // 0-100 → 0-1
-      const currentVolumePercent = Math.round(volume * 100);
-      // 1% 이상 차이날 때만 업데이트 (0.5%에서 1%로 증가하여 흔들림 방지)
-      if (Math.abs(externalVolume - currentVolumePercent) >= 1) {
-        prevExternalVolumeRef.current = externalVolume;
-        setVolume(volumeNormalized);
-      }
-    }
-  }, [externalVolume, volume, setVolume]);
-
-  // 음량 변경 시 상위 컴포넌트에 전달 (0-1 → 0-100 변환)
-  // 무한 루프 방지: ref를 사용하여 이전 값 추적
-  const prevVolumeRef = useRef<number | undefined>(undefined);
-  useEffect(() => {
-    if (onVolumeChange) {
-      const volumePercent = Math.round(volume * 100);
-      // externalVolume과 비교하여 실제로 변경되었을 때만 전달 (1% 이상 차이)
-      if (externalVolume === undefined || Math.abs(externalVolume - volumePercent) >= 1) {
-        if (prevVolumeRef.current !== volumePercent) {
-          prevVolumeRef.current = volumePercent;
-          onVolumeChange(volumePercent);
-        }
-      }
-    }
-  }, [volume, onVolumeChange, externalVolume]);
+  // ✅ Fix: 모든 양방향 동기화 useEffect 제거
+  // 이제 useMusicTrackPlayer가 props로 받은 volume을 직접 사용하므로 동기화 로직이 필요 없음
+  // HomePage의 volume 상태가 유일한 진실 공급원이므로, useMusicTrackPlayer는 이를 props로 받아 사용만 함
 
   /**
    * Phase 5: 새로고침 버튼 스피너 상태 관리
@@ -328,12 +311,9 @@ export default function MoodDashboard({
 
           <MusicControls
             mood={effectiveMood as Mood}
-            progress={trackProgress}
             totalProgress={totalProgress}
             segmentDuration={segmentDuration}
             currentTrack={currentTrack}
-            currentTrackIndex={0}
-            totalTracks={totalTracks}
             playing={playing}
             moodColor={progressBarColor} // 무드 컬러 전달 (scent 아이콘과 동일, 컬러피커 변경 시 즉시 반영)
             onPlayToggle={() => {
