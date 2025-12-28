@@ -25,7 +25,7 @@ The system operates based on the following pipeline:
 - **Document(PDF)**: [Mood-manager | PDF](docs/G14_Mood_Manager.pdf)
 - **Document(LATEX)**: [Mood-manager | LATEX](docs/G14_Mood_Manager.tex)
 - **PPT**: [Mood-manager | PPT](https://www.miricanvas.com/login?redirect=%2Fv2%2Fdesign2%2F82bba40d-4ef0-44d6-8108-753343e84517)
-- **Deployed Demo**: [moodmanager](https://moodmanager.me)
+- **Deployed Demo**: [moodmanager](https://moodmanager.me) (current not working)
 
 ---
 
